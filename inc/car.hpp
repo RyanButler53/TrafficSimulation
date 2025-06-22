@@ -1,7 +1,8 @@
 #include <ostream>
 #include <iostream>
+#include "strategy.hpp"
 
-struct Car
+class Car
 {
     
     /// @brief Position is defined. Meters. 
@@ -9,15 +10,6 @@ struct Car
     
     /// @brief Current Velocity. Meters per second.
     double vel_;
-
-    /// @brief Desired Velocity. (m/s)
-    double desiredVel_;
-
-    /// @brief Maximum Acceleration (m/s/s)
-    const double maxAccel_;
-
-    /// @brief Max Deceleration. m/s/s
-    const double maxDecel_;
 
     /// @brief Current Timestep (seconds)
     double timestep_;
@@ -28,44 +20,43 @@ struct Car
     /// @brief Gap between car and tail end of car in front of it. 
     double gap_;
 
-    // IDM model parameters
-    double accel_; // Acceleration
-    double braking_; // Braking ability. Affects slowdowns
-    double rxnTime_; // Reaction time
-
-    // Stored previous state
-    double oldPos_;
-    double oldVel_;
+    // Update Strategy. Either Intelligent or Gipps Driver Models
+    FollowStrategy* updateStrategy_;
+    
+    public: 
     
     Car();
-    ~Car() = default;
 
-    // Simple step, no acceleration, open road
-    void step(double dt);
+    ~Car(){delete updateStrategy_;}
+
+    // Getters:
+    double getPosition() const {return pos_;}
+    double getVelocity() const {return vel_;}
+    double getLength() const {return len_;}
+
+
 
     /**
-     * @brief Takes a step forward in time. Takes the car in front of it into account
+     * @brief Takes 
      * @param inFront Copy of car in front. (Original car has moved, cannot use its current data)
      */
-    void step(const Car inFront, double dt);
+
+    /**
+     * @brief Takes a step forward in time. 
+     * @details Takes the car in front of it into account based on the car in
+     * front of it and its following strategy
+     * 
+     * @param lead Leader car. Passed by reference
+     * @param dt Timestep. 
+     */
+    void step(const Car& lead, double dt);
+
+
     void log() const ;
     void log(std::ostream& os) const;
 
 
-    /**
-     * @brief Returns a car that is at position infinity. Allows for updating a car freely. 
-     */
-    static Car infinity();
 
-    /**
-     * @brief stores the current position and velocity of 
-     */
-    void store();
-
-    /**
-     * @brief Returns a car copy constructed from the previous state
-     */
-    Car restore();
 };
 
 std::ostream& operator<<(std::ostream& os, const Car& c);
