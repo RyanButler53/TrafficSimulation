@@ -1,6 +1,7 @@
 /**
  * @file lane.hpp
  */
+#pragma once
 
 #include "car.hpp"
 #include <list>
@@ -18,6 +19,7 @@ private:
 public:
 
     // Cars should be added in order. 
+    Lane() = default;
     Lane(std::list<Car>& cars);
     ~Lane()= default;
 

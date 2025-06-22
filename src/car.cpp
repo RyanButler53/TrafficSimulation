@@ -1,17 +1,20 @@
 #include "car.hpp"
 #include <algorithm>
+#include <memory>
 
 
 Car::Car(double x0, double v0, double t0, FollowStrategy* follow):
-    pos_{x0}, vel_{v0}, timestep_{0}, len_{4.9}, leadStrategy_{new ConstantLead(v0)}, followStrategy_{follow}{}
+    pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}{
+        leadStrategy_ = std::make_shared<ConstantLead>(v0);
+        followStrategy_ = std::shared_ptr<FollowStrategy>(follow);
+    }
 
 Car::Car(double x0, double v0, double t0, FollowStrategy* follow, LeadStrategy* lead):
-    pos_{x0}, vel_{v0}, timestep_{0}, len_{4.9}, leadStrategy_{lead}, followStrategy_{follow}{}
+    pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}{
+        leadStrategy_ = std::shared_ptr<LeadStrategy>(lead);
+        followStrategy_ = std::shared_ptr<FollowStrategy>(follow);
+    }
 
-Car::~Car(){
-    delete followStrategy_;
-    delete leadStrategy_;
-}
 
 // Stepping forward functions
 

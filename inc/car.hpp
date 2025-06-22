@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ostream>
 #include <iostream>
 #include "strategy.hpp"
@@ -22,10 +24,10 @@ class Car
     double gap_;
 
     /// @brief Lead Car strategy. Constant, Discrete or Functional
-    LeadStrategy* leadStrategy_;
+    std::shared_ptr<LeadStrategy> leadStrategy_;
 
     /// @brief Car Following Strategy Either Intelligent or Gipps Driver Models
-    FollowStrategy* followStrategy_;
+    std::shared_ptr<FollowStrategy> followStrategy_;
 
     // Private Methods
 
@@ -34,13 +36,13 @@ class Car
      * 
      * @param dt Timestep to incrememtn by 
      */
-    void Car::update(double dt);
+    void update(double dt);
     
     public: 
 
+    // Constructors
     Car(double x0, double v0, double t0, FollowStrategy* follow);
     Car(double x0, double v0, double t0, FollowStrategy* follow, LeadStrategy* lead);
-    ~Car();
 
     // Getters:
     double getPosition() const {return pos_;}

@@ -8,13 +8,14 @@
  * @copyright Copyright (c) 2025
  * 
  */
+#pragma once
 
 #include <vector>
 #include <functional>
 
 struct LeadStrategy {
     LeadStrategy() = default;
-    ~LeadStrategy(){}
+    virtual ~LeadStrategy(){}
 
     virtual double nextVelocity(double dt) = 0;
 };
@@ -70,6 +71,8 @@ class FunctionLead : public LeadStrategy {
 
     public:
     FunctionLead(std::function<double(double)> f):func_{f}, t_{0}{}
+
+    // this actually won't work...
     FunctionLead(std::function<double(double)> f, double t0):func_{f}, t_{t0}{}
 
     ~FunctionLead() = default;

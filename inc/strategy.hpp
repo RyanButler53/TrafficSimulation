@@ -7,6 +7,8 @@
  * 
  * @note Car Following Strategy classes must implement update 
  */
+
+ #pragma once
 struct FollowStrategy {
     
     FollowStrategy() = default;

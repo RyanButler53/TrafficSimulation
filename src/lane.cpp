@@ -1,6 +1,6 @@
 #include "lane.hpp"
 
-Lane::Lane(std::list<Car>& cars):cars_{cars}{
+Lane::Lane(std::list<Car>& cars):cars_{std::move(cars)}{
 
 }
 
@@ -19,8 +19,10 @@ void Lane::updateLane(double dt){
         ++next;
     }
 
-    // Next is at the end 
+    // current points to the lead car
     current->step(dt);
+}
 
-
+void Lane::addCar(Car& c){
+    cars_.push_front(c);
 }

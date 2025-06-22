@@ -3,4 +3,6 @@ set(VERSION 0.0.0)
 project(TrafficSimulation)
 
 include_directories(inc)
-add_executable(sim src/simulate.cpp src/car.cpp)
+
+
+add_executable(sim src/simulate.cpp src/car.cpp src/lane.cpp src/strategy.cpp)
