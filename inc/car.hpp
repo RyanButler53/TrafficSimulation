@@ -1,7 +1,11 @@
+#pragma once
+
 #include <ostream>
 #include <iostream>
+#include "strategy.hpp"
+#include "leadStrategy.hpp"
 
-struct Car
+class Car
 {
     
     /// @brief Position is defined. Meters. 
@@ -10,33 +14,62 @@ struct Car
     /// @brief Current Velocity. Meters per second.
     double vel_;
 
-    /// @brief Desired Velocity. (m/s)
-    double desiredVel_;
-
-    /// @brief Maximum Acceleration (m/s/s)
-    const double maxAccel_;
-
-    /// @brief Max Deceleration. m/s/s
-    const double maxDecel_;
-
     /// @brief Current Timestep (seconds)
     double timestep_;
 
     /// @brief Car Length. (meters)
     double len_;
 
-    // lane data, agressiveness, idm models
-public:
-    Car();
-    ~Car() = default;
+    /// @brief Gap between car and tail end of car in front of it. 
+    double gap_;
 
+    /// @brief Lead Car strategy. Constant, Discrete or Functional
+    std::shared_ptr<LeadStrategy> leadStrategy_;
+
+    /// @brief Car Following Strategy Either Intelligent or Gipps Driver Models
+    std::shared_ptr<FollowStrategy> followStrategy_;
+
+    // Private Methods
+
+    /**
+     * @brief Updates position and time
+     * 
+     * @param dt Timestep to incrememtn by 
+     */
+    void update(double dt);
+    
+    public: 
+
+    // Constructors
+    Car(double x0, double v0, double t0, FollowStrategy* follow);
+    Car(double x0, double v0, double t0, FollowStrategy* follow, LeadStrategy* lead);
+
+    // Getters:
+    double getPosition() const {return pos_;}
+    double getVelocity() const {return vel_;}
+    double getLength() const {return len_;}
+
+    /**
+     * @brief Takes a step forward in time. This overload is for when the car is the LEADER
+     * 
+     * @param dt 
+     */
     void step(double dt);
-    void log() const ;
+
+    /**
+     * @brief Takes a step forward in time. 
+     * @details Takes the car in front of it into account based on the car in
+     * front of it and its following strategy
+     * 
+     * @param lead Leader car. Passed by reference
+     * @param dt Timestep. 
+     */
+    void step(const Car& lead, double dt);
+
+
+    void log() const;
     void log(std::ostream& os) const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Car& c);
-// std::ostream &operator<<(std::ostream& out, const SplayTree<key_t, value_t> &splaytree);
-
-
 
