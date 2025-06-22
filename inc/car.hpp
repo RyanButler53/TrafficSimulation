@@ -1,6 +1,7 @@
 #include <ostream>
 #include <iostream>
 #include "strategy.hpp"
+#include "leadStrategy.hpp"
 
 class Car
 {
@@ -20,26 +21,38 @@ class Car
     /// @brief Gap between car and tail end of car in front of it. 
     double gap_;
 
-    // Update Strategy. Either Intelligent or Gipps Driver Models
-    FollowStrategy* updateStrategy_;
+    /// @brief Lead Car strategy. Constant, Discrete or Functional
+    LeadStrategy* leadStrategy_;
+
+    /// @brief Car Following Strategy Either Intelligent or Gipps Driver Models
+    FollowStrategy* followStrategy_;
+
+    // Private Methods
+
+    /**
+     * @brief Updates position and time
+     * 
+     * @param dt Timestep to incrememtn by 
+     */
+    void Car::update(double dt);
     
     public: 
-    
-    Car();
 
-    ~Car(){delete updateStrategy_;}
+    Car(double x0, double v0, double t0, FollowStrategy* follow);
+    Car(double x0, double v0, double t0, FollowStrategy* follow, LeadStrategy* lead);
+    ~Car();
 
     // Getters:
     double getPosition() const {return pos_;}
     double getVelocity() const {return vel_;}
     double getLength() const {return len_;}
 
-
-
     /**
-     * @brief Takes 
-     * @param inFront Copy of car in front. (Original car has moved, cannot use its current data)
+     * @brief Takes a step forward in time. This overload is for when the car is the LEADER
+     * 
+     * @param dt 
      */
+    void step(double dt);
 
     /**
      * @brief Takes a step forward in time. 
@@ -52,14 +65,9 @@ class Car
     void step(const Car& lead, double dt);
 
 
-    void log() const ;
+    void log() const;
     void log(std::ostream& os) const;
-
-
-
 };
 
 std::ostream& operator<<(std::ostream& os, const Car& c);
-
-
 

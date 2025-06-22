@@ -9,20 +9,18 @@ void Lane::updateLane(double dt){
         std::cout << "Empty lane" << std::endl;
         return;
     }
-    // First car is the "lead" car. Can move and accelerate freely. 
-    std::list<Car>::iterator lead = cars_.begin();
-    lead->store(); // cache x and v
-    lead->step(Car::infinity(), dt);
-
-    std::list<Car>::iterator car = ++lead;
-    while (car != cars_.end())
-    {
-        Car oldLead = lead->restore();
-        // Use v and x from the old leading car
-        car->step(oldLead, dt);
-        car->store(); // store the new v and x values
-        ++car;
-        ++lead; // incrementing lead should 
+    
+    std::list<Car>::iterator current = cars_.begin();
+    std::list<Car>::iterator next = ++cars_.begin();
+    while (next != cars_.end()){
+        Car& lead = *next;
+        current->step(lead, dt);
+        ++current;
+        ++next;
     }
+
+    // Next is at the end 
+    current->step(dt);
+
 
 }

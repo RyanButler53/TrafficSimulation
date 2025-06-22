@@ -1,5 +1,5 @@
 /**
- * @file leadFunction.hpp
+ * @file LeadStrategy.hpp
  * @author Ryan Butler
  * @brief Header file for the possible Lead Functions
  * @version 0.1
@@ -12,18 +12,18 @@
 #include <vector>
 #include <functional>
 
-struct LeadFunction {
-    LeadFunction() = default;
-    ~LeadFunction(){}
+struct LeadStrategy {
+    LeadStrategy() = default;
+    ~LeadStrategy(){}
 
     virtual double nextVelocity(double dt) = 0;
 };
 
 /**
- * @brief Class for holding a constant pace
+ * @brief Class for holding a constant velocity. 
  * 
  */
-class ConstantLead : public LeadFunction {
+class ConstantLead : public LeadStrategy {
     
     double v_;
 
@@ -34,7 +34,11 @@ class ConstantLead : public LeadFunction {
     double nextVelocity(double dt) override {return v_;}
 };
 
-class DiscreteLead : public LeadFunction {
+/**
+ * @brief Class for holding 
+ * 
+ */
+class DiscreteLead : public LeadStrategy {
     
     std::vector<double> velocities_;
     std::vector<double>::iterator next_;
@@ -60,7 +64,7 @@ class DiscreteLead : public LeadFunction {
  * Implements 
  * 
  */
-class FunctionLead : public LeadFunction {
+class FunctionLead : public LeadStrategy {
     std::function<double(double)> func_;
     double t_;
 
@@ -75,4 +79,4 @@ class FunctionLead : public LeadFunction {
         t_ += dt;
         return v;
     }
-}
+};

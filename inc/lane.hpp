@@ -12,7 +12,7 @@ class Lane
 private:
     
     /**
-     * @brief List of cars. Furthest car forward is the beginning of the list
+     * @brief List of cars. Leading car is the end of the list
      */
     std::list<Car> cars_;
 public:
@@ -27,6 +27,8 @@ public:
      * @param dt Timestep
      */
     void updateLane(double dt);
+
+    void addCar(Car& c);
 
 };
 
