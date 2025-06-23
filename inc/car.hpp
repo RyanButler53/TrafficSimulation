@@ -4,9 +4,12 @@
 #include <iostream>
 #include "strategy.hpp"
 #include "leadStrategy.hpp"
+#include "logger.hpp"
 
 class Car
 {
+    /// @brief Unique id for each card
+    size_t id_;
     
     /// @brief Position is defined. Meters. 
     double pos_;
@@ -29,6 +32,11 @@ class Car
     /// @brief Car Following Strategy Either Intelligent or Gipps Driver Models
     std::shared_ptr<FollowStrategy> followStrategy_;
 
+    /// @brief Logger. Could log to files and evantually a DB
+    CarLogger* logger_;
+
+    /// @brief Static: Car ID. Every time the car is created, use this
+    static size_t carId_; 
     // Private Methods
 
     /**
@@ -41,8 +49,8 @@ class Car
     public: 
 
     // Constructors
-    Car(double x0, double v0, double t0, FollowStrategy* follow);
-    Car(double x0, double v0, double t0, FollowStrategy* follow, LeadStrategy* lead);
+    Car(double x0, double v0, double t0, CarLogger* logger, FollowStrategy* follow);
+    Car(double x0, double v0, double t0, CarLogger* logger, FollowStrategy* follow, LeadStrategy* lead);
 
     // Getters:
     double getPosition() const {return pos_;}
@@ -66,6 +74,8 @@ class Car
      */
     void step(const Car& lead, double dt);
 
+
+    static size_t getId(){return carId_++;} //Car::carId++;
 
     void log() const;
     void log(std::ostream& os) const;

@@ -3,19 +3,25 @@
 #include <memory>
 
 
-Car::Car(double x0, double v0, double t0, FollowStrategy* follow):
-    pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}{
+Car::Car(double x0, double v0, double t0, CarLogger* logger, FollowStrategy* follow):
+    id_{Car::getId()}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}{
         leadStrategy_ = std::make_shared<ConstantLead>(v0);
         followStrategy_ = std::shared_ptr<FollowStrategy>(follow);
     }
 
-Car::Car(double x0, double v0, double t0, FollowStrategy* follow, LeadStrategy* lead):
-    pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}{
+Car::Car(double x0, double v0, double t0, CarLogger* logger, FollowStrategy* follow, LeadStrategy* lead):
+    id_{Car::getId()},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}{
         leadStrategy_ = std::shared_ptr<LeadStrategy>(lead);
         followStrategy_ = std::shared_ptr<FollowStrategy>(follow);
     }
 
+size_t Car::carId_ = 0;
 
+// size_t Car::getId(){
+//     size_t newid = Car::carId_;
+//     ++Car::carId_;
+//     return newid; // carId++
+// }
 // Stepping forward functions
 
 void Car::step(double dt){
@@ -41,7 +47,7 @@ void Car::step(const Car& lead, double dt){
 void Car::update(double dt){
     pos_ += vel_*dt;
     timestep_ += dt;
-    log();
+    logger_->log(id_, pos_, vel_, timestep_);
 }
 
 // Logging Methods
