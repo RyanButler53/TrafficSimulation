@@ -2,6 +2,8 @@
 #include <numeric>
 #include <fstream>
 
+namespace fs = std::filesystem;
+
 void CarLogger::log(size_t id, double x, double v, double t) {
     logs_.push_back({id, x, v, t});
     cached = false;
@@ -60,10 +62,12 @@ void FileLogger::write(){
 
     for (size_t i = 0; i < n; ++i){
         // If file doesn't exist, make it
-        std::string fname = "car" + std::to_string(i) + ".txt";
-        if (!std::filesystem::exists(fname)){
+        fs::path fname = basepath_ / fs::path("car" + std::to_string(i) + ".csv");
+        if (!fs::exists(fname)){
             std::ofstream out(fname);
+            out << "x,v,t\n";
         }
+        
         std::ofstream logfile(fname, std::ios::app);
         for (CarLog& c : byCar[i]){
             logfile << c.x << "," << c.v << ","<< c.t<<"\n";

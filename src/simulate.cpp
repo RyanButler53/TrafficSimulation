@@ -43,7 +43,7 @@ int main(){
             22.6515168
     };
 
-    CarLogger* logger = new FileLogger();
+    CarLogger* logger = new FileLogger("");
     DiscreteLead* leadStrat = new DiscreteLead(vleads);
     Gipps* leadFollowStrat = new Gipps(1.981, -2.8955, -3.505, 33.528);
     Gipps* followStrat = new Gipps(1.981, -2.8955, -3.505, 33.528);

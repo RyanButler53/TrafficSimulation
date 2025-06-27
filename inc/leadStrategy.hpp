@@ -36,7 +36,7 @@ class ConstantLead : public LeadStrategy {
 };
 
 /**
- * @brief Class for holding 
+ * @brief Class for discretly setting velocities and times
  * 
  */
 class DiscreteLead : public LeadStrategy {
@@ -62,7 +62,6 @@ class DiscreteLead : public LeadStrategy {
 /**
  * @brief Class for using a Function for the car's velocity when
  * in the leading position. 
- * Implements 
  * 
  */
 class FunctionLead : public LeadStrategy {
