@@ -6,8 +6,7 @@
 #include "leadStrategy.hpp"
 #include "logger.hpp"
 
-class Car
-{
+class Car {
     /// @brief Unique id for each card
     size_t id_;
     
@@ -33,10 +32,11 @@ class Car
     std::shared_ptr<FollowStrategy> followStrategy_;
 
     /// @brief Logger. Could log to files and evantually a DB
-    CarLogger* logger_;
+    std::shared_ptr<CarLogger> logger_;
 
     /// @brief Static: Car ID. Every time the car is created, use this
     static size_t carId_; 
+    
     // Private Methods
 
     /**
@@ -49,13 +49,18 @@ class Car
     public: 
 
     // Constructors
-    Car(double x0, double v0, double t0, CarLogger* logger, FollowStrategy* follow);
-    Car(double x0, double v0, double t0, CarLogger* logger, FollowStrategy* follow, LeadStrategy* lead);
+    Car(double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 
+        std::shared_ptr<FollowStrategy> follow);
+    Car(double x0, double v0, double t0, std::shared_ptr<CarLogger>logger, 
+        std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead);
 
     // Getters:
     double getPosition() const {return pos_;}
     double getVelocity() const {return vel_;}
     double getLength() const {return len_;}
+
+    // Set Lead Strategy 
+    void setLeadStrategy(std::shared_ptr<LeadStrategy> ls) {leadStrategy_ = ls;}
 
     /**
      * @brief Takes a step forward in time. This overload is for when the car is the LEADER
@@ -75,7 +80,7 @@ class Car
     void step(const Car& lead, double dt);
 
 
-    static size_t getId(){return carId_++;} //Car::carId++;
+    static size_t getId(){return carId_++;} 
 
     void log() const;
     void log(std::ostream& os) const;

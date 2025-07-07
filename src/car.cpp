@@ -1,28 +1,32 @@
+/**
+ * @file car.cpp
+ * @author Ryan Butler (rmbutler@outlook.com)
+ * @brief Implements the Car class. 
+ * @version 0.1
+ * @date 2025-07-06
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #include "car.hpp"
 #include <algorithm>
 #include <memory>
 
 
-Car::Car(double x0, double v0, double t0, CarLogger* logger, FollowStrategy* follow):
-    id_{Car::getId()}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}{
+Car::Car(double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
+        id_{Car::getId()}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, followStrategy_{follow}{
+        // logger_ = std::shared_ptr<CarLogger>(logger);
         leadStrategy_ = std::make_shared<ConstantLead>(v0);
-        followStrategy_ = std::shared_ptr<FollowStrategy>(follow);
+        // followStrategy_ = std::shared_ptr<FollowStrategy>(follow);
     }
 
-Car::Car(double x0, double v0, double t0, CarLogger* logger, FollowStrategy* follow, LeadStrategy* lead):
-    id_{Car::getId()},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}{
-        leadStrategy_ = std::shared_ptr<LeadStrategy>(lead);
-        followStrategy_ = std::shared_ptr<FollowStrategy>(follow);
-    }
+Car::Car(double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 
+         std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead):
+        id_{Car::getId()},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, 
+        leadStrategy_{lead}, followStrategy_{follow}{}
 
+// Initialize Car ID Static variable
 size_t Car::carId_ = 0;
-
-// size_t Car::getId(){
-//     size_t newid = Car::carId_;
-//     ++Car::carId_;
-//     return newid; // carId++
-// }
-// Stepping forward functions
 
 void Car::step(double dt){
     vel_ = leadStrategy_->nextVelocity(dt);
@@ -47,13 +51,13 @@ void Car::step(const Car& lead, double dt){
 void Car::update(double dt){
     pos_ += vel_*dt;
     timestep_ += dt;
-    logger_->log(id_, pos_, vel_, timestep_);
+    log();
 }
 
 // Logging Methods
 
 void Car::log() const {
-    std::cout << pos_ << "," <<vel_ <<","<<timestep_<<"\n";
+    logger_->log(id_, pos_, vel_, timestep_);
 }
 
 void Car::log(std::ostream& os) const {
