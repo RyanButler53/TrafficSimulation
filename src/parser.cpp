@@ -59,7 +59,7 @@ std::shared_ptr<LeadStrategy> DiscreteParser::parseLeadStrategy(){
         YAML::Node sine = cfg_["function"]["sine"];
         double a = sine["a"].as<double>();
         double b = sine["b"].as<double>();
-        double c = sine["b"].as<double>();
+        double c = sine["c"].as<double>();
         std::function<double(double)> fn = [=](double t)->double {return a * std::sin(b*t) + c;};
         return std::make_shared<FunctionLead>(fn);
         

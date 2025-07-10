@@ -15,9 +15,7 @@
 
 Car::Car(double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
         id_{Car::getId()}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, followStrategy_{follow}{
-        // logger_ = std::shared_ptr<CarLogger>(logger);
         leadStrategy_ = std::make_shared<ConstantLead>(v0);
-        // followStrategy_ = std::shared_ptr<FollowStrategy>(follow);
     }
 
 Car::Car(double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 

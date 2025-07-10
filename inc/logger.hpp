@@ -92,7 +92,7 @@ class FileLogger : public CarLogger {
     std::vector<std::filesystem::path> filepaths;
     std::filesystem::path basepath_;
     public: 
-    FileLogger(std::string basepath = "."):basepath_{basepath}{};
+    FileLogger(std::string basepath);
     ~FileLogger() = default;
 
     void write();

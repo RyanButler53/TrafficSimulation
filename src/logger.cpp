@@ -55,6 +55,14 @@ void CarLogger::partition(size_t n) {
     cached = true;
 }
 
+FileLogger::FileLogger(std::string basepath):basepath_{basepath}{
+    // create the directory if it doesn't exist and clear it out if it does
+    if (fs::exists(basepath_)){
+        fs::remove_all(basepath);
+    }
+    fs::create_directory(basepath_);
+}
+
 void FileLogger::write(){
 
     std::vector<std::vector<CarLog>> byCar = getPartition();

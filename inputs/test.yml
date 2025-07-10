@@ -1,5 +1,4 @@
 ---
-numCars: 2
 time: 30.0 # Total time to simulate
 timestep: 1.0 # dt
 driverType: "Gipps" # driver type
