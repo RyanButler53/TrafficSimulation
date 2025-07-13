@@ -1,3 +1,14 @@
+/**
+ * @file logger.cpp
+ * @author Ryan Butler (rmbutler@outlook.com)
+ * @brief  Implements the Car Logger and File Logger classes
+ * @note Will be expanded to provide interface for a database
+ * @version 0.1
+ * @date 2025-07-13
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #include "logger.hpp"
 #include <numeric>
 #include <fstream>

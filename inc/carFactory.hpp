@@ -1,3 +1,13 @@
+/**
+ * @file carFactory.hpp
+ * @author Ryan Buutler (rmbutler@outlook.com)
+ * @brief Defines the interface for a car factory
+ * @version 0.1
+ * @date 2025-07-13
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #pragma once
 
 #include <memory>

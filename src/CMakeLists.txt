@@ -1,5 +1,3 @@
-
-# Yaml Parsing Library
 include(FetchContent)
 
 FetchContent_Declare(

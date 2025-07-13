@@ -1,3 +1,13 @@
+/**
+ * @file car.hpp
+ * @author Ryan Buutler (rmbutler@outlook.com)
+ * @brief Defines the car interface
+ * @version 0.1
+ * @date 2025-07-13
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #pragma once
 
 #include <ostream>

@@ -1,3 +1,13 @@
+/**
+ * @file parser.hpp
+ * @author Ryan Buutler (rmbutler@outlook.com)
+ * @brief Defines interface for the discrete input parser for discretely defined simulations
+ * @version 0.1
+ * @date 2025-07-13
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #pragma once
 
 #include <exception>

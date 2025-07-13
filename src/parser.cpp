@@ -102,13 +102,10 @@ void DiscreteParser::fillLane(Lane& lane){
 // Put all the parsing together
 SimulatorInputs DiscreteParser::parse() {
 
-    // Parse general simulation wide parameters
     parseGeneral();
 
-    // Parse car factory
     parseCarFactory();
 
-    // Fill the lane with cars
     Lane lane;
     fillLane(lane);
 

@@ -9,7 +9,6 @@ driverParams:
 
 # cars
 leadType: "discrete" # Lead Car type: function, discrete, constant
-# Must have one called "discrete"
 
 logdir: ../sims
 

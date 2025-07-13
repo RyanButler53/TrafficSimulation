@@ -1,3 +1,13 @@
+/**
+ * @file strategy.cpp
+ * @author Ryan Butler
+ * @brief Implements the Car Following strategies Gipps and Intelligent
+ * @version 0.1
+ * @date 2025-07-13
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #include "strategy.hpp"
 
 #include <algorithm>

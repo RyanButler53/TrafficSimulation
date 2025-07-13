@@ -1,7 +1,7 @@
 /**
  * @file simInputs.hpp 
- * @author your name (you@domain.com)
- * @brief Defines inputs for the Simulator
+ * @author Ryan Buutler (rmbutler@outlook.com)
+ * @brief Defines inputs for the Simulator. Passed between the parsing step and 
  * @version 0.1
  * @date 2025-07-06
  * 
