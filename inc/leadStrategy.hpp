@@ -36,7 +36,7 @@ class ConstantLead : public LeadStrategy {
 };
 
 /**
- * @brief Class for holding 
+ * @brief Class for discretly setting velocities and times
  * 
  */
 class DiscreteLead : public LeadStrategy {
@@ -62,7 +62,6 @@ class DiscreteLead : public LeadStrategy {
 /**
  * @brief Class for using a Function for the car's velocity when
  * in the leading position. 
- * Implements 
  * 
  */
 class FunctionLead : public LeadStrategy {
@@ -71,9 +70,6 @@ class FunctionLead : public LeadStrategy {
 
     public:
     FunctionLead(std::function<double(double)> f):func_{f}, t_{0}{}
-
-    // this actually won't work...
-    FunctionLead(std::function<double(double)> f, double t0):func_{f}, t_{t0}{}
 
     ~FunctionLead() = default;
 

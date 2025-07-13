@@ -1,0 +1,57 @@
+---
+time: 30.0 # Total time to simulate
+timestep: 1.0 # dt
+driverType: "Gipps" # driver type
+driverParams:
+  a: 1.981
+  b: -2.8955
+  bmax: -3.505
+
+# cars
+leadType: "discrete" # Lead Car type: function, discrete, constant
+
+logdir: ../sims
+
+discrete:
+  velocities:
+    # - 23.4114848
+    - 22.776688
+    - 21.45792
+    - 20.56384
+    - 19.66976
+    - 18.7756
+    - 18.32864
+    - 17.43456
+    - 16.54048
+    - 15.6464
+    - 14.75232
+    - 13.85824
+    - 12.96416
+    - 11.176
+    - 9.83488
+    - 8.49376
+    - 9.38784
+    - 10.72896
+    - 11.62304
+    - 12.96416
+    - 13.85824
+    - 14.75232
+    - 16.09344
+    - 17.43456
+    - 18.77568
+    - 20.1168
+    - 21.90496
+    - 22.7588064
+    - 23.02256
+    - 22.6515168
+
+cars:
+  - car0: # First car is the lead car. These must be set in case of a lane change. 
+    x0: 0
+    v0: 23.4114848
+    vdes: 33.528
+
+  - car1:
+    x0: -60.96
+    v0: 24.274
+    vdes: 33.528

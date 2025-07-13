@@ -1,3 +1,13 @@
+/**
+ * @file lane.cpp
+ * @author Ryan Butler (rmbutler@outlook.com)
+ * @brief Implements the lane class. Only works for a single lane
+ * @version 0.1
+ * @date 2025-07-13
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #include "lane.hpp"
 
 Lane::Lane(std::list<Car>& cars):cars_{std::move(cars)}{

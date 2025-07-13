@@ -1,0 +1,53 @@
+---
+time: 1500 # Total time to simulate
+timestep: 1 # dt
+
+# Driver Model section
+driverType: "IDM" # driver type
+driverParams:
+  a: 0.3
+  b: 3
+  s0: 2
+
+# Logging 
+logdir: ./sim
+
+
+# Cars
+leadType: "function" # Lead Car type: function, discrete, constant
+# Must have a field called "Function, Discrete or Constant"
+function:
+  sine: # next 3 arguments a sin(bx) + c 
+    a: 5.0
+    b: 0.04
+    c: 40
+
+# For Discrete simulations, must have ALL cars represented
+cars:
+  - car0: # First car is the lead car. These must be set in case of a lane change. 
+    x0: 300
+    v0: 50
+    vdes: 20
+
+  - car1:
+    x0: 250
+    v0: 30
+    vdes: 50
+
+  - car2:
+    x0: 210
+    v0: 30
+    vdes: 45
+
+  - car3:
+    x0: 200
+    v0: 30
+    vdes: 50
+
+  - car4:
+    x0: 100
+    v0: 30
+    vdes: 50
+
+
+

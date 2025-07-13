@@ -7,6 +7,7 @@
 #include <list>
 /**
  * @class Lane Class. Represents a lane of cars. 
+ * @warning Leading car is at the END of the list;
  */
 class Lane
 {

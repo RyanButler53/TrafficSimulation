@@ -1,3 +1,13 @@
+/**
+ * @file strategy.cpp
+ * @author Ryan Butler
+ * @brief Implements the Car Following strategies Gipps and Intelligent
+ * @version 0.1
+ * @date 2025-07-13
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #include "strategy.hpp"
 
 #include <algorithm>
@@ -35,6 +45,6 @@ double Intelligent::update(double v, double vlead, double gap, double dt) const 
 
     // Compute Velocity
     double sDes = s0_ + std::max(0.0, v*dt + (v*dv)/(2*std::sqrt(2*a_*b_)));
-    double final_accel = a_ * (1 - std::pow(ratio, 4) - sDes/(gap * gap));
+    double final_accel = a_ * (1 - std::pow(ratio, 4) - std::pow(sDes/gap,2));
     return v + final_accel * dt;
 }

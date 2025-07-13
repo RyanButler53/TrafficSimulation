@@ -1,5 +1,19 @@
-
 /**
+ * @file strategy.hpp
+ * @author Ryan Butler (rmbutler@outlook.com)
+ * @brief Defines the interface for the Follow Strategy and 2 car following strategies
+ * @version 0.1
+ * @date 2025-07-13
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+
+
+
+ #pragma once
+
+ /**
  * @class FollowStrategy is a an Abstract Class for implementing a car following strategy
  * Strategies include:
  * Gipps Model
@@ -7,8 +21,6 @@
  * 
  * @note Car Following Strategy classes must implement update 
  */
-
- #pragma once
 struct FollowStrategy {
     
     FollowStrategy() = default;
