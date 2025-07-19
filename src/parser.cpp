@@ -7,15 +7,8 @@
 #include <ranges>
 #include <algorithm>
 
-DiscreteParser::DiscreteParser(std::filesystem::path path){
-    try {
-        cfg_ = YAML::LoadFile(path);
-    } catch(const std::exception& e) {
-        std::cout << "Error loading file: " << e.what() << std::endl; 
-    }
-}
 
-void DiscreteParser::parseGeneral() {
+void Parser::parseGeneral() {
     std::string logdir;
     try
     {
@@ -32,7 +25,7 @@ void DiscreteParser::parseGeneral() {
     logger_ = std::make_shared<FileLogger>(logdir);
 }
 
-void DiscreteParser::parseCarFactory(){
+void Parser::parseCarFactory(){
     std::string drivertype = cfg_["driverType"].as<std::string>();
     YAML::Node driverParams = cfg_["driverParams"];
 
@@ -51,12 +44,12 @@ void DiscreteParser::parseCarFactory(){
     }
 }
 
-std::shared_ptr<LeadStrategy> DiscreteParser::parseLeadStrategy(){
-    std::string leadtype = cfg_["leadType"].as<std::string>();
+std::shared_ptr<LeadStrategy> Parser::parseLeadStrategy(YAML::Node leadNode){
+    std::string leadtype = leadNode["leadType"].as<std::string>();
     if (leadtype == "function"){
         // looking for Sine, Constant, Piecewise
         // Do piecewise later. 
-        YAML::Node sine = cfg_["function"]["sine"];
+        YAML::Node sine = leadNode["function"]["sine"];
         double a = sine["a"].as<double>();
         double b = sine["b"].as<double>();
         double c = sine["c"].as<double>();
@@ -78,7 +71,7 @@ std::shared_ptr<LeadStrategy> DiscreteParser::parseLeadStrategy(){
 
 void DiscreteParser::fillLane(Lane& lane){
     YAML::Node carsNode = cfg_["cars"];
-    // Get all the cars in a list/vector. Sort by x coordinate. reverse. 
+    // Get all the cars in a list/vector. Sort by x coordinate in reverse. 
     std::vector<Car> cars;
     for (YAML::Node n : carsNode){
         double x0 = n["x0"].as<double>();
@@ -90,7 +83,8 @@ void DiscreteParser::fillLane(Lane& lane){
     std::ranges::sort(cars, [](const Car& c1, const Car& c2)->bool {return c1.getPosition() > c2.getPosition();});
     
     // Set the lead strategy 
-    std::shared_ptr<LeadStrategy> leadStrat = parseLeadStrategy();
+    YAML::Node leadCar = cfg_["leadCar"];
+    std::shared_ptr<LeadStrategy> leadStrat = parseLeadStrategy(leadCar);
     cars[0].setLeadStrategy(leadStrat);
     
     // Add to lane
@@ -99,8 +93,10 @@ void DiscreteParser::fillLane(Lane& lane){
     }
 }
 
+DiscreteParser::DiscreteParser(YAML::Node cfg):Parser(cfg){}
+
 // Put all the parsing together
-SimulatorInputs DiscreteParser::parse() {
+SimulatorInputs Parser::parse() {
 
     parseGeneral();
 

@@ -1,4 +1,6 @@
 ---
+# General Information
+type: discrete
 time: 30.0 # Total time to simulate
 timestep: 1.0 # dt
 driverType: "Gipps" # driver type
@@ -7,10 +9,10 @@ driverParams:
   b: -2.8955
   bmax: -3.505
 
+logdir: ../sims
+
 # cars
 leadType: "discrete" # Lead Car type: function, discrete, constant
-
-logdir: ../sims
 
 discrete:
   velocities:

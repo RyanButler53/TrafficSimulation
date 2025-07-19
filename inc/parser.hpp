@@ -22,33 +22,34 @@
 #include "simInputs.hpp"
 
 /**
- * @brief Parses the yaml input file for a discrete model (no continuously flowing cars in)
- * @note Discrete model means all car x0, v0 and vdes is described in the config
- * (Lanes too)
+ * @class Parser: A base class for Continuous and Discrete parsers. Continuous parsers 
+ * have to handle flow based parameters
+ * 
  */
-class DiscreteParser {
+class Parser {
+
+    protected:
     YAML::Node cfg_;
     std::shared_ptr<CarFactory> factory_;
     std::shared_ptr<CarLogger> logger_;
     double totaltime_;
     double dt_;
 
-    // Private helper methods to break up parsing
+
+    // Template Utility functions of parsing algorithm
 
     /**
      * @brief General stuff for all simulations
-     * 
+     * @details Log directory, Time, dt, seed
      */
     void parseGeneral();
     
     /**
      * @brief Parses the lead strategy
      * 
-     * @param leadStrat Node with the Lead Strategy data
      * @throw Throws an error if the strategy does not supply the right data. 
-     * @return std::shared_ptr<LeadStrategy> 
      */
-    std::shared_ptr<LeadStrategy> parseLeadStrategy();
+    std::shared_ptr<LeadStrategy> parseLeadStrategy(YAML::Node leadNode);
 
     /**
      * @brief Parses the Driver Factory. Can be either Gipps or Intelligent
@@ -59,18 +60,45 @@ class DiscreteParser {
 
 
     /**
-     * @brief Fills a lane with cars
+     * @brief Fills a lane with cars. Hook Method
      * 
      * @param lane Lane to populate with cars
      */
-    void  fillLane(Lane& lane);
+    virtual void  fillLane(Lane& lane){}
 
-    public: 
-    DiscreteParser(std::filesystem::path yamlpath);
+    public:
+    Parser(YAML::Node cfg):cfg_{cfg}{};
 
+    /**
+     * @brief Common algorithm to parse the inputs. 
+     * 
+     * @return SimulatorInputs 
+     */
     SimulatorInputs parse();
 };
 
+/**
+ * @brief Parses the yaml input file for a discrete model (no continuously flowing cars in)
+ * @note Discrete model means all car x0, v0 and vdes is described in the config
+ * (Lanes too)
+ */
+class DiscreteParser : public Parser{
+
+
+    /**
+     * @brief Fills a lane with cars for a discrete simulation
+     * 
+     * @param lane Lane to populate with cars
+     */
+    void fillLane(Lane& lane) override;
+
+    public: 
+    DiscreteParser(YAML::Node cfg);
+};
+
+class ContinuousParser : public Parser {
+
+};
 struct InvalidConfigError : public std::exception {
 
     std::string msg;
