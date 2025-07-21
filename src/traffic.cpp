@@ -10,6 +10,7 @@
  */
 // Main driver code to run a simulation 
 #include "parser.hpp"
+#include "parserFactory.hpp"
 #include "simulator.hpp"
 #include <iostream>
 
@@ -21,8 +22,9 @@ int main(int argc, char** argv){
     }
     
     std::string configfile(argv[1]);
-    DiscreteParser parser(configfile);
-    SimulatorInputs inputs = parser.parse();
+    ParserFactory parserFac(configfile);
+    std::shared_ptr<Parser> parser = parserFac.makeParser();
+    SimulatorInputs inputs = parser->parse();
 
     Simulator s(inputs);
 

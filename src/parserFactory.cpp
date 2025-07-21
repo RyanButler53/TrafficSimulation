@@ -10,11 +10,12 @@ ParserFactory::ParserFactory(std::filesystem::path cfgpath){
 
 std::unique_ptr<Parser> ParserFactory::makeParser(){
     std::string simtype = "";
-    try {
-        std::string simtype = cfg_["type"].as<std::string>();
-    } catch(const std::exception& e) {
-        std::cerr << "Simulation type must be defined " << '\n';
+    if (cfg_["type"]){
+        simtype = cfg_["type"].as<std::string>();
+    } else {
+        throw InvalidConfigError("type not found");
     }
+    
     
     if (simtype == "continuous"){
         return std::make_unique<ContinuousParser>(cfg_);

@@ -34,6 +34,8 @@ class Parser {
     std::shared_ptr<CarLogger> logger_;
     double totaltime_;
     double dt_;
+    uint64_t seed_;
+
 
 
     // Template Utility functions of parsing algorithm
@@ -58,13 +60,20 @@ class Parser {
      */
     void parseCarFactory();
 
+    /**
+     * @brief Parses the node for Flow Generation parameters
+     * 
+     * @param flowNode Node with flow generation
+     * @return FlowGenerator with zero flow. Override to parse flow. 
+     */
+    virtual FlowGenerator parseFlow(YAML::Node flowNode){return FlowGenerator();}
 
     /**
      * @brief Fills a lane with cars. Hook Method
      * 
      * @param lane Lane to populate with cars
      */
-    virtual void  fillLane(Lane& lane){}
+    virtual void  parseLane(Lane& lane){}
 
     public:
     Parser(YAML::Node cfg):cfg_{cfg}{};
@@ -82,7 +91,7 @@ class Parser {
  * @note Discrete model means all car x0, v0 and vdes is described in the config
  * (Lanes too)
  */
-class DiscreteParser : public Parser{
+class DiscreteParser : public Parser {
 
 
     /**
@@ -90,15 +99,30 @@ class DiscreteParser : public Parser{
      * 
      * @param lane Lane to populate with cars
      */
-    void fillLane(Lane& lane) override;
+    void parseLane(Lane& lane) override;
 
     public: 
-    DiscreteParser(YAML::Node cfg);
+    DiscreteParser(YAML::Node cfg):Parser(cfg){};
 };
 
 class ContinuousParser : public Parser {
 
+    public:
+
+    /**
+     * @brief Parses the Flow for either a lane or default. 
+     * 
+     * @param flowNode 
+     * @return FlowGenerator 
+     */
+    FlowGenerator parseFlow(YAML::Node flowNode) override;
+
+    void parseLane(Lane& lane) override;
+
+
+    ContinuousParser(YAML::Node cfg):Parser(cfg){}
 };
+
 struct InvalidConfigError : public std::exception {
 
     std::string msg;

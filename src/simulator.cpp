@@ -23,6 +23,10 @@ void Simulator::run(){
     while (t < totalTime_){
         lane_.updateLane(dt_);
         t += dt_;
+        
+        if (lane_.done()){
+            break;
+        }
     }
     logger_->write();
 }

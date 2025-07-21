@@ -22,18 +22,13 @@ TEST(FunctionalTest, YamlParse){
 TEST(DiscreteTest, YamlParse){
     YAML::Node cfg = YAML::LoadFile("../inputs/continuous.yml");
     // std::vector<int> velocities = cfg["discrete"].as<std::vector<int>>();
-    YAML::Node laneNode = cfg["lanes"];
-
-    std::vector<double> velocities;
-    std::cout << laneNode.size() << std::endl;
-
+    YAML::Node laneNode = cfg["flow"];
 
     for (YAML::const_iterator it=laneNode.begin();it!=laneNode.end();++it) {
         YAML::Node node = it->as<YAML::Node>();
         std::cout << node["leadType"].as<std::string>() << " " << node["x0"]<<std::endl;;
     }
-      
-
+    
 }
 
 
