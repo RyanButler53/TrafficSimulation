@@ -2,8 +2,10 @@
 
 Car factory: Creates cars with different distributions of aggressiveness, braking and reaction times. 
 
-3 things to do : 
-Docker container (no need for yaml! Use FetchContent!)
-Functions (in input files) (need piecewise)
+Roadmap:
+Piecewise Functions
 Multiple lanes
+Valuable Metrics (pobably traffic flow at a specific X at a given time)
+Continuous Traffic Flow 
+Car Factory can be randomized
 

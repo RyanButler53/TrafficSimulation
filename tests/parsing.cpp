@@ -8,30 +8,27 @@
 TEST(FunctionalTest, YamlParse){
     
     YAML::Node cfg = YAML::LoadFile("../inputs/input.yml");
-    int numCars = cfg["numCars"].as<int>();
     double time = cfg["time"].as<double>();
     double timestep = cfg["timestep"].as<double>();
     std::string leadType = cfg["leadType"].as<std::string>();
 
-    ASSERT_EQ(numCars, 5);
-    ASSERT_EQ(time, 30);
+    ASSERT_EQ(time, 1500);
     ASSERT_EQ(timestep, 1);
+    ASSERT_EQ(leadType, "function");
     
     
 }
 
 TEST(DiscreteTest, YamlParse){
-    YAML::Node cfg = YAML::LoadFile("../inputs/test.yml");
+    YAML::Node cfg = YAML::LoadFile("../inputs/continuous.yml");
     // std::vector<int> velocities = cfg["discrete"].as<std::vector<int>>();
-    YAML::Node discrete = cfg["discrete"];
+    YAML::Node laneNode = cfg["flow"];
 
-    std::vector<double> velocities;
-    
-    std::transform(discrete.begin(), discrete.end(), std::back_inserter(velocities), [](const YAML::Node& n){return n.as<double>();});
-    for (auto x : discrete){
-        std::cout << x << " ";
+    for (YAML::const_iterator it=laneNode.begin();it!=laneNode.end();++it) {
+        YAML::Node node = it->as<YAML::Node>();
+        std::cout << node["leadType"].as<std::string>() << " " << node["x0"]<<std::endl;;
     }
-    std::cout << std::endl;
+    
 }
 
 

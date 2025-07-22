@@ -1,0 +1,40 @@
+---
+# General Information
+type: "continuous" # differentiates between adding cars upfront or online
+time: 200
+timestep: 1
+seed: 70
+logdir: "./cont"
+
+# Driver Model
+driverType: "Gipps" # driver type
+driverParams:
+  a: 1.981
+  b: -2.8955
+  bmax: -3.505
+  a_stdev: 0.1
+  b_stdev: 0.1
+  bmax_stdev: 0.1
+
+
+# Default flow if lanes don't specify a flow 
+flow:
+  rate: 800 # flow rate (veh/hr)
+  v0: 30 # says all cars are starting from a standstill (stoplight case)
+  vdes: 35 # all cars want to go 35 m/s
+
+# Later make this into a list for lanes
+leadCar:
+  leadType: "function"
+  function:
+    sine: # 3 arguments a sin(bx) + c 
+      a: 5.0
+      b: 0.04
+      c: 40
+  v0: 40
+  vdes: 45
+  
+# Start and end of lane. 
+end: 1500
+
+

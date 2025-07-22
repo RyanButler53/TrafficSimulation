@@ -9,12 +9,14 @@ FetchContent_MakeAvailable(yaml-cpp)
 
 set (SHARED_SRC
     car.cpp
+    flowGenerator.cpp
     lane.cpp
     logger.cpp
     strategy.cpp)
 
 set (SETUP_SRC
     carFactory.cpp
+    parserFactory.cpp
     parser.cpp
     )
 
