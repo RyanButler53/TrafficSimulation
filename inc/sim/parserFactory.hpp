@@ -18,7 +18,7 @@
 class ParserFactory{
 
     YAML::Node cfg_;
-
+    std::filesystem::path cfgpath_;
     public:
 
     ParserFactory(std::filesystem::path cfgpath);

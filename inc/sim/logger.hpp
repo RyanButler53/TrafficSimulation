@@ -2,7 +2,7 @@
  * @file logger.hpp
  * @author Ryan Butler
  * @brief Header for logger and other logging related classes. 
- * @version 0.1
+ * @version 0.2
  * @date 2025-06-22
  * 
  * @copyright Copyright (c) 2025
@@ -16,6 +16,7 @@
 #include <iterator>
 #include <ranges>
 #include <filesystem>
+#include <exception>
 
 /**
  * @brief Struct containing the minimum data about each car at a given timestep
@@ -89,19 +90,33 @@ class CarLogger
 
 class FileLogger : public CarLogger {
 
-    std::vector<std::filesystem::path> filepaths;
     std::filesystem::path basepath_;
     public: 
     FileLogger(std::string basepath);
     ~FileLogger() = default;
 
-    void write();
+    void write() override;
 
 };
 
-// Extentible for sending logs to the database. 
-class DatabaseLogger : public CarLogger {
+class DBLogger : public CarLogger {
 
+    std::string tablePrefix_; // jobname + timestamp
+    std::string configFile_; // important for traceability
+    std::string jobname_;
+    int ncars_; // number of corresponding tables
+
+    public: 
+    DBLogger(std::string jobname, std::string config);
+    ~DBLogger() = default;
+
+    // Commits to the database
+    void write() override;
 };
 
+struct DatabaseError : public std::exception{
+    std::string msg;
 
+    DatabaseError(std::string message) throw():msg{message}{};
+    virtual const char* what() throw() {return msg.c_str();};
+};

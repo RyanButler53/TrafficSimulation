@@ -1,17 +1,23 @@
 /**
  * @file logger.cpp
  * @author Ryan Butler (rmbutler@outlook.com)
- * @brief  Implements the Car Logger and File Logger classes
- * @note Will be expanded to provide interface for a database
+ * @brief  Implements the Car Logger Base class, File Logger and Database Logger
+ * @note Relies on libpqxx and libpostgres
  * @version 0.1
  * @date 2025-07-13
  * 
  * @copyright Copyright (c) 2025
  * 
  */
-#include "logger.hpp"
+#include "sim/logger.hpp"
 #include <numeric>
 #include <fstream>
+#include <chrono>
+#include <format>
+#include <iostream>
+
+// Database
+#include <pqxx/pqxx>
 
 namespace fs = std::filesystem;
 
@@ -95,3 +101,41 @@ void FileLogger::write(){
     clearLogs();
 }
 
+DBLogger::DBLogger(std::string jobname, std::string config):
+    jobname_{jobname}, configFile_{std::filesystem::absolute(config)}{
+    auto now = std::chrono::system_clock::now();
+    uint64_t t = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+    std::string timepostfix = std::to_string(t);
+    tablePrefix_ = jobname + timepostfix;
+    
+    // Initialize Database connection: 
+    pqxx::connection connect("host=localhost port=5432 dbname=trafficDB");
+    try {
+        std::cout << "connnecting" << std::endl;
+        connect = pqxx::connection("host=localhost port=5432 dbname=trafficDB");
+    } catch(const std::exception& e) {
+        std::cout << "DB ERROR" << std::endl;
+       throw DatabaseError(e.what());
+    }
+
+    // Create table
+    pqxx::work tx(connect);
+    tx.exec("CREATE TABLE IF NOT EXISTS TrafficJobs (jobID int GENERATED ALWAYS AS IDENTITY, configfile text, jobname text, carTablePrefix text)");
+    // tx.commit();
+
+    // Add row
+    std::string row = std::format("INSERT INTO TrafficJobs (configfile, jobname, carTablePrefix)\nVALUES ('{}', '{}', '{}')", configFile_, jobname_, tablePrefix_);
+    tx.exec(row);
+    tx.commit();
+
+}
+
+void DBLogger::write() {
+
+    std::vector<std::vector<CarLog>> byCar = getPartition();
+    size_t n = byCar.size();
+    std::cout << "Writing to separate database " << std::endl;
+    for (std::vector<CarLog>& car : byCar){
+        //
+    }
+}

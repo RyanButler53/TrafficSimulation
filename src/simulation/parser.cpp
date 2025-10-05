@@ -1,5 +1,5 @@
-#include "parser.hpp"
-#include "simInputs.hpp"
+#include "sim/parser.hpp"
+#include "sim/simInputs.hpp"
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -9,25 +9,34 @@
 
 
 void Parser::parseGeneral() {
-    std::string logdir;
-    try
-    {
+
+    try {
         totaltime_ = cfg_["time"].as<double>();
         dt_ = cfg_["timestep"].as<double>();
-        logdir = cfg_["logdir"].as<std::string>();
         if (cfg_["seed"]){
             seed_ = cfg_["seed"].as<uint64_t>();
         } else {
             seed_ = 0;
         }
-    }
-    catch(const std::exception& e)
-    {
+    } catch(const std::exception& e) {
         std::cerr << e.what() << '\n';
     }
     
-    // Just File Logger for now, may break into separate method for DB
-    logger_ = std::make_shared<FileLogger>(logdir);
+    try {
+        std::string logtype, jobname, logdir;
+        logtype = cfg_["logtype"].as<std::string>();
+        jobname = cfg_["jobname"].as<std::string>();
+        if (logtype == "db"){
+            logger_ = std::make_shared<DBLogger>(jobname, configPath_);
+        } else {
+            logger_ = std::make_shared<FileLogger>(cfg_[logdir].as<std::string>());
+        }
+    } catch(const std::exception& e) {
+        std::cerr << e.what() << '\n';
+    }
+    if (!logger_){
+        throw std::invalid_argument("Error constructing the logger");
+    }
 }
 
 void Parser::parseCarFactory(){

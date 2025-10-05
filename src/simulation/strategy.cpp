@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2025
  * 
  */
-#include "strategy.hpp"
+#include "sim/strategy.hpp"
 
 #include <algorithm>
 #include <cmath>

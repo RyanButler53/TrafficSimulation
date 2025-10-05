@@ -11,7 +11,7 @@
  */
 #include <iostream>
 #include <vector>
-#include "simulator.hpp"
+#include "sim/simulator.hpp"
 
 
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
@@ -28,5 +28,6 @@ void Simulator::run(){
             break;
         }
     }
+    // Fits all logs in memory.
     logger_->write();
 }

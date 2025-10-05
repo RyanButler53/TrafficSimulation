@@ -1,6 +1,6 @@
-#include "parserFactory.hpp"
+#include "sim/parserFactory.hpp"
 
-ParserFactory::ParserFactory(std::filesystem::path cfgpath){
+ParserFactory::ParserFactory(std::filesystem::path cfgpath):cfgpath_{cfgpath}{
     try {
         cfg_ = YAML::LoadFile(cfgpath);
     } catch(const std::exception& e) {
@@ -18,9 +18,9 @@ std::unique_ptr<Parser> ParserFactory::makeParser(){
     
     
     if (simtype == "continuous"){
-        return std::make_unique<ContinuousParser>(cfg_);
+        return std::make_unique<ContinuousParser>(cfg_, cfgpath_);
     } else if (simtype == "discrete"){
-        return std::make_unique<DiscreteParser>(cfg_);
+        return std::make_unique<DiscreteParser>(cfg_, cfgpath_);
     } else {
         throw InvalidConfigError("\"type\" must me either continuous or discrete");
     }

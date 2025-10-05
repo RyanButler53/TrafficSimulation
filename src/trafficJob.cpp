@@ -9,9 +9,9 @@
  * 
  */
 // Main driver code to run a simulation 
-#include "parser.hpp"
-#include "parserFactory.hpp"
-#include "simulator.hpp"
+#include "sim/parser.hpp"
+#include "sim/parserFactory.hpp"
+#include "sim/simulator.hpp"
 #include <iostream>
 
 int main(int argc, char** argv){
@@ -25,8 +25,6 @@ int main(int argc, char** argv){
     ParserFactory parserFac(configfile);
     std::shared_ptr<Parser> parser = parserFac.makeParser();
     SimulatorInputs inputs = parser->parse();
-
     Simulator s(inputs);
-
     s.run();
 }

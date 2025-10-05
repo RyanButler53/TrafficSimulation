@@ -30,12 +30,12 @@ class Parser {
 
     protected:
     YAML::Node cfg_;
+    std::filesystem::path configPath_; // Required for reproducing simulation runs
     std::shared_ptr<CarFactory> factory_;
     std::shared_ptr<CarLogger> logger_;
     double totaltime_;
     double dt_;
     uint64_t seed_;
-
 
 
     // Template Utility functions of parsing algorithm
@@ -76,7 +76,7 @@ class Parser {
     virtual void  parseLane(Lane& lane){}
 
     public:
-    Parser(YAML::Node cfg):cfg_{cfg}{};
+    Parser(YAML::Node cfg, std::filesystem::path cfgpath):cfg_{cfg},configPath_{cfgpath}{};
 
     /**
      * @brief Common algorithm to parse the inputs. 
@@ -102,7 +102,7 @@ class DiscreteParser : public Parser {
     void parseLane(Lane& lane) override;
 
     public: 
-    DiscreteParser(YAML::Node cfg):Parser(cfg){};
+    DiscreteParser(YAML::Node cfg, std::filesystem::path configPath):Parser(cfg, configPath){};
 };
 
 class ContinuousParser : public Parser {
@@ -120,7 +120,7 @@ class ContinuousParser : public Parser {
     void parseLane(Lane& lane) override;
 
 
-    ContinuousParser(YAML::Node cfg):Parser(cfg){}
+    ContinuousParser(YAML::Node cfg, std::filesystem::path configPath):Parser(cfg, configPath){}
 };
 
 struct InvalidConfigError : public std::exception {

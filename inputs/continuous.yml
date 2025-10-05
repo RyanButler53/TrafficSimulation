@@ -1,10 +1,11 @@
 ---
 # General Information
+jobname: cont
 type: "continuous" # differentiates between adding cars upfront or online
 time: 200
 timestep: 1
 seed: 70
-logdir: "./cont"
+logtype: "db"
 
 # Driver Model
 driverType: "Gipps" # driver type

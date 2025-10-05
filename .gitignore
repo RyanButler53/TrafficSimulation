@@ -1,3 +1,7 @@
 build/
 .vscode/
 *.csv
+
+# database and log
+trafficDB/
+logfile.log

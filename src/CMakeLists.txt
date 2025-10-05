@@ -1,31 +1,15 @@
-include(FetchContent)
+add_subdirectory(simulation)
+# add_subdirectory(api)
 
-FetchContent_Declare(
-  yaml-cpp
-  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-  GIT_TAG master
-)
-FetchContent_MakeAvailable(yaml-cpp)
 
-set (SHARED_SRC
-    car.cpp
-    flowGenerator.cpp
-    lane.cpp
-    logger.cpp
-    strategy.cpp)
+# driver executable
+add_executable(traffic trafficJob.cpp)
+target_link_libraries(traffic PUBLIC setup simulation shared)
 
-set (SETUP_SRC
-    carFactory.cpp
-    parserFactory.cpp
-    parser.cpp
-    )
+find_package(oatpp 1.3.0 REQUIRED)
+message(STATUS "Found Oatpp: ${oatpp_DIR}")
 
-set (SIMULATION_SRC
-    simulator.cpp)
-
-add_library(shared ${SHARED_SRC})
-add_library(setup ${SETUP_SRC})
-add_library(simulation ${SIMULATION_SRC})
-
-target_link_libraries(setup yaml-cpp::yaml-cpp)
-
+# Api executable
+# add_executable(trafficApi trafficApi.cpp)
+# target_include_directories(trafficApi PUBLIC inc)
+# target_link_libraries(trafficApi PUBLIC api)
