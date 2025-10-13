@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <format>
 
 // Gipps Driver Model
 
@@ -32,6 +33,8 @@ double Gipps::update(double v, double vlead, double gap, double dt) const {
     return std::min(free_road, breaking);
 }
 
+std::string Gipps::str() const {return std::format("Gipps: a = {}, b = {}, max b= {}, des v = {}", a_, b_, bMax_, vDes_);}
+
 // Intelligent Driver Model
 
 Intelligent::Intelligent(double accel, double braking, double s0, double vDes):
@@ -48,3 +51,5 @@ double Intelligent::update(double v, double vlead, double gap, double dt) const 
     double final_accel = a_ * (1 - std::pow(ratio, 4) - std::pow(sDes/gap,2));
     return v + final_accel * dt;
 }
+
+std::string Intelligent::str() const {return std::format("Intelligent: a = {}, b = {}, des gap = {}, des v = {}", a_, b_, s0_, vDes_);}

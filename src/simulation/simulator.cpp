@@ -29,5 +29,5 @@ void Simulator::run(){
         }
     }
     // Fits all logs in memory.
-    logger_->write();
+    logger_->writeData();
 }

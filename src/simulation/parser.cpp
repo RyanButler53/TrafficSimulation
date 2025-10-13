@@ -67,8 +67,7 @@ std::shared_ptr<LeadStrategy> Parser::parseLeadStrategy(YAML::Node leadNode){
         double a = sine["a"].as<double>();
         double b = sine["b"].as<double>();
         double c = sine["c"].as<double>();
-        std::function<double(double)> fn = [=](double t)->double {return a * std::sin(b*t) + c;};
-        return std::make_shared<FunctionLead>(fn);
+        return std::make_shared<FunctionLead>(a,b,c);
         
     } else if (leadtype == "discrete") {
         std::vector<double> velocities;
