@@ -12,12 +12,15 @@
 
 #include <vector>
 #include <functional>
+#include <string>
+#include <format>
 
 struct LeadStrategy {
     LeadStrategy() = default;
     virtual ~LeadStrategy(){}
 
     virtual double nextVelocity(double dt) = 0;
+    virtual std::string str() const = 0;
 };
 
 /**
@@ -33,6 +36,8 @@ class ConstantLead : public LeadStrategy {
     ~ConstantLead() = default;
 
     double nextVelocity(double dt) override {return v_;}
+
+    std::string str() const override{ return std::format("Constant: v = {}", v_);}
 };
 
 /**
@@ -48,7 +53,7 @@ class DiscreteLead : public LeadStrategy {
     DiscreteLead(std::vector<double> vs):velocities_{vs},next_{velocities_.begin()}{}
     ~DiscreteLead() = default;
 
-    double nextVelocity(double dt){
+    double nextVelocity(double dt) override {
         double v = *next_;
         ++next_;
         if (next_ == velocities_.end()){
@@ -56,6 +61,7 @@ class DiscreteLead : public LeadStrategy {
         }
         return v;
     }
+    std::string str() const override{ return std::format("Discrete: Looping through {} velocities", velocities_.size());}
 
 };
 
@@ -67,15 +73,19 @@ class DiscreteLead : public LeadStrategy {
 class FunctionLead : public LeadStrategy {
     std::function<double(double)> func_;
     double t_;
-
+    std::string name_;
     public:
-    FunctionLead(std::function<double(double)> f):func_{f}, t_{0}{}
+    FunctionLead(double a, double b, double c):func_{[=](double t)->double {return a * std::sin(b*t) + c;}}, 
+                t_{0},name_{std::format("Function: {}sin({}t + {})", a, b, c)}{}
+    FunctionLead(std::function<double(double)> f):func_{f}, t_{0},name_{"Function f(t)"}{}
 
     ~FunctionLead() = default;
 
-    double nextVelocity(double dt){
+    double nextVelocity(double dt) override {
         double v = func_(t_);
         t_ += dt;
         return v;
     }
+    std::string str() const override{ return name_;}
+
 };

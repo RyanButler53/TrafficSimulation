@@ -9,7 +9,7 @@
  * 
  */
 
-
+#include <string>
 
  #pragma once
 
@@ -38,6 +38,11 @@ struct FollowStrategy {
      * @warning GAP INCLUDES THE LEAD VEHICLE'S LENGTH
      */
     virtual double update(double v, double vlead, double gap, double dt) const = 0;
+
+    /**
+     * @brief Returns the string for database logging
+     */
+    virtual std::string str() const = 0;
     
 };
 
@@ -68,6 +73,7 @@ class Gipps : public FollowStrategy{
      */
     double update(double v, double vlead, double gap, double dt) const override;
 
+    std::string str() const override;
 };
 
 class Intelligent : public FollowStrategy {
@@ -90,5 +96,7 @@ class Intelligent : public FollowStrategy {
     ~Intelligent() = default;
 
     double update(double v, double vlead, double gap, double dt) const override;
+
+    std::string str() const override;
 
 };

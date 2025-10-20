@@ -13,24 +13,22 @@
 #include <memory>
 
 
-Car::Car(double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
-        id_{Car::getId()}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, followStrategy_{follow}{
+Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
+        id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, followStrategy_{follow}{
         leadStrategy_ = std::make_shared<ConstantLead>(v0);
         logger->addCar(id_, leadStrategy_->str(), followStrategy_->str());
         logger->log(id_, x0, v0, t0);
 
     }
 
-Car::Car(double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 
+Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 
          std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead):
-        id_{Car::getId()},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, 
+        id_{id},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, 
         leadStrategy_{lead}, followStrategy_{follow}{
             logger->addCar(id_, leadStrategy_->str(), followStrategy_->str());
             logger->log(id_, x0, v0, t0);
         }
 
-// Initialize Car ID Static variable
-size_t Car::carId_ = 0;
 
 void Car::step(double dt){
     vel_ = leadStrategy_->nextVelocity(dt);

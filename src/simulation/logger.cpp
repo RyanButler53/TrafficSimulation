@@ -121,8 +121,6 @@ DBLogger::DBLogger(std::string jobname, std::string config):
     tx.exec("CREATE TABLE IF NOT EXISTS carData (carID int, jobID int, follow text, lead text, FOREIGN KEY (jobID) REFERENCES trafficjobs(jobID) , PRIMARY KEY (carID, jobID))");
     tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
 
-
-
     // Add row for the job
 
     std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname)\nVALUES ('{}', '{}') RETURNING jobID", configFile_, jobname_);
@@ -135,9 +133,6 @@ DBLogger::DBLogger(std::string jobname, std::string config):
 
 }
 
-// CREATE TABLE trafficJobs ( jobID int GENERATED ALWAYS AS IDENTITY PRIMARY KEY, configfile text, jobname text );
-// CREATE TABLE carData (carID int, jobID int, follow text, lead text, FOREIGN KEY (jobID) REFERENCES trafficjobs(jobID) , PRIMARY KEY (carID, jobID));
-// CREATE TABLE snapshotData (carID int, jobID int, x float, v float, t float, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID));
  void DBLogger::writeData() {
 
     std::vector<std::vector<CarSnapshot>> byCar = getPartition();

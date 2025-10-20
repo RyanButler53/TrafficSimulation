@@ -22,26 +22,39 @@
  * @brief Struct containing the minimum data about each car at a given timestep
  * 
  */
-struct CarLog {
+struct CarSnapshot {
     size_t id;
     double x;
     double v;
     double t;
 };
 
+/**
+ * @brief Struct containing data about a specific car
+ * 
+ */
+struct CarData {
+    std::string leadStrategy;
+    std::string followStrategy;
+    size_t id;
+};
+
 class CarLogger 
 {
 
     /// @brief Uncommited logs. Unwritten to file or unwritten to database
-    std::vector<CarLog> logs_;
+    std::vector<CarSnapshot> logs_;
 
     /// @brief Uncommitted logs split up by car id. 
-    std::vector<std::vector<CarLog>> partitions_;
+    std::vector<std::vector<CarSnapshot>> partitions_;
 
     protected:
 
     /// @brief Keeps track if partitions is current
     bool cached = false;
+
+    /// @brief Uncommitted newly made cars (Added in car constructor)
+    std::vector<CarData> cars_;
 
     void clearLogs();
 
@@ -65,15 +78,22 @@ class CarLogger
      * for logging that doesn't need to write to files at all
      * 
      */
-    virtual void write(){}; 
+    virtual void writeData(){}; 
 
+    /**
+     * @brief Adds information about a specific car. 
+     * 
+     */
+    virtual void addCar(size_t id, std::string lead, std::string follow);
+
+    protected:
     /**
      * @brief Utility for accessing the logs of a specific car. Is expensive unless partition() has been called
      * 
      * @param id Car ID to get logs from
      * @return std::vector<CarLog> vector of logs
      */
-    std::vector<CarLog> getCar(size_t id);
+    std::vector<CarSnapshot> getCar(size_t id);
 
     
     /**
@@ -83,8 +103,7 @@ class CarLogger
      */
     void partition(size_t n = 0);
 
-    std::vector<std::vector<CarLog>>& getPartition();
-
+    std::vector<std::vector<CarSnapshot>>& getPartition();
 
 };
 
@@ -95,23 +114,22 @@ class FileLogger : public CarLogger {
     FileLogger(std::string basepath);
     ~FileLogger() = default;
 
-    void write() override;
+    void writeData() override;
 
 };
 
 class DBLogger : public CarLogger {
 
-    std::string tablePrefix_; // jobname + timestamp
     std::string configFile_; // important for traceability
     std::string jobname_;
-    int ncars_; // number of corresponding tables
+    int jobid_;
 
     public: 
     DBLogger(std::string jobname, std::string config);
     ~DBLogger() = default;
 
     // Commits to the database
-    void write() override;
+    void writeData() override;
 };
 
 struct DatabaseError : public std::exception{

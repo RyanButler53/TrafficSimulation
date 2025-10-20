@@ -43,9 +43,6 @@ class Car {
 
     /// @brief Logger. Could log to files and evantually a DB
     std::shared_ptr<CarLogger> logger_;
-
-    /// @brief Static: Car ID. Every time the car is created, use this
-    static size_t carId_; 
     
     // Private Methods
 
@@ -59,9 +56,9 @@ class Car {
     public: 
 
     // Constructors
-    Car(double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 
+    Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 
         std::shared_ptr<FollowStrategy> follow);
-    Car(double x0, double v0, double t0, std::shared_ptr<CarLogger>logger, 
+    Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger>logger, 
         std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead);
 
     // Getters:
@@ -88,9 +85,6 @@ class Car {
      * @param dt Timestep. 
      */
     void step(const Car& lead, double dt);
-
-
-    static size_t getId(){return carId_++;} 
 
     void log() const;
     void log(std::ostream& os) const;

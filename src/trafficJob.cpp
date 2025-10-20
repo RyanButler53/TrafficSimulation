@@ -34,4 +34,5 @@ int main(int argc, char** argv){
     SimulatorInputs inputs = parser->parse();
     Simulator s(inputs);
     s.run();
+    return 0;
 }

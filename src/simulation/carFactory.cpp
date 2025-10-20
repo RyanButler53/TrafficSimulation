@@ -14,7 +14,7 @@
 
 #include <memory>
 
-CarFactory::CarFactory(std::shared_ptr<CarLogger> logger):logger_{logger}{}
+CarFactory::CarFactory(std::shared_ptr<CarLogger> logger):logger_{logger}, carid_{0}{}
 
 GippsCarFactory::GippsCarFactory(double a, double b, double bmax, std::shared_ptr<CarLogger> logger):
     CarFactory(logger), a_{a}, b_{b}, bmax_{bmax}{}
@@ -22,7 +22,7 @@ GippsCarFactory::GippsCarFactory(double a, double b, double bmax, std::shared_pt
 
 Car GippsCarFactory::makeCar(double x0, double v0, double vdes, double t0) const {
     auto  follow = std::make_shared<Gipps>(a_, b_, bmax_, vdes);
-    return Car(x0, v0, t0, logger_, follow);
+    return Car(carid_++, x0, v0, t0, logger_, follow);
 }
 
 IDMCarFactory::IDMCarFactory(double a, double b, double s0, std::shared_ptr<CarLogger> logger):
@@ -30,6 +30,6 @@ IDMCarFactory::IDMCarFactory(double a, double b, double s0, std::shared_ptr<CarL
 
 Car IDMCarFactory::makeCar(double x0, double v0, double vdes, double t0) const {
     auto  follow = std::make_shared<Intelligent>(a_, b_, s0_, vdes);
-    return Car(x0, v0, t0, logger_, follow);
+    return Car(carid_++, x0, v0, t0, logger_, follow);
 }
     
