@@ -1,0 +1,1 @@
+pg_ctl -D /Users/ryan/projects/TrafficSimulation/trafficDB -l logfile.log start

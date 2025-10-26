@@ -83,7 +83,7 @@ FileLogger::FileLogger(std::string basepath):basepath_{basepath}{
     if (fs::exists(basepath_)){
         fs::remove_all(basepath);
     }
-    fs::create_directory(basepath_);
+    fs::create_directories(basepath_);
 }
 
 void FileLogger::writeData(){
@@ -109,11 +109,15 @@ void FileLogger::writeData(){
 
 // DATABASE LOGGER
 
-DBLogger::DBLogger(std::string jobname, std::string config):
+DBLoggerBase::DBLoggerBase(std::string jobname, std::string config):
     jobname_{jobname}, configFile_{std::filesystem::absolute(config)}{
+}
+
+void DBLoggerBase::init() {
 
     // Initialize Database connection: 
-    pqxx::connection connect("host=localhost port=5432 dbname=trafficDB");
+    std::string connStr = getConnectionString();
+    pqxx::connection connect(connStr);
 
     // Create 3 tables: Traffic Jobs Main Table, Car Data Table (including strategies), Main data table (with car x,v,t values)
     pqxx::work tx(connect);
@@ -122,23 +126,19 @@ DBLogger::DBLogger(std::string jobname, std::string config):
     tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
 
     // Add row for the job
-
     std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname)\nVALUES ('{}', '{}') RETURNING jobID", configFile_, jobname_);
     pqxx::result result = tx.exec(row);
     jobid_ = result.one_field().as<int>();
-    std::cout << "Creted logger for job " << jobid_ << std::endl;
     tx.commit();
-
-    std::cout << "commited to the DB" << std::endl;
-
 }
 
- void DBLogger::writeData() {
+ void DBLoggerBase::writeData() {
 
     std::vector<std::vector<CarSnapshot>> byCar = getPartition();
     size_t n = byCar.size();
-    std::cout << "Writing to separate database " << std::endl;
-    pqxx::connection connect("host=localhost port=5432 dbname=trafficDB");
+
+    std::string connStr = getConnectionString();
+    pqxx::connection connect(connStr);
 
     // Add rows for all the new cars seen. 
     pqxx::work tx(connect);

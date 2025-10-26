@@ -49,7 +49,7 @@ std::vector<JobData> DBReader::queryJobs(){
 }
 
 CarMetadata DBReader::queryCars(std::string jobname, int carid){
-    std::string querystr = std::format("SELECT follow, lead FROM CarData WHERE (jobname = {} AND carid = {}", jobname, carid);
+    std::string querystr = std::format("SELECT follow, lead FROM CarData WHERE (jobname = {} AND carid = {})", jobname, carid);
     pqxx::work tx{*connect_};
     pqxx::result result = tx.exec(querystr);
     if (result.empty()) {
@@ -71,7 +71,7 @@ std::vector<CarMetadata> DBReader::queryCars(std::string jobname){
 }
 
 RawData DBReader::queryData(std::string jobname, int carid){
-    std::string querystr = std::format("SELECT x, v, t FROM snapshotData WHERE (jobname = {} AND carid = {}", jobname, carid);
+    std::string querystr = std::format("SELECT x, v, t FROM snapshotData WHERE (jobname = {} AND carid = {})", jobname, carid);
     pqxx::work tx{*connect_};
     pqxx::result result = tx.exec(querystr);
     if (result.empty()) {

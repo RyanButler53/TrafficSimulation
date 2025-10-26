@@ -12,6 +12,8 @@
 #include <iostream>
 #include <vector>
 #include "sim/simulator.hpp"
+#include "sim/parser.hpp"
+#include "sim/parserFactory.hpp"
 
 
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
@@ -30,4 +32,20 @@ void Simulator::run(){
     }
     // Fits all logs in memory.
     logger_->writeData();
+}
+
+int Traffic::Simulate(std::string configfile){
+    ParserFactory parserFac(configfile);
+    std::shared_ptr<Parser> parser;
+    try {
+       parser = parserFac.makeParser();
+    } catch(const std::exception& e) {
+        std::cerr << e.what() << '\n';
+        return 1;
+    }
+    
+    SimulatorInputs inputs = parser->parse();
+    Simulator s(inputs);
+    s.run();
+    return 0;
 }

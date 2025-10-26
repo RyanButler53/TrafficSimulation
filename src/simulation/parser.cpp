@@ -28,14 +28,19 @@ void Parser::parseGeneral() {
         jobname = cfg_["jobname"].as<std::string>();
         if (logtype == "db"){
             logger_ = std::make_shared<DBLogger>(jobname, configPath_);
+        } else if (logtype == "test"){
+            logger_ = std::make_shared<DBLoggerTest>(jobname, configPath_);
         } else {
-            logger_ = std::make_shared<FileLogger>(cfg_[logdir].as<std::string>());
+            logdir = cfg_["logdir"].as<std::string>();
+            logger_ = std::make_shared<FileLogger>(logdir);
         }
     } catch(const std::exception& e) {
         std::cerr << e.what() << '\n';
     }
     if (!logger_){
         throw std::invalid_argument("Error constructing the logger");
+    }else {
+        logger_->init();
     }
 }
 

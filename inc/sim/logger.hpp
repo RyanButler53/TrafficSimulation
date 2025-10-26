@@ -2,7 +2,7 @@
  * @file logger.hpp
  * @author Ryan Butler
  * @brief Header for logger and other logging related classes. 
- * @version 0.2
+ * @version 0.3
  * @date 2025-06-22
  * 
  * @copyright Copyright (c) 2025
@@ -86,6 +86,12 @@ class CarLogger
      */
     virtual void addCar(size_t id, std::string lead, std::string follow);
 
+    /**
+     * @brief Initialize the logger. Called after constructor to allow virtual methods.
+     * 
+     */
+    virtual void init(){};
+
     protected:
     /**
      * @brief Utility for accessing the logs of a specific car. Is expensive unless partition() has been called
@@ -118,19 +124,44 @@ class FileLogger : public CarLogger {
 
 };
 
-class DBLogger : public CarLogger {
+
+class DBLoggerBase : public CarLogger {
 
     std::string configFile_; // important for traceability
     std::string jobname_;
     int jobid_;
 
     public: 
-    DBLogger(std::string jobname, std::string config);
-    ~DBLogger() = default;
+    DBLoggerBase(std::string jobname, std::string config);
+    virtual ~DBLoggerBase(){};
+
+    void init() override;
+
+    virtual std::string getConnectionString() const = 0;
+
 
     // Commits to the database
     void writeData() override;
 };
+
+class DBLogger : public DBLoggerBase {
+
+    using DBLoggerBase::DBLoggerBase;
+
+    virtual std::string getConnectionString() const override {
+        return "host=localhost port=5432 dbname=trafficDB";
+    }
+};
+
+class DBLoggerTest: public DBLoggerBase {
+
+    using DBLoggerBase::DBLoggerBase;
+
+    virtual std::string getConnectionString() const override {
+        return "host=localhost port=5432 dbname=trafficDBTest";
+    }
+};
+
 
 struct DatabaseError : public std::exception{
     std::string msg;

@@ -2,6 +2,10 @@ build/
 .vscode/
 *.csv
 
+# Cmake user presets
+CMakeUserPresets.json
+
 # database and log
 trafficDB/
+trafficDBTest/
 logfile.log

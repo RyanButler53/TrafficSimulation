@@ -29,6 +29,7 @@ add_library(shared ${SHARED_SRC})
 add_library(setup ${SETUP_SRC})
 add_library(simulation ${SIMULATION_SRC})
 
-target_link_libraries(setup yaml-cpp::yaml-cpp)
+target_link_libraries(setup PUBLIC yaml-cpp::yaml-cpp)
 target_link_libraries(shared PRIVATE libpqxx::pqxx)
+target_link_libraries(simulation PRIVATE setup shared)
 

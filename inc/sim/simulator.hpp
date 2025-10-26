@@ -2,7 +2,7 @@
  * @file simulator.hpp 
  * @author Ryan Butler (rmbutler@outlook.com)
  * @brief Defines the Simulator Class (Interface?)
- * @version 0.1
+ * @version 0.2
  * @date 2025-07-01
  * 
  * @copyright Copyright (c) 2025
@@ -29,5 +29,14 @@ public:
     void run();
 };
 
+namespace Traffic {
+
+    /**
+     * @brief Runs the full traffic simulation based off the config ifle
+     * 
+     * @param configfile config yaml passed to parser and simulator
+     */
+    int Simulate(std::string configfile);
+}
 
 

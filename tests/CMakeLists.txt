@@ -26,4 +26,14 @@ find_package(libpqxx CONFIG REQUIRED)
 add_executable(dumpdb dumpDB.cpp)
 target_link_libraries(dumpdb PRIVATE libpqxx::pqxx)
 
+find_package(OpenSSL)
 
+add_executable(regression regression.cpp)
+target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
+target_link_libraries(regression PRIVATE simulation 
+                                        jobManager
+                                        yaml-cpp::yaml-cpp 
+                                        libpqxx::pqxx 
+                                        $<IF:$<BOOL:OpenSSL_FOUND>,OpenSSL::Crypto,""> 
+                                        GTest::gtest 
+                                        GTest::gtest_main)

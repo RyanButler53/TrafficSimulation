@@ -4,7 +4,7 @@ add_subdirectory(api)
 
 # traffic driver executable
 add_executable(traffic trafficJob.cpp)
-target_link_libraries(traffic PUBLIC setup simulation shared)
+target_link_libraries(traffic PRIVATE simulation)
 
 find_package(oatpp 1.3.0 REQUIRED)
 

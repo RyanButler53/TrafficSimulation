@@ -1,0 +1,12 @@
+Combinations of components that can be combined into an integration test. 
+
+Regression Testing. 
+Submit one job that uses the file logger. Compare the hashes of the logs with the known hash
+Submit one job that uses the file logger. submit one that uses the Test db logger. 
+Compare those to see if they are the same. 
+
+Integration Testing: 
+Submit 1-2 jobs via the JobManager. 
+Mock the DB logger and make sure it has 2 calls to it. 
+
+Hash the File logging and check if it matches the known hash. 
