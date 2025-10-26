@@ -21,7 +21,7 @@
 #include <pqxx/pqxx>
 
 #ifdef WITH_OPEN_SSL
-    #include <openssl/sha.h>
+    #include <openssl/evp.h>
 #endif
 
 struct XVT{
@@ -134,16 +134,32 @@ protected:
     }
 
     std::string hashBytes(char* data, size_t size){
-        unsigned char hash[SHA256_DIGEST_LENGTH];
+        unsigned char hash[EVP_MAX_MD_SIZE];
+        unsigned int numHashedBytes;
+        EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
 
-        SHA256_CTX sha256;
-        SHA256_Init(&sha256);
-        SHA256_Update(&sha256, data, size);
-        SHA256_Final(hash, &sha256);
+        if (!EVP_DigestInit_ex2(mdctx, EVP_sha256(), NULL)){
+            EVP_MD_CTX_free(mdctx);
+            throw std::logic_error("Error initializing Hash function");
+        }
+
+        if(!EVP_DigestUpdate(mdctx, data, size)) {
+            EVP_MD_CTX_free(mdctx);
+            throw std::logic_error("Error updating Hash");
+        }
+        if (!EVP_DigestFinal_ex(mdctx, hash, &numHashedBytes)) {
+            printf("Message digest finalization failed.\n");
+            EVP_MD_CTX_free(mdctx);
+            throw std::logic_error("Hashing Error");
+        }
+
         std::stringstream ss;
-        for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        for(int i = 0; i < numHashedBytes; i++) {
             ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
         }
+
+        EVP_MD_CTX_free(mdctx);
+
         return ss.str();
     }
     #endif
