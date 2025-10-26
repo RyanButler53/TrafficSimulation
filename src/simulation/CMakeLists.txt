@@ -29,7 +29,20 @@ add_library(shared ${SHARED_SRC})
 add_library(setup ${SETUP_SRC})
 add_library(simulation ${SIMULATION_SRC})
 
+
+# Create pqxx Interface library wrapper to prevent duplicate linkage
+add_library(pqxx_import STATIC IMPORTED)
+find_library(pqxx_lib NAMES libpqxx-7.10.a PATHS ${libpqxx_DIR}/../../)
+get_target_property(pqxx_inc libpqxx::pqxx INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(pqxx_link_libs libpqxx::pqxx INTERFACE_LINK_LIBRARIES)
+
+set_target_properties(pqxx_import PROPERTIES IMPORTED_LOCATION ${pqxx_lib}
+                                              INTERFACE_INCLUDE_DIRECTORIES ${pqxx_inc}
+                                              INTERFACE_LINK_LIBRARIES ${pqxx_link_libs})
+add_library(pqxx_wrapper INTERFACE)
+target_link_libraries(pqxx_wrapper INTERFACE pqxx_import)
+
 target_link_libraries(setup PUBLIC yaml-cpp::yaml-cpp)
-target_link_libraries(shared PRIVATE libpqxx::pqxx)
-target_link_libraries(simulation PRIVATE setup shared)
+target_link_libraries(shared PUBLIC pqxx_wrapper)
+target_link_libraries(simulation PUBLIC setup shared)
 

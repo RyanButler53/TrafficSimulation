@@ -30,10 +30,10 @@ find_package(OpenSSL)
 
 add_executable(regression regression.cpp)
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
-target_link_libraries(regression PRIVATE simulation 
+target_link_libraries(regression PUBLIC simulation 
                                         jobManager
-                                        yaml-cpp::yaml-cpp 
-                                        libpqxx::pqxx 
                                         $<IF:$<BOOL:OpenSSL_FOUND>,OpenSSL::Crypto,""> 
                                         GTest::gtest 
-                                        GTest::gtest_main)
+                                        GTest::gtest_main
+                                        pqxx_wrapper
+                                 )
