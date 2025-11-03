@@ -2,7 +2,7 @@
 # General Information
 jobname: cont
 type: "continuous" # differentiates between adding cars upfront or online
-time: 200
+time: 600
 timestep: 1
 seed: 70
 logtype: "db"

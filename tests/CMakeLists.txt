@@ -35,5 +35,12 @@ target_link_libraries(regression PUBLIC simulation
                                         $<IF:$<BOOL:OpenSSL_FOUND>,OpenSSL::Crypto,""> 
                                         GTest::gtest 
                                         GTest::gtest_main
-                                        pqxx_wrapper
-                                 )
+                                        pqxx_wrapper)
+
+add_executable(dbreader dbReader.cpp)
+target_link_libraries(dbreader PUBLIC simulation 
+                                      jobManager 
+                                      dbReader
+                                      GTest::gtest 
+                                      GTest::gtest_main 
+                                      pqxx_wrapper)

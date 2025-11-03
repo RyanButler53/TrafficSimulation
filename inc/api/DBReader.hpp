@@ -25,7 +25,8 @@ class DBReader {
 
 public:
 
-    DBReader();
+    // By default, constructs a reader for the PROD database. 
+    DBReader(std::string connectionStr = "host=localhost port=5432 dbname=trafficDB");
 
     // Various overloads for each possible query to the DB. 
     JobData queryJobs(std::string jobname);
