@@ -113,3 +113,13 @@ class ErrorDTO : public oatpp::DTO {
 
 };
 #include OATPP_CODEGEN_END(DTO)
+
+// Deletion message
+#include OATPP_CODEGEN_BEGIN(DTO)
+class DeleteDTO : public oatpp::DTO {
+  DTO_INIT(DeleteDTO, DTO);
+  DTO_FIELD(String, msg);
+
+};
+#include OATPP_CODEGEN_END(DTO)
+

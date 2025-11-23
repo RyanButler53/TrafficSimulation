@@ -14,6 +14,7 @@
 #include "sim/simulator.hpp"
 #include "sim/parser.hpp"
 #include "sim/parserFactory.hpp"
+#include <expected>
 
 
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},

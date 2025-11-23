@@ -82,6 +82,12 @@ class DBReaderTest : public ::testing::Test {
             if (std::filesystem::exists(fname)) std::filesystem::remove(fname);
         }
     }
+
+    protected:
+    template <typename T>
+    void checkError(std::expected<T, std::string>& result){
+        if (!result){  FAIL() << result.error(); }
+    }
 };
 
 TEST_F(DBReaderTest, evaulateDB){
@@ -90,24 +96,28 @@ TEST_F(DBReaderTest, evaulateDB){
     // Job General Data
     std::vector<JobData> jobsSingle;
     for (size_t i = 0; i < 3; ++i){
-        JobData data = reader.queryJobs(std::format("test-dbreader{}", i));
-        jobsSingle.push_back(data);
+        std::expected<JobData, std::string> data = reader.queryJobs(std::format("test-dbreader{}", i));
+        checkError(data);
+        jobsSingle.push_back(*data);
     }
-    std::vector<JobData> jobsAll = reader.queryJobs();
-
-    for (auto [single, all] : std::views::zip(jobsSingle, jobsAll)){
+    std::expected<std::vector<JobData>, std::string> jobsAll = reader.queryJobs();
+    checkError(jobsAll);
+    for (auto [single, all] : std::views::zip(jobsSingle, *jobsAll)){
         ASSERT_EQ(single.cfgPath_, all.cfgPath_);
         ASSERT_EQ(single.jobName_, all.jobName_);
     }
 
     std::vector<CarMetadata> singleMetadata;
-    std::vector<CarMetadata> allCarMetadata = reader.queryCars("test-dbreader1");
-    size_t ncars = allCarMetadata.size();
+    std::expected<std::vector<CarMetadata>, std::string> allCarMetadata = reader.queryCars("test-dbreader1");
+    checkError(allCarMetadata);
+    size_t ncars = allCarMetadata->size();
     for (size_t i = 0; i < ncars; ++i){
-        singleMetadata.push_back(reader.queryCars("test-dbreader1", i));
+        auto data = reader.queryCars("test-dbreader1", i);
+        checkError(data);
+        singleMetadata.push_back(*data);
     }
 
-    for (auto [single, all] : std::views::zip(singleMetadata, allCarMetadata)){
+    for (auto [single, all] : std::views::zip(singleMetadata, *allCarMetadata)){
         ASSERT_EQ(single.id_, all.id_);
         ASSERT_EQ(single.follow_, all.follow_);
         ASSERT_EQ(single.lead_, all.lead_);
@@ -117,20 +127,21 @@ TEST_F(DBReaderTest, evaulateDB){
 
     // Due to the size of the raw data, just check if X is increasing 
     std::vector<RawData> singleRawData;
-    std::vector<RawData> allRawData = reader.queryData("test-dbreader1");
+    std::expected<std::vector<RawData>, std::string> allRawData = reader.queryData("test-dbreader1");
+    checkError(allCarMetadata);
     for (size_t i = 0; i < ncars; ++i){
-        singleRawData.push_back(reader.queryData("test-dbreader1", i));
+        auto cardata = reader.queryData("test-dbreader1", i);
+        checkError(cardata);
+        singleRawData.push_back(*cardata);
         std::vector<float>& xs = singleRawData.back().x_;
         ASSERT_TRUE(std::ranges::is_sorted(xs));
     }
 
-    for (auto [single, all] : std::views::zip(singleRawData, allRawData)){
+    for (auto [single, all] : std::views::zip(singleRawData, *allRawData)){
         ASSERT_EQ(single.id_, all.id_);
         ASSERT_EQ(single.x_, all.x_);
         ASSERT_EQ(single.v_, all.v_);
         ASSERT_EQ(single.t_, all.t_);
-
     }
-
 }
 
