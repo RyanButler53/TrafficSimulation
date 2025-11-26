@@ -28,9 +28,14 @@ void JobManager::threadRoutine(){
         
         if (j){
             uint32_t id = j->id();
-            statuses_[id] = JobStatus::RUNNING;
-            j->operator()();
-            statuses_[id] = JobStatus::DONE;
+            if (!j->checkInput()){
+                statuses_[id] = JobStatus::INVALID;
+            } else {
+                statuses_[id] = JobStatus::RUNNING;
+                j->operator()();
+                statuses_[id] = JobStatus::DONE;
+            }
+
         } else {
             std::unique_lock lk(queueMutex_);
             cv_.wait(lk, [this](){return !workQueue_.empty() || isDone_.load();});
@@ -40,6 +45,8 @@ void JobManager::threadRoutine(){
 }
 
 uint32_t JobManager::submit(std::string path){
+    // Do the Parsing here since its so fast it can be redone later. 
+
     statuses_.push_back(JobStatus::QUEUED);
     std::unique_lock lk(queueMutex_);
     workQueue_.push(std::make_shared<Job>(path, jobid_));
@@ -56,18 +63,20 @@ JobStatus JobManager::status(uint32_t id){
     }
 }
 
+bool Job::checkInput() const {
+    ParserFactory parserFac(inputPath_);
+    std::expected<SimulatorInputs, std::string> inputs = parserFac.makeParser().and_then([](std::unique_ptr<Parser> p){return p->parse();});
+    return inputs.has_value();
+}
+
 // Runs the job
 void Job::operator()(){
-    ParserFactory parserFac(inputPath_);
-    std::shared_ptr<Parser> parser;
-    try {
-       parser = parserFac.makeParser();
-    } catch(const std::exception& e) {
-        return;
-    }
     
-    SimulatorInputs inputs = parser->parse();
-    Simulator s(inputs);
+    ParserFactory parserFac(inputPath_);
+    std::expected<SimulatorInputs, std::string> inputs = parserFac.makeParser()
+                                                                  .and_then([](std::unique_ptr<Parser> p){return p->parse();});
+    // Inputs have already been checked. 
+    Simulator s(*inputs);
     s.run();
     return;
 }

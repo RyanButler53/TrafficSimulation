@@ -102,9 +102,10 @@ TEST_F(DBReaderTest, evaulateDB){
     }
     std::expected<std::vector<JobData>, std::string> jobsAll = reader.queryJobs();
     checkError(jobsAll);
+    EXPECT_EQ(jobsSingle.size(), jobsAll->size());
     for (auto [single, all] : std::views::zip(jobsSingle, *jobsAll)){
-        ASSERT_EQ(single.cfgPath_, all.cfgPath_);
-        ASSERT_EQ(single.jobName_, all.jobName_);
+        EXPECT_EQ(single.cfgPath_, all.cfgPath_);
+        EXPECT_EQ(single.jobName_, all.jobName_);
     }
 
     std::vector<CarMetadata> singleMetadata;
@@ -118,11 +119,11 @@ TEST_F(DBReaderTest, evaulateDB){
     }
 
     for (auto [single, all] : std::views::zip(singleMetadata, *allCarMetadata)){
-        ASSERT_EQ(single.id_, all.id_);
-        ASSERT_EQ(single.follow_, all.follow_);
-        ASSERT_EQ(single.lead_, all.lead_);
-        ASSERT_EQ(single.model_.a_, all.model_.a_);
-        ASSERT_EQ(single.model_.b_, all.model_.b_);
+        EXPECT_EQ(single.id_, all.id_);
+        EXPECT_EQ(single.follow_, all.follow_);
+        EXPECT_EQ(single.lead_, all.lead_);
+        EXPECT_EQ(single.model_.a_, all.model_.a_);
+        EXPECT_EQ(single.model_.b_, all.model_.b_);
     }
 
     // Due to the size of the raw data, just check if X is increasing 
@@ -138,10 +139,10 @@ TEST_F(DBReaderTest, evaulateDB){
     }
 
     for (auto [single, all] : std::views::zip(singleRawData, *allRawData)){
-        ASSERT_EQ(single.id_, all.id_);
-        ASSERT_EQ(single.x_, all.x_);
-        ASSERT_EQ(single.v_, all.v_);
-        ASSERT_EQ(single.t_, all.t_);
+        EXPECT_EQ(single.id_, all.id_);
+        EXPECT_EQ(single.x_, all.x_);
+        EXPECT_EQ(single.v_, all.v_);
+        EXPECT_EQ(single.t_, all.t_);
     }
 }
 

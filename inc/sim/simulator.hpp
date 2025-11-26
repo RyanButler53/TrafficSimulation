@@ -12,6 +12,7 @@
 
 #include "lane.hpp"
 #include "simInputs.hpp"
+#include <expected>
 
 class Simulator
 {
@@ -26,7 +27,7 @@ public:
     Simulator(SimulatorInputs input);
     ~Simulator() =default;
 
-    void run();
+    std::expected<void, std::string> run();
 };
 
 namespace Traffic {

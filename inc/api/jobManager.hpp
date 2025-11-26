@@ -19,9 +19,10 @@
 #include <atomic>
 
 enum class JobStatus : uint8_t {
-    QUEUED = 0,
-    RUNNING = 1,
-    DONE = 2
+    INVALID = 0, // Jobs that can't parse
+    QUEUED = 1,
+    RUNNING = 2,
+    DONE = 3
 };
 
 class Job {
@@ -32,6 +33,14 @@ class Job {
     
     public:
     Job(std::string path, uint32_t id):inputPath_{path}, id_{id}{}
+
+    /**
+     * @brief Checks if the inputs to the job are valid. Fast operation that can be done to validate
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool checkInput() const ; 
     void operator()();
     uint32_t id() const {return id_;}
 };

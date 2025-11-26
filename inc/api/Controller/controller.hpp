@@ -20,10 +20,6 @@
 
 using namespace oatpp;
 
-#define DATABASE_ERROR  auto err = ErrorDTO::createShared(); \
-                err->errmsg = e.what(); \
-                return createDtoResponse(Status::CODE_404, err);
-
 #include OATPP_CODEGEN_BEGIN(ApiController) ///< Begin Codegen
 
 class Controller : public oatpp::web::server::api::ApiController {

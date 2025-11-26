@@ -86,7 +86,7 @@ FileLogger::FileLogger(std::string basepath):basepath_{basepath}{
     fs::create_directories(basepath_);
 }
 
-void FileLogger::writeData(){
+std::expected<void, std::string> FileLogger::writeData(){
 
     std::vector<std::vector<CarSnapshot>> byCar = getPartition();
     size_t n = byCar.size();
@@ -105,6 +105,7 @@ void FileLogger::writeData(){
         }
     }
     clearLogs();
+    return {};
 }
 
 // DATABASE LOGGER
@@ -113,26 +114,34 @@ DBLoggerBase::DBLoggerBase(std::string jobname, std::string config):
     jobname_{jobname}, configFile_{std::filesystem::absolute(config)}{
 }
 
-void DBLoggerBase::init() {
+std::expected<void, std::string> DBLoggerBase::init() {
 
     // Initialize Database connection: 
     std::string connStr = getConnectionString();
-    pqxx::connection connect(connStr);
+    try {
+        
+        pqxx::connection connect(connStr);
 
-    // Create 3 tables: Traffic Jobs Main Table, Car Data Table (including strategies), Main data table (with car x,v,t values)
-    pqxx::work tx(connect);
-    tx.exec("CREATE TABLE IF NOT EXISTS trafficJobs ( jobID int GENERATED ALWAYS AS IDENTITY PRIMARY KEY, configfile text, jobname text)");
-    tx.exec("CREATE TABLE IF NOT EXISTS carData (carID int, jobID int, follow text, lead text, FOREIGN KEY (jobID) REFERENCES trafficjobs(jobID) , PRIMARY KEY (carID, jobID))");
-    tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
+        // Create 3 tables: Traffic Jobs Main Table, Car Data Table (including strategies), Main data table (with car x,v,t values)
+        pqxx::work tx(connect);
+        tx.exec("CREATE TABLE IF NOT EXISTS trafficJobs ( jobID int GENERATED ALWAYS AS IDENTITY PRIMARY KEY, configfile text, jobname text)");
+        tx.exec("CREATE TABLE IF NOT EXISTS carData (carID int, jobID int, follow text, lead text, FOREIGN KEY (jobID) REFERENCES trafficjobs(jobID) , PRIMARY KEY (carID, jobID))");
+        tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
 
-    // Add row for the job
-    std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname)\nVALUES ('{}', '{}') RETURNING jobID", configFile_, jobname_);
-    pqxx::result result = tx.exec(row);
-    jobid_ = result.one_field().as<int>();
-    tx.commit();
+        // Check if row for the job exists. Otherwise, add it. Will overwrite a duplicate job name. 
+        pqxx::result jobExists;
+        
+        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname)\nVALUES ('{}', '{}') RETURNING jobID", configFile_, jobname_);
+        pqxx::result result = tx.exec(row);
+        jobid_ = result.one_field().as<int>();
+        tx.commit();
+    } catch(const std::exception& e) {
+        std::unexpected(e.what());
+    }
+    return {};
 }
 
- void DBLoggerBase::writeData() {
+ std::expected<void, std::string> DBLoggerBase::writeData() {
 
     std::vector<std::vector<CarSnapshot>> byCar = getPartition();
     size_t n = byCar.size();
@@ -141,22 +150,32 @@ void DBLoggerBase::init() {
     pqxx::connection connect(connStr);
 
     // Add rows for all the new cars seen. 
-    pqxx::work tx(connect);
-    for (CarData& cdata : cars_){
-        tx.exec(std::format("INSERT INTO cardata (carid, jobid, follow, lead)\nVALUES ({}, {}, '{}', '{}')", cdata.id, jobid_, cdata.followStrategy, cdata.leadStrategy));
+    try {
+        pqxx::work tx(connect);
+        for (CarData& cdata : cars_){
+            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow, lead)\nVALUES ({}, {}, '{}', '{}')", cdata.id, jobid_, cdata.followStrategy, cdata.leadStrategy));
+        }
+        tx.commit();
+    } catch(const std::exception& e) {
+        return std::unexpected(e.what());
     }
-    tx.commit();
-
+    
     // Update the big data table
     for (std::vector<CarSnapshot>& car : byCar){
         if (car.empty()) continue;
-        pqxx::work car_transaction(connect);
+        try {
+            pqxx::work car_transaction(connect);
 
-        std::string logstr;
-        for (CarSnapshot& log : car){
-            logstr = std::format("INSERT INTO snapshotData (jobid, carid, x, v, t)\nVALUES ({}, {}, {}, {}, {})", jobid_, log.id, log.x, log.v, log.t);
-            car_transaction.exec(logstr);
+            std::string logstr;
+            for (CarSnapshot& log : car){
+                logstr = std::format("INSERT INTO snapshotData (jobid, carid, x, v, t)\nVALUES ({}, {}, {}, {}, {})", jobid_, log.id, log.x, log.v, log.t);
+                car_transaction.exec(logstr);
+            }
+            car_transaction.commit();
+        } catch(const std::exception& e) {
+            return std::unexpected(e.what());
         }
-        car_transaction.commit();
     }
+
+    return {};
 }

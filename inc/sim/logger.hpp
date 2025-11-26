@@ -16,7 +16,7 @@
 #include <iterator>
 #include <ranges>
 #include <filesystem>
-#include <exception>
+#include <expected>
 
 /**
  * @brief Struct containing the minimum data about each car at a given timestep
@@ -78,7 +78,7 @@ class CarLogger
      * for logging that doesn't need to write to files at all
      * 
      */
-    virtual void writeData(){}; 
+    virtual std::expected<void, std::string> writeData(){return {};}; 
 
     /**
      * @brief Adds information about a specific car. 
@@ -90,7 +90,7 @@ class CarLogger
      * @brief Initialize the logger. Called after constructor to allow virtual methods.
      * 
      */
-    virtual void init(){};
+    virtual std::expected<void, std::string> init(){return {};};
 
     protected:
     /**
@@ -120,7 +120,7 @@ class FileLogger : public CarLogger {
     FileLogger(std::string basepath);
     ~FileLogger() = default;
 
-    void writeData() override;
+    std::expected<void, std::string> writeData() override;
 
 };
 
@@ -135,13 +135,13 @@ class DBLoggerBase : public CarLogger {
     DBLoggerBase(std::string jobname, std::string config);
     virtual ~DBLoggerBase(){};
 
-    void init() override;
+    std::expected<void, std::string> init() override;
 
     virtual std::string getConnectionString() const = 0;
 
 
     // Commits to the database
-    void writeData() override;
+    std::expected<void, std::string> writeData() override;
 };
 
 class DBLogger : public DBLoggerBase {
@@ -157,15 +157,7 @@ class DBLoggerTest: public DBLoggerBase {
 
     using DBLoggerBase::DBLoggerBase;
 
-    virtual std::string getConnectionString() const override {
+    virtual std::string getConnectionString() const override  {
         return "host=localhost port=5432 dbname=trafficDBTest";
     }
-};
-
-
-struct DatabaseError : public std::exception{
-    std::string msg;
-
-    DatabaseError(std::string message) throw():msg{message}{};
-    virtual const char* what() throw() {return msg.c_str();};
 };

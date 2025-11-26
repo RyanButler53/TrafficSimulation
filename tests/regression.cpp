@@ -49,7 +49,7 @@ private:
         cfg["driverParams"]["b"] = -2.8955;
         cfg["driverParams"]["bmax"] = -5.505;
         cfg["driverParams"]["a_stdev"] = 0.1;
-        cfg["driverParams"]["a_stdev"] = 0.1;
+        cfg["driverParams"]["b_stdev"] = 0.1;
         cfg["driverParams"]["bmax_stdev"] = 0.1;
 
         cfg["flow"]["rate"] = 600;
@@ -166,8 +166,8 @@ protected:
 };
 
 TEST_F(RegressionTest, FileDBEquivalence){
-    Traffic::Simulate("fileConfig.yaml");
-    Traffic::Simulate("dbConfig.yaml");
+    ASSERT_EQ(Traffic::Simulate("fileConfig.yaml"), 0);
+    ASSERT_EQ(Traffic::Simulate("dbConfig.yaml"), 0);
 
     // Need to compare both of them, car by car at each timestamp. 
 

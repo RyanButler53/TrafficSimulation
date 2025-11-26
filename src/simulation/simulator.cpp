@@ -20,7 +20,11 @@
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
     lane_{input.lane_}, totalTime_{input.totalTime_}, dt_{input.dt_}{}
 
-void Simulator::run(){
+std::expected<void, std::string> Simulator::run(){
+    if (!logger_->init().has_value()){
+        return std::unexpected("Error initalizing Logger");
+    }
+
     double t = 0;
 
     while (t < totalTime_){
@@ -32,21 +36,26 @@ void Simulator::run(){
         }
     }
     // Fits all logs in memory.
-    logger_->writeData();
+    return logger_->writeData();
 }
 
 int Traffic::Simulate(std::string configfile){
     ParserFactory parserFac(configfile);
-    std::shared_ptr<Parser> parser;
-    try {
-       parser = parserFac.makeParser();
-    } catch(const std::exception& e) {
-        std::cerr << e.what() << '\n';
+    std::expected<std::unique_ptr<Parser>, std::string> parser = parserFac.makeParser();
+    if (!parser){ 
+        std::cerr << parser.error() << std::endl;
         return 1;
     }
-    
-    SimulatorInputs inputs = parser->parse();
-    Simulator s(inputs);
-    s.run();
+    std::expected<SimulatorInputs, std::string> inputs = parser.value()->parse();
+    if (!inputs){
+        std::cerr << inputs.error() << std::endl;
+        return 1;
+    }
+    Simulator s(inputs.value());
+    std::expected<void, std::string> result = s.run();
+    if (!result){
+        std::cerr << result.error();
+        return 1;
+    }
     return 0;
 }

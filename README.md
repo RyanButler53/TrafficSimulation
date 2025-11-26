@@ -10,16 +10,19 @@ Continuous Traffic Flow
 Car Factory can be randomized
 
 
-
 Add actual test for postgres integration
 Add integration test for API access to DB
 
 Dependencies: 
-PostgreSQL: Main Database system
-libpqxx: C++ libpq wrapper
-yaml-cpp: C++ Yaml parsing library
-oatpp: C++ Api library
-openssl (optional): Hashing for regression testing. 
+
+- PostgreSQL: Main Database system
+- libpqxx: C++ libpq wrapper
+- yaml-cpp: C++ Yaml parsing library
+- oatpp: C++ Api library
+- Googletest: C++ Testing library
+- openssl (optional): Hashing for regression testing. 
+
+Compiler must be compatible with C++23 with `std::views::zip` and `std::expected`
 
 ### Database Schema:
 There are two databases: TrafficDB and TrafficDBTest
@@ -34,13 +37,18 @@ TrafficJobs:
 CarData:
 
 | carID (int) | jobID (int) | Follow Strategy | Lead Strategy |
+| --- | --- | --- | --- |
 | Unique Car Id to its simulation | Job ID that the car belongs to | Car Following strategy when not in lead | Car Lead strategy when in lead |
 
 JobID is a foreign key to the TrafficJobs table. CarID and JobID are gauranteed to be unique. 
 
 Snapshot Data:
+
 | carID (int) | jobID (int) | x (float) | v (float) | t (float) |
-| Car Id for simulation | Job the car belongs to | position | velocity | timestamp. 
+| --- | --- | --- | --- | --- |
+| Car Id for simulation | Job the car belongs to | position | velocity | timestamp |
+
+
 
 CarID and JobID is a foreign key to CarData's CarID and JobID values. CarID, JobID and timestamp (t) are gauranteed to be unique. 
 
@@ -59,3 +67,5 @@ CarID and JobID is a foreign key to CarData's CarID and JobID values. CarID, Job
 `GET "/data/{job-name}/cars/raw/{id}"` -> Returns raw snapshot data for a single car in the specified job. 
 
 `POST "/submit/{job-name}"` -> Submits a job with the specified job name. The Job name must be unique. Requires a query parameter `{"cfg" : "configfile.yaml"}` to specify the config file. 
+
+`DELETE "/jobs/{jobname}"` -> Deletes the specified job if it exists. 
