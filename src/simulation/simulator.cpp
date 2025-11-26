@@ -41,21 +41,10 @@ std::expected<void, std::string> Simulator::run(){
 
 int Traffic::Simulate(std::string configfile){
     ParserFactory parserFac(configfile);
-    std::expected<std::unique_ptr<Parser>, std::string> parser = parserFac.makeParser();
-    if (!parser){ 
-        std::cerr << parser.error() << std::endl;
-        return 1;
-    }
-    std::expected<SimulatorInputs, std::string> inputs = parser.value()->parse();
-    if (!inputs){
-        std::cerr << inputs.error() << std::endl;
-        return 1;
-    }
-    Simulator s(inputs.value());
-    std::expected<void, std::string> result = s.run();
-    if (!result){
-        std::cerr << result.error();
-        return 1;
-    }
-    return 0;
+    return parserFac.makeParser()
+                    .and_then([](std::unique_ptr<Parser> p){return p->parse();})
+                    .and_then([](SimulatorInputs inputs){return Simulator(inputs).run();})
+                    .transform_error([](std::string err){std::cerr << err << std::endl; return err;})
+                    .transform([](){return 0;}).value_or(1);
+
 }
