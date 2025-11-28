@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2025
  * 
  */
-// Main driver code to run a simulation 
+
 #include "sim/simulator.hpp"
 #include <iostream>
 

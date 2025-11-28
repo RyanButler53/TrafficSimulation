@@ -28,14 +28,8 @@ void JobManager::threadRoutine(){
         
         if (j){
             uint32_t id = j->id();
-            if (!j->checkInput()){
-                statuses_[id] = JobStatus::INVALID;
-            } else {
-                statuses_[id] = JobStatus::RUNNING;
-                j->operator()();
-                statuses_[id] = JobStatus::DONE;
-            }
-
+            statuses_[id] = JobStatus::RUNNING;
+            statuses_[id] = j->operator()();
         } else {
             std::unique_lock lk(queueMutex_);
             cv_.wait(lk, [this](){return !workQueue_.empty() || isDone_.load();});
@@ -44,12 +38,20 @@ void JobManager::threadRoutine(){
 
 }
 
-uint32_t JobManager::submit(std::string path){
-    // Do the Parsing here since its so fast it can be redone later. 
+std::expected<uint32_t, std::string> JobManager::submit(std::string path){
 
+    // Do the Parsing here since its so fast it can be redone later. 
+    
+    std::expected<SimulatorInputs, std::string> inputs = ParserFactory(path).makeParser()
+                                                                            .and_then([](std::unique_ptr<Parser> p){return p->parse();});
+    if (!inputs.has_value()){
+        std::cout << "Input checking error" << std::endl;
+        return std::unexpected("Input Checking Error: " + inputs.error());
+    } 
     statuses_.push_back(JobStatus::QUEUED);
     std::unique_lock lk(queueMutex_);
-    workQueue_.push(std::make_shared<Job>(path, jobid_));
+    auto j = std::make_shared<Job>(inputs.value(), jobid_);
+    workQueue_.push(j);
     lk.unlock();
     cv_.notify_one();
     return jobid_++;
@@ -63,21 +65,9 @@ JobStatus JobManager::status(uint32_t id){
     }
 }
 
-bool Job::checkInput() const {
-    ParserFactory parserFac(inputPath_);
-    std::expected<SimulatorInputs, std::string> inputs = parserFac.makeParser().and_then([](std::unique_ptr<Parser> p){return p->parse();});
-    return inputs.has_value();
-}
-
 // Runs the job
-void Job::operator()(){
-    
-    ParserFactory parserFac(inputPath_);
-    std::expected<SimulatorInputs, std::string> inputs = parserFac.makeParser()
-                                                                  .and_then([](std::unique_ptr<Parser> p){return p->parse();});
-    // Inputs have already been checked. 
-    Simulator s(*inputs);
-    s.run();
-    return;
+JobStatus Job::operator()(){
+    // Loses the error message: Where should it go?
+    return Simulator(inputs_).run().transform([](){return JobStatus::DONE;}).value_or(JobStatus::FAILED);
 }
 

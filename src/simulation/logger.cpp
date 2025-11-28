@@ -136,7 +136,7 @@ std::expected<void, std::string> DBLoggerBase::init() {
         jobid_ = result.one_field().as<int>();
         tx.commit();
     } catch(const std::exception& e) {
-        std::unexpected(e.what());
+        std::unexpected(std::format("Error setting up database: {}",e.what()));
     }
     return {};
 }
@@ -157,7 +157,7 @@ std::expected<void, std::string> DBLoggerBase::init() {
         }
         tx.commit();
     } catch(const std::exception& e) {
-        return std::unexpected(e.what());
+        return std::unexpected(std::format("Error inserting car info data into database", e.what()));
     }
     
     // Update the big data table
@@ -173,7 +173,7 @@ std::expected<void, std::string> DBLoggerBase::init() {
             }
             car_transaction.commit();
         } catch(const std::exception& e) {
-            return std::unexpected(e.what());
+            return std::unexpected(std::format("Error inserting car raw snapshot data into database", e.what()));
         }
     }
 

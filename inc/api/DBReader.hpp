@@ -31,7 +31,7 @@ class DBReader {
 public:
 
     // By default, constructs a reader for the PROD database. 
-    DBReader(std::string connectionStr = "host=localhost port=5432 dbname=trafficDB");
+    DBReader(bool testDB = false);
 
     // Various overloads for each possible query to the DB. 
     std::expected<JobData, std::string> queryJobs(std::string jobname);
@@ -43,16 +43,15 @@ public:
     std::expected<RawData, std::string> queryData(std::string jobname, int carid);
     std::expected <std::vector<RawData>,std::string> queryData(std::string jobname);
 
-    std::expected<bool, std::string> deleteJob(std::string jobname);
+    std::expected<void, std::string> deleteJob(std::string jobname);
 
     /**
-     * @brief Checks if the job name exists
+     * @brief Gets the job id of a given job name. Can be used to check if a job already exists or not
      * 
      * @param jobname Job name to check
-     * @return true if the job name is availane
-     * @return false if the job name is NOT available 
+     * @return Integer job id for the corresponsing job. Returns std::string if a DB error or no job present. 
      */
-    std::expected<bool, std::string> checkJobName(std::string jobname);
+    std::expected<int, std::string> getJobId(std::string jobname);
 };
 
 class DBReadError : public std::exception {

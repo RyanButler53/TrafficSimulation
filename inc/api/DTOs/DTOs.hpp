@@ -79,6 +79,7 @@ class JobSubmitDTO : public oatpp::DTO {
   
     DTO_FIELD(String, jobname);
     DTO_FIELD(String, configpath);
+    DTO_FIELD(UInt32, jobID);
 };
 
 #include OATPP_CODEGEN_END(DTO)

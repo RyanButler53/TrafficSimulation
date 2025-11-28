@@ -144,5 +144,14 @@ TEST_F(DBReaderTest, evaulateDB){
         EXPECT_EQ(single.v_, all.v_);
         EXPECT_EQ(single.t_, all.t_);
     }
+
+    // Clean up jobs: 
+    for (size_t i = 0; i < 3; ++i){
+        std::expected<void, std::string> result = reader.deleteJob(std::format("test-dbreader{}", i));
+        checkError(result);
+    }
+    jobsAll = reader.queryJobs();
+    checkError(jobsAll);
+    EXPECT_TRUE(jobsAll.value().empty());
 }
 

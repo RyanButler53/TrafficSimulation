@@ -10,4 +10,4 @@ find_package(oatpp 1.3.0 REQUIRED)
 # Api executable
 add_executable(trafficApi trafficApi.cpp)
 target_include_directories(trafficApi PUBLIC inc)
-target_link_libraries(trafficApi PUBLIC oatpp::oatpp PRIVATE dbReader jobManager)
+target_link_libraries(trafficApi PRIVATE api)

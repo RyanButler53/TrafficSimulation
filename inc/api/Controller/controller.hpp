@@ -24,7 +24,7 @@ using namespace oatpp;
 
 class Controller : public oatpp::web::server::api::ApiController {
     
-    DBReader reader_;
+    std::shared_ptr<DBReader> reader_;
     JobManager manager_;
     // Error DTO Prototype in the class
     using ErrorResponse = ErrorDTO::Wrapper;
@@ -38,25 +38,47 @@ class Controller : public oatpp::web::server::api::ApiController {
 
 
     template <typename ReturnDTO>
-    auto getReturnDto(std::expected<ReturnDTO, ErrorResponse> apiResponse, const oatpp::web::server::api::ApiController::Status &failstatus = Status::CODE_404){
+    auto getReturnDto(std::expected<ReturnDTO, ErrorResponse> apiResponse){
         if (apiResponse.has_value()){
             return createDtoResponse(Status::CODE_200, apiResponse.value());
         } else {
-            return createDtoResponse(failstatus, apiResponse.error());
+            return createDtoResponse(Status::CODE_400, apiResponse.error());
         }
     }
     
-    public: 
+    static std::string decodeURL(std::string url){
+        std::string decoded = "";
+        for (size_t i = 0; i < url.size(); ++i){
+            if (url[i] == '%' and i < url.size() - 2){
+                char hex1 = url[i+1];
+                char hex2 = url[i+2];
+                std::stringstream s;
+                s << std::hex << hex1 << hex2;
+                int hexVal = stoi(s.str(), 0, 16);
+                decoded.push_back(char(hexVal));
+                i += 2;
+            } else {
+                decoded.push_back(url[i]);
+            }
+        }
+        return decoded;
+    }
+
+    public:
 
     Controller(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, mapper))
         // Call base class constructor. Pass the object mapper component
         :oatpp::web::server::api::ApiController(mapper){}
 
+    void setDBReader(bool testDB){
+        reader_ = std::make_shared<DBReader>(testDB);
+    }
+    
     // Get simple information about a job
     ENDPOINT("GET", "/jobs/{job-name}", queryJobs, PATH(String, jobname, "job-name")){
 
         // Query Database for job
-        auto data = reader_.queryJobs(jobname);
+        auto data = reader_->queryJobs(jobname);
         // Define translation function between JobData and DTO and translate
         std::function<JobDataDTO::Wrapper(JobData)> translateJobData = [](const JobData& data){
             auto response = JobDataDTO::createShared();
@@ -71,7 +93,9 @@ class Controller : public oatpp::web::server::api::ApiController {
 
     // Querying for whatever jobs are available
     ENDPOINT("GET", "/jobs", allJobs){
-        std::expected<std::vector<JobData>, std::string> jobs = reader_.queryJobs();
+        OATPP_LOGI("Controller", "Getting job information for all jobs");
+
+        std::expected<std::vector<JobData>, std::string> jobs = reader_->queryJobs();
         auto translateJobList = [](const std::vector<JobData>& jobs){ // std::function<JobDataListDTO::Wrapper(std::vector<JobData>)>
             auto response = JobDataListDTO::createShared();
             response->jobs = {};
@@ -90,8 +114,9 @@ class Controller : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/data/{job-name}/cars/{id}", getCarData, 
             PATH(String, job, "job-name"), PATH(Int32, id, "id")) {
 
-        
-        std::expected<CarMetadata, std::string> cm = reader_.queryCars(job, id);
+        OATPP_LOGI("Controller", "Getting job information for car %d in %s", int(id), std::string(job).c_str());
+
+        std::expected<CarMetadata, std::string> cm = reader_->queryCars(job, id);
 
         std::function<CarMetadataDTO::Wrapper(CarMetadata)> translateCarMetadata = [&id](const CarMetadata& cm){
             auto response = CarMetadataDTO::createShared();
@@ -112,8 +137,9 @@ class Controller : public oatpp::web::server::api::ApiController {
     // Get all information about ALL cars
     ENDPOINT("GET", "/data/{job-name}/cars/", getAllCarData, 
             PATH(String, job, "job-name")){
+        OATPP_LOGI("Controller", "Getting job information for all cars in %s", std::string(job).c_str());
 
-        auto cars = reader_.queryCars(job);
+        auto cars = reader_->queryCars(job);
         auto translate = [](std::vector<CarMetadata> carlist){
             auto response = CarMetadataListDTO::createShared();
             response->numCars = carlist.size();
@@ -137,8 +163,9 @@ class Controller : public oatpp::web::server::api::ApiController {
     // Getting raw data about one car
     ENDPOINT("GET", "/data/{job-name}/cars/raw/{id}", carRawData, 
             PATH(String, job, "job-name"), PATH(Int32, car, "id")){
-        
-        auto raw = reader_.queryData(job, car);
+        OATPP_LOGI("Controller", "Getting raw data for car %d in %s", int(car), std::string(job).c_str());
+
+        auto raw = reader_->queryData(job, car);
         auto translate = [](const RawData& raw){
             auto response = CarSnapshotDTO::createShared();
             response->x->resize(raw.x_.size());
@@ -156,7 +183,7 @@ class Controller : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/data/{job-name}/cars/raw", carRawDataAll, 
         PATH(String, job, "job-name")){
 
-    auto raw = reader_.queryData(job);
+    auto raw = reader_->queryData(job);
     auto translate = [](const std::vector<RawData>& raw){
         auto response = RawDataDTO::createShared();
         response->data = {};
@@ -179,20 +206,37 @@ class Controller : public oatpp::web::server::api::ApiController {
     // Submitting a job. Must check if jobname is unique. 
     ENDPOINT("POST", "/submit/{job-name}", submitJob, 
         PATH(String, jobname, "job-name"),
-        QUERY(String, cfg, "config") ){
-        
-    std::expected<bool, std::string> exists = reader_.checkJobName(jobname);
+        QUERY(String, cfg, "config") ){ // path must be an ABSOLUTE PATH 
 
-    if (exists.has_value() && exists.value()){
-        auto response = JobSubmitDTO::createShared();
-        response->jobname = jobname;
-        response->configpath = cfg;
-        manager_.submit(cfg);
-        return createDtoResponse(Status::CODE_200, response);
-    } else if (exists.has_value() && !exists.value()) {
+    std::string path = std::string(Controller::decodeURL(cfg));
+    if (std::filesystem::path(path).is_relative()){
+        auto error = ErrorDTO::createShared();
+        error->errmsg = path + " is not an absolute path. Must pass in an absolute path!";
+        return createDtoResponse(Status::CODE_400, error);
+    }
+
+    std::string msg = std::format("Submitting Job {}", std::string(jobname));
+    OATPP_LOGI("Controller", "%s", msg.c_str());
+    std::expected<int, std::string> exists = reader_->getJobId(jobname);
+
+    // Exists has value -> jobid has been found and jobname is taken. 
+    if (exists.has_value()){
         auto error = ErrorDTO::createShared();
         error->errmsg = "Job with this name already exists";
         return createDtoResponse(Status::CODE_409, error);
+        // Job is not found . Submit one. 
+    } else if (exists.error() == std::format("Job {} not found", std::string(jobname))) {
+        std::expected<uint32_t, std::string> submit = manager_.submit(path);
+        if (!submit){
+            auto error = ErrorDTO::createShared();
+            error->errmsg = submit.error();
+            return createDtoResponse(Status::CODE_400, error);
+        }
+        auto response = JobSubmitDTO::createShared();
+        response->jobname = jobname;
+        response->configpath = path;
+        response->jobID = submit.value();
+        return createDtoResponse(Status::CODE_400, response);
     } else {
         auto error = ErrorDTO::createShared();
         error->errmsg = exists.error();
@@ -203,7 +247,7 @@ class Controller : public oatpp::web::server::api::ApiController {
     ENDPOINT("DELETE", "/delete/{job-name}", deleteJob, 
         PATH(String, jobname, "job-name")){
             // Delete job handles checking if it exists. 
-            std::expected<bool, std::string> result = reader_.deleteJob(jobname);
+            std::expected<void, std::string> result = reader_->deleteJob(jobname);
             if (result.has_value()){
                 // Return an error code
                 auto response = DeleteDTO::createShared();

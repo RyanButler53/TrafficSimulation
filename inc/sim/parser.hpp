@@ -85,7 +85,7 @@ class Parser {
         try {
             return node[key].as<T>();
         } catch(const std::exception& e)  {
-            return std::unexpected(e.what());
+            return std::unexpected(std::format("Error parsing {} field: {}", key, e.what()));
         }   
     }
 

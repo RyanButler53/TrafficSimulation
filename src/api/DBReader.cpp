@@ -15,26 +15,32 @@
 #include <unordered_map>
 #include <cstdlib> 
 
-DBReader::DBReader(std::string connectionStr){
-    const char* test = std::getenv("TRAFFIC_DEBUG");
-    if (test){
-        std::cout << "initializing the test DB" << std::endl;
+DBReader::DBReader(bool testDB){
+    if (testDB){
         init("host=localhost port=5432 dbname=trafficDBTest");
     } else {
-        std::cout << "Initializing caller provided DB" << std::endl;
-        init(connectionStr);
+        init("host=localhost port=5432 dbname=trafficDB");
     }
 }
 
 void DBReader::init(std::string connectionStr){
     try {   
         connect_ = std::make_shared<pqxx::connection>(connectionStr);
+        // Initialize tables if not initialized
+
+        /// @warning This code is duplicated from the DBLoggerBase's setup code
+        // Create 3 tables: Traffic Jobs Main Table, Car Data Table (including strategies), Main data table (with car x,v,t values)
+        pqxx::work tx(*connect_);
+        tx.exec("CREATE TABLE IF NOT EXISTS trafficJobs ( jobID int GENERATED ALWAYS AS IDENTITY PRIMARY KEY, configfile text, jobname text)");
+        tx.exec("CREATE TABLE IF NOT EXISTS carData (carID int, jobID int, follow text, lead text, FOREIGN KEY (jobID) REFERENCES trafficjobs(jobID) , PRIMARY KEY (carID, jobID))");
+        tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
+        tx.commit();
     } catch(const std::exception& e) {
         std::cout << "Error connecting to the database" << std::endl;
         std::cerr << e.what() << '\n';
     }
     if (!connect_){
-        throw DBReadError("Could not connect to the database!");
+        throw DBReadError("Fatal Error: Could not connect to the database!");
     }
 }
 
@@ -47,7 +53,7 @@ std::expected<JobData, std::string> DBReader::queryJobs(std::string jobname){
     try {
         result = tx.exec(querystr);
     } catch(const std::exception& e) {
-        return std::unexpected(e.what());
+        return std::unexpected(std::format("Error executing SELECT query: {}",  e.what()));
     }
     
     if (result.empty()) {
@@ -74,7 +80,7 @@ std::expected<std::vector<JobData>, std::string> DBReader::queryJobs(){
             data.push_back({name, cfg});
         }    
     } catch(const std::exception& e) {
-        return std::unexpected(e.what());
+        return std::unexpected(std::format("Error in SELECT query from DB Reader: ", e.what()));
     }
     
     return data;
@@ -105,7 +111,7 @@ std::expected<std::vector<CarMetadata>, std::string> DBReader::queryCars(std::st
             data.push_back({lead, follow, {}, carid});
         }    }
     catch(const std::exception& e){
-        return std::unexpected(e.what());
+        return std::unexpected(std::format("Error Querying all Cars from {}: {}", jobname, e.what()));
     }
 
     if (data.empty()){
@@ -128,7 +134,7 @@ std::expected<RawData, std::string>  DBReader::queryData(std::string jobname, in
             raw.t_.push_back(t);
         }
     } catch(const std::exception& e) {
-        return std::unexpected(e.what());
+        return std::unexpected(std::format("Error querying Raw Data from car {} in job {}: {}",jobname, carid, e.what()));
     }
         
     return raw;
@@ -155,40 +161,46 @@ std::expected<std::vector<RawData>, std::string> DBReader::queryData(std::string
             alldata.back().t_.push_back(t);
         }    }
     catch(const std::exception& e) {
-        return std::unexpected(e.what());
+        return std::unexpected(std::format("Error reading raw data from all cars for job {}: {}", jobname, e.what()));
     }
     return alldata;
 }
 
-std::expected<bool, std::string> DBReader::checkJobName(std::string jobname) {
+std::expected<int, std::string> DBReader::getJobId(std::string jobname) {
     pqxx::work tx{*connect_};
-    std::string querystr = std::format("SELECT ('jobname', 'configfile')  FROM TrafficJobs WHERE jobname = '{}'", jobname);
+    std::string querystr = std::format("SELECT jobID FROM TrafficJobs WHERE jobname = '{}'", jobname);
     try {
         pqxx::result result = tx.exec(querystr);
-        return result.empty();
+        if (result.empty()){
+            return std::unexpected(std::format("Job {} not found", jobname));
+        } else {
+            pqxx::row r = result[0];
+            return r["jobID"].as<int>();
+        }
     } catch(const std::exception& e) {
-        return std::unexpected(e.what());
+        return std::unexpected(std::format("Error checking getting job if from job {}: {}", jobname, e.what()));
     }
 }
 
-std::expected<bool, std::string> DBReader::deleteJob(std::string jobname){
+std::expected<void, std::string> DBReader::deleteJob(std::string jobname){
 
-    auto deleteJob = [this, &jobname](bool) -> std::expected<bool, std::string>{
+    auto deleteJobByID = [this, &jobname](int jobid) -> std::expected<void, std::string>{
         try {
             pqxx::work tx{*connect_};
-            std::string querystr = std::format("DELETE  FROM TrafficJobs WHERE jobname = '{}'", jobname);
+            std::string querystr = std::format("DELETE FROM snapshotData  WHERE jobid = '{}'", jobid);
             tx.exec(querystr);
-            return true;
+            querystr = std::format("DELETE FROM CarData WHERE jobid = '{}'", jobid);
+
+            tx.exec(querystr);
+            querystr = std::format("DELETE FROM TrafficJobs WHERE jobname = '{}'", jobname);
+
+            tx.exec(querystr);
+            tx.commit();
+            return std::expected<void, std::string>{};
         } catch(const std::exception& e) {
-            return std::unexpected(e.what());
+            std::string errMsg = std::format("Error deleting {} from database: {}", jobname, e.what());
+            return std::unexpected(errMsg);
         }
     };
-    auto result = checkJobName(jobname).and_then(deleteJob);
-    return result;
-    // if(checkJobName(jobname).has_value()){
-        
-    // } else {
-    //     return std::unexpected("Job not found.");
-    // }
-    
+    return getJobId(jobname).and_then(deleteJobByID);
 }

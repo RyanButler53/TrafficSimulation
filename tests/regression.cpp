@@ -1,5 +1,6 @@
 // Regression test for Traffic Simulator
 #include <gtest/gtest.h>
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -202,10 +203,10 @@ TEST_F(RegressionTest, FileDBEquivalence){
 #ifdef WITH_OPEN_SSL
 TEST_F(RegressionTest, FileHashEquivalence){
     JobManager j;
-    uint32_t id = j.submit("fileConfig.yaml");
-
+    std::expected<uint32_t, std::string> id = j.submit("fileConfig.yaml");
+    ASSERT_TRUE(id.has_value()) << id.error();
     // Need to wait for the job to be done
-    while (j.status(id) != JobStatus::DONE){
+    while (j.status(*id) != JobStatus::DONE){
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 

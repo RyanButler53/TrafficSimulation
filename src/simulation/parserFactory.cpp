@@ -1,14 +1,12 @@
 #include "sim/parserFactory.hpp"
 
-ParserFactory::ParserFactory(std::filesystem::path cfgpath):cfgpath_{cfgpath}{
-
-}
+ParserFactory::ParserFactory(std::filesystem::path cfgpath):cfgpath_{cfgpath}{}
 
 std::expected<std::unique_ptr<Parser>, std::string>ParserFactory::makeParser(){
     try {
         cfg_ = YAML::LoadFile(cfgpath_);
     } catch(const std::exception& e) {
-        return std::unexpected(e.what());
+        return std::unexpected(std::format("Error constructing parser: {}", e.what()));
     }  
 
     std::string simtype = "";

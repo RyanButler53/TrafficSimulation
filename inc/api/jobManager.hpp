@@ -17,31 +17,28 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <expected>
+#include "sim/simulator.hpp"
+
 
 enum class JobStatus : uint8_t {
     INVALID = 0, // Jobs that can't parse
     QUEUED = 1,
     RUNNING = 2,
-    DONE = 3
+    DONE = 3,
+    FAILED = 4 // Jobs that throw runtime errors
 };
 
 class Job {
 
     private:
-    std::string inputPath_;
+    SimulatorInputs inputs_;
     uint32_t id_;
     
     public:
-    Job(std::string path, uint32_t id):inputPath_{path}, id_{id}{}
+    Job(const SimulatorInputs& inputs, uint32_t id):inputs_{inputs}, id_{id}{}
 
-    /**
-     * @brief Checks if the inputs to the job are valid. Fast operation that can be done to validate
-     * 
-     * @return true 
-     * @return false 
-     */
-    bool checkInput() const ; 
-    void operator()();
+    JobStatus operator()();
     uint32_t id() const {return id_;}
 };
 
@@ -82,7 +79,7 @@ public:
      * @param path Config file to use. 
      * @return Job ID to query status
      */
-    uint32_t submit(std::string path);
+    std::expected<uint32_t, std::string> submit(std::string path);
 
     /**
      * @brief Check the status of a given job id. 

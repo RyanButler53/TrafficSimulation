@@ -1,11 +1,12 @@
 #include <memory>
 
+#include "api/api.hpp"
 #include "api/appComponent.hpp"
 #include "api/Controller/controller.hpp"
 #include "oatpp/network/Server.hpp"
 
 
-void run() {
+void TrafficApi::run() {
 
     // Registers these as COMPONENTS! (CRTP?)
     AppComponent components;
@@ -13,6 +14,7 @@ void run() {
     OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
 
     auto controller = std::make_shared<Controller>();
+    controller->setDBReader(useTestDB_);
     router->addController(controller);
 
     OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler);
@@ -22,20 +24,12 @@ void run() {
 
     /* Print info about server port */
     char* x = (char*)connectionProvider->getProperty("port").getData();
-    OATPP_LOGI("MyApp", "Server running on port %s", x );
+    OATPP_LOGI("Traffic API", "Server running on port %s", x );
 
     /* Run server */
-    server.run();
+    server.run([this](){return serverOn_.load();});
 }
-
-int main(){
-    /* Init oatpp Environment */
-    oatpp::base::Environment::init();
-
-    /* Run App */
-    run();
-
-    /* Destroy oatpp Environment */
-    oatpp::base::Environment::destroy();
-    return 0;
+    
+void TrafficApi::closeServer(){
+    serverOn_.store(false);
 }

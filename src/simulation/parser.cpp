@@ -120,7 +120,7 @@ std::expected<void, std::string> DiscreteParser::parseLane(){
             double vdes = n["vdes"].as<double>();
             cars.push_back(factory_->makeCar(x0, v0, vdes, 0));
         } catch(const std::exception& e) { // any exception here is a failure condition. 
-            return std::unexpected(e.what());
+            return std::unexpected(std::format("Error parsing data about a car: {}", e.what()));
         }
         
 
