@@ -64,6 +64,42 @@ class Controller : public oatpp::web::server::api::ApiController {
         return decoded;
     }
 
+    static CarSnapshotDTO::Wrapper convertRaw(const RawData& raw){
+        auto response = CarSnapshotDTO::createShared();
+        auto convert = [](float xvt){return Float32(xvt);};
+        response->x = {};
+        response->x->resize(raw.x_.size());
+        std::ranges::transform(raw.x_, response->x->begin(), convert);
+        response->v = {};
+        response->v->resize(raw.v_.size());
+        std::ranges::transform(raw.v_, response->v->begin(),convert);
+        response->t = {};
+        response->t->resize(raw.t_.size());
+        std::ranges::transform(raw.t_, response->t->begin(), convert);
+
+        return response;
+    }
+
+    static CarMetadataDTO::Wrapper convertCar(const CarMetadata& cm){
+        auto response = CarMetadataDTO::createShared();
+        auto followModel = FollowModelDTO::createShared();
+        response->leadStrategy = cm.lead_;
+        response->followStrategy = cm.follow_;
+
+        followModel->a = cm.model_.a_;
+        followModel->b = cm.model_.b_;
+        response->followModel = followModel;
+        response->carid = cm.id_; // id
+        return response;
+    }
+
+    static JobDataDTO::Wrapper convertJob(const JobData& j){
+        auto job = JobDataDTO::createShared();
+        job->jobname = j.jobName_;
+        job->cfgfile = j.cfgPath_;
+        return job;
+    }
+
     public:
 
     Controller(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, mapper))
@@ -79,16 +115,7 @@ class Controller : public oatpp::web::server::api::ApiController {
 
         // Query Database for job
         auto data = reader_->queryJobs(jobname);
-        // Define translation function between JobData and DTO and translate
-        std::function<JobDataDTO::Wrapper(JobData)> translateJobData = [](const JobData& data){
-            auto response = JobDataDTO::createShared();
-            response->present = true;
-            response->jobname = data.jobName_;
-            response->cfgfile = data.cfgPath_;
-            return response;
-        };
-
-        return getReturnDto(data.transform(translateJobData).transform_error(Controller::translateError));
+        return getReturnDto(data.transform(Controller::convertJob).transform_error(Controller::translateError));
     }
 
     // Querying for whatever jobs are available
@@ -99,12 +126,8 @@ class Controller : public oatpp::web::server::api::ApiController {
         auto translateJobList = [](const std::vector<JobData>& jobs){ // std::function<JobDataListDTO::Wrapper(std::vector<JobData>)>
             auto response = JobDataListDTO::createShared();
             response->jobs = {};
-            for (const JobData& j : jobs){
-                auto job = JobDataDTO::createShared();
-                job->jobname = j.jobName_;
-                job->cfgfile = j.cfgPath_;
-                response->jobs->push_back(job);
-            }
+            response->jobs->resize(jobs.size());
+            std::ranges::transform(jobs, response->jobs->begin(), Controller::convertJob);
             return response;
         };
         return getReturnDto(jobs.transform(translateJobList).transform_error(Controller::translateError));
@@ -117,20 +140,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         OATPP_LOGI("Controller", "Getting job information for car %d in %s", int(id), std::string(job).c_str());
 
         std::expected<CarMetadata, std::string> cm = reader_->queryCars(job, id);
-
-        std::function<CarMetadataDTO::Wrapper(CarMetadata)> translateCarMetadata = [&id](const CarMetadata& cm){
-            auto response = CarMetadataDTO::createShared();
-            auto followModel = FollowModelDTO::createShared();
-            response->leadStrategy = cm.lead_;
-            response->followStrategy = cm.follow_;
-    
-            followModel->a = cm.model_.a_;
-            followModel->b = cm.model_.b_;
-            response->followModel = followModel;
-            response->carid = id; // id
-            return response;
-        };
-        return getReturnDto(cm.transform(translateCarMetadata).transform_error(Controller::translateError));
+        return getReturnDto(cm.transform(Controller::convertCar).transform_error(Controller::translateError));
 
     }
 
@@ -143,66 +153,38 @@ class Controller : public oatpp::web::server::api::ApiController {
         auto translate = [](std::vector<CarMetadata> carlist){
             auto response = CarMetadataListDTO::createShared();
             response->numCars = carlist.size();
-            for (CarMetadata& cm : carlist){
-                auto carMeta = CarMetadataDTO::createShared();
-                auto followModel = FollowModelDTO::createShared();
-                carMeta->carid = cm.id_;
-                carMeta->leadStrategy = cm.lead_;
-                carMeta->followStrategy = cm.follow_;
-        
-                followModel->a = cm.model_.a_;
-                followModel->b = cm.model_.b_;
-                carMeta->followModel = followModel;
-                response->cars->push_back(carMeta);
-            }
+            response->cars = {};
+            response->cars->resize(carlist.size());
+            std::ranges::transform(carlist, response->cars->begin(), Controller::convertCar);
             return response;
         };
         return getReturnDto(cars.transform(translate).transform_error(Controller::translateError));
     }
 
     // Getting raw data about one car
-    ENDPOINT("GET", "/data/{job-name}/cars/raw/{id}", carRawData, 
-            PATH(String, job, "job-name"), PATH(Int32, car, "id")){
+    ENDPOINT("GET", "/data/{job-name}/raw/{car}", getRawData, 
+            PATH(String, job, "job-name"), PATH(Int32, car, "car")){
         OATPP_LOGI("Controller", "Getting raw data for car %d in %s", int(car), std::string(job).c_str());
 
         auto raw = reader_->queryData(job, car);
-        auto translate = [](const RawData& raw){
-            auto response = CarSnapshotDTO::createShared();
-            response->x->resize(raw.x_.size());
-            response->v->resize(raw.v_.size());
-            response->t->resize(raw.t_.size());
-            std::ranges::transform(raw.x_, response->x->begin(), [](float x){return Float32(x);});
-            std::ranges::transform(raw.v_, response->v->begin(), [](float v){return Float32(v);});
-            std::ranges::transform(raw.t_, response->t->begin(), [](float t){return Float32(t);});
-            return response;
-        };
-        return getReturnDto(raw.transform(translate).transform_error(Controller::translateError));
+        return getReturnDto(raw.transform(Controller::convertRaw).transform_error(Controller::translateError));
     }
 
-    // Getting raw data about ALL cars (this is a big call)
-    ENDPOINT("GET", "/data/{job-name}/cars/raw", carRawDataAll, 
+        // Getting raw data about ALL cars (this is a big call)
+    ENDPOINT("GET", "/data/{job-name}/raw/", getAllRawData, 
         PATH(String, job, "job-name")){
 
-    auto raw = reader_->queryData(job);
-    auto translate = [](const std::vector<RawData>& raw){
-        auto response = RawDataDTO::createShared();
-        response->data = {};
-        for (const RawData& cardata : raw){
-            auto individualCar = CarSnapshotDTO::createShared();
-            individualCar->x->resize(cardata.x_.size());
-            individualCar->v->resize(cardata.v_.size());
-            individualCar->t->resize(cardata.t_.size());
-            std::ranges::transform(cardata.x_, individualCar->x->begin(), [](float x){return Float32(x);});
-            std::ranges::transform(cardata.v_, individualCar->v->begin(), [](float v){return Float32(v);});
-            std::ranges::transform(cardata.t_, individualCar->t->begin(), [](float t){return Float32(t);});
-            response->data->push_back(individualCar);
-        }
-        return response;
-    };
+        auto raw = reader_->queryData(job);
+        auto translate = [](const std::vector<RawData>& raw){
+            auto response = RawDataDTO::createShared();
+            response->data = {};
+            response->data->resize(raw.size());
+            std::ranges::transform(raw, response->data->begin(), Controller::convertRaw);
+            return response;
+        };
 
-    return getReturnDto(raw.transform(translate).transform_error(Controller::translateError));
-}
-
+        return getReturnDto(raw.transform(translate).transform_error(Controller::translateError));
+    }
     // Submitting a job. Must check if jobname is unique. 
     ENDPOINT("POST", "/submit/{job-name}", submitJob, 
         PATH(String, jobname, "job-name"),
@@ -217,7 +199,7 @@ class Controller : public oatpp::web::server::api::ApiController {
 
     std::string msg = std::format("Submitting Job {}", std::string(jobname));
     OATPP_LOGI("Controller", "%s", msg.c_str());
-    std::expected<int, std::string> exists = reader_->getJobId(jobname);
+    std::expected<std::vector<int>, std::string> exists = reader_->getJobId(jobname);
 
     // Exists has value -> jobid has been found and jobname is taken. 
     if (exists.has_value()){
@@ -225,7 +207,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         error->errmsg = "Job with this name already exists";
         return createDtoResponse(Status::CODE_409, error);
         // Job is not found . Submit one. 
-    } else if (exists.error() == std::format("Job {} not found", std::string(jobname))) {
+    } else if (exists.error() == std::format("No jobs with job name \"{}\" not found", std::string(jobname))) {
         std::expected<uint32_t, std::string> submit = manager_.submit(path);
         if (!submit){
             auto error = ErrorDTO::createShared();
@@ -236,7 +218,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         response->jobname = jobname;
         response->configpath = path;
         response->jobID = submit.value();
-        return createDtoResponse(Status::CODE_400, response);
+        return createDtoResponse(Status::CODE_200, response);
     } else {
         auto error = ErrorDTO::createShared();
         error->errmsg = exists.error();

@@ -26,7 +26,13 @@ find_package(libpqxx CONFIG REQUIRED)
 add_executable(dumpdb dumpDB.cpp)
 target_link_libraries(dumpdb PRIVATE libpqxx::pqxx)
 
+# Optional Dependencies
 find_package(OpenSSL)
+find_package(CURL)
+
+include(FetchContent)
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
+FetchContent_MakeAvailable(json)
 
 add_executable(regression regression.cpp)
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
@@ -44,3 +50,14 @@ target_link_libraries(dbreader PUBLIC simulation
                                       GTest::gtest 
                                       GTest::gtest_main 
                                       pqxx_wrapper)
+
+
+add_executable(apiTest apiTest.cpp)
+target_link_libraries(apiTest PUBLIC api
+                                     nlohmann_json::nlohmann_json
+                                     yaml-cpp::yaml-cpp
+                                     GTest::gtest
+                                     GTest::gtest_main
+                             PRIVATE CURL::libcurl
+                            #  PRIVATE nlohmann_json::nlohmann_json
+)

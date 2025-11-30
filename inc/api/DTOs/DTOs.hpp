@@ -89,7 +89,6 @@ class JobSubmitDTO : public oatpp::DTO {
 class JobDataDTO : public oatpp::DTO {
   DTO_INIT(JobDataDTO, DTO);
 
-  DTO_FIELD(Boolean, present);
   DTO_FIELD(String, jobname);
   DTO_FIELD(String, cfgfile);
 

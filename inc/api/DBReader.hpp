@@ -49,9 +49,9 @@ public:
      * @brief Gets the job id of a given job name. Can be used to check if a job already exists or not
      * 
      * @param jobname Job name to check
-     * @return Integer job id for the corresponsing job. Returns std::string if a DB error or no job present. 
+     * @return Integer values of jobids that match the provided name. Returns std::string if a DB error or no job present. 
      */
-    std::expected<int, std::string> getJobId(std::string jobname);
+    std::expected<std::vector<int>, std::string> getJobId(std::string jobname);
 };
 
 class DBReadError : public std::exception {

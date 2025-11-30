@@ -36,7 +36,7 @@ TrafficJobs:
 
 CarData:
 
-| carID (int) | jobID (int) | Follow Strategy | Lead Strategy |
+| carID (int) | jobID (int) | Follow Strategy (text) | Lead Strategy (text) |
 | --- | --- | --- | --- |
 | Unique Car Id to its simulation | Job ID that the car belongs to | Car Following strategy when not in lead | Car Lead strategy when in lead |
 
@@ -47,7 +47,6 @@ Snapshot Data:
 | carID (int) | jobID (int) | x (float) | v (float) | t (float) |
 | --- | --- | --- | --- | --- |
 | Car Id for simulation | Job the car belongs to | position | velocity | timestamp |
-
 
 
 CarID and JobID is a foreign key to CarData's CarID and JobID values. CarID, JobID and timestamp (t) are gauranteed to be unique. 
@@ -62,9 +61,9 @@ CarID and JobID is a foreign key to CarData's CarID and JobID values. CarID, Job
 
 `GET "/data/{job-name}/cars/"` -> Returns data about all the cars for a specific job
 
-`GET "/data/{job-name}/cars/raw/"` -> Returns raw snapshot data about all cars for a specific job. This is a _very_ large amount of data!
+`GET "/data/{job-name}/raw/"` -> Returns raw snapshot data about all cars for a specific job. This is a _very_ large amount of data!
 
-`GET "/data/{job-name}/cars/raw/{id}"` -> Returns raw snapshot data for a single car in the specified job. 
+`GET "/data/{job-name}/raw/{id}"` -> Returns raw snapshot data for a single car in the specified job. 
 
 `POST "/submit/{job-name}"` -> Submits a job with the specified job name. The Job name must be unique. Requires a query parameter `{"cfg" : "configfile.yaml"}` to specify the config file. 
 

@@ -83,7 +83,6 @@ std::expected<std::shared_ptr<LeadStrategy>, std::string> Parser::parseLeadStrat
         std::transform(discrete.begin(), discrete.end(), std::back_inserter(velocities), [](const YAML::Node& n){return n.as<double>();});
         return std::make_shared<DiscreteLead>(velocities);
     } else if (leadtype == "constant") {
-        // double v = ParseField<YAML::Node>(leadNode, "constant").and_then([this](auto& n){return ParseField<double>(n, "velocity");}).value_or(30);
         double v = ParseField<YAML::Node>(leadNode, "constant")
                                         .and_then([this](const YAML::Node& n){return ParseField<double>(n, "velocity");})
                                         .value_or(30.0);

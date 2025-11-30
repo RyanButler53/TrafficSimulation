@@ -1,6 +1,6 @@
 /**
  * @file DBReader.cpp
- * @author Ryan Butler (you@domain.com)
+ * @author Ryan Butler
  * @brief Implements the DB Reader class
  * @version 0.1
  * @date 2025-10-18
@@ -159,43 +159,48 @@ std::expected<std::vector<RawData>, std::string> DBReader::queryData(std::string
             alldata.back().x_.push_back(x);
             alldata.back().v_.push_back(v);
             alldata.back().t_.push_back(t);
-        }    }
+        }
+    }
     catch(const std::exception& e) {
         return std::unexpected(std::format("Error reading raw data from all cars for job {}: {}", jobname, e.what()));
     }
     return alldata;
 }
 
-std::expected<int, std::string> DBReader::getJobId(std::string jobname) {
+std::expected<std::vector<int>, std::string> DBReader::getJobId(std::string jobname) {
     pqxx::work tx{*connect_};
+    std::vector<int> ids;
     std::string querystr = std::format("SELECT jobID FROM TrafficJobs WHERE jobname = '{}'", jobname);
     try {
-        pqxx::result result = tx.exec(querystr);
-        if (result.empty()){
-            return std::unexpected(std::format("Job {} not found", jobname));
+        for (auto [id] : tx.query<int>(querystr)){
+            ids.push_back(id);
+        }
+        if (ids.empty()){
+            return std::unexpected(std::format("No jobs with job name \"{}\" not found", jobname));
         } else {
-            pqxx::row r = result[0];
-            return r["jobID"].as<int>();
+            return ids;
         }
     } catch(const std::exception& e) {
-        return std::unexpected(std::format("Error checking getting job if from job {}: {}", jobname, e.what()));
+        return std::unexpected(std::format("Error checking getting job id from job {}: {}", jobname, e.what()));
     }
 }
 
 std::expected<void, std::string> DBReader::deleteJob(std::string jobname){
 
-    auto deleteJobByID = [this, &jobname](int jobid) -> std::expected<void, std::string>{
+    auto deleteJobByID = [this, &jobname](const std::vector<int>&  jobids) -> std::expected<void, std::string>{
         try {
-            pqxx::work tx{*connect_};
-            std::string querystr = std::format("DELETE FROM snapshotData  WHERE jobid = '{}'", jobid);
-            tx.exec(querystr);
-            querystr = std::format("DELETE FROM CarData WHERE jobid = '{}'", jobid);
-
-            tx.exec(querystr);
-            querystr = std::format("DELETE FROM TrafficJobs WHERE jobname = '{}'", jobname);
-
-            tx.exec(querystr);
-            tx.commit();
+            for (const int& id : jobids){
+                pqxx::work tx{*connect_};
+                std::string querystr = std::format("DELETE FROM snapshotData  WHERE jobid = '{}'", id);
+                tx.exec(querystr);
+                querystr = std::format("DELETE FROM CarData WHERE jobid = '{}'", id);
+    
+                tx.exec(querystr);
+                querystr = std::format("DELETE FROM TrafficJobs WHERE jobid = '{}'", id);
+    
+                tx.exec(querystr);
+                tx.commit();
+            }
             return std::expected<void, std::string>{};
         } catch(const std::exception& e) {
             std::string errMsg = std::format("Error deleting {} from database: {}", jobname, e.what());
