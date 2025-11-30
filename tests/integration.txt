@@ -1,12 +1,14 @@
-Combinations of components that can be combined into an integration test. 
+Integration Tests: 
 
-Regression Testing. 
+DB Reader + Job Manager Test: 
+Submits jobs via the Job Manager and reads data from the Database via the DB Reader. 
+Compares the values from the Multiple Cars cases to the Single Car cases. 
+
+Regression Test: 
 Submit one job that uses the file logger. Compare the hashes of the logs with the known hash
 Submit one job that uses the file logger. submit one that uses the Test db logger. 
-Compare those to see if they are the same. 
+Compare those to see if they are the same via SHA 256 (Requires OpenSSL)
 
-Integration Testing: 
-Submit 1-2 jobs via the JobManager. 
-Mock the DB logger and make sure it has 2 calls to it. 
-
-Hash the File logging and check if it matches the known hash. 
+Api Integration Test: 
+Runs the API in Test mode
+Sends api requests and checks the status codes for code 200 (Requires curl and json)
