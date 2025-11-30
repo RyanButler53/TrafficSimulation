@@ -18,6 +18,7 @@ class CarFactory {
 
 protected: 
     std::shared_ptr<CarLogger> logger_;
+    mutable size_t carid_;
 
 public:
     CarFactory(std::shared_ptr<CarLogger> logger);
@@ -30,7 +31,6 @@ class GippsCarFactory : public CarFactory {
     double a_;
     double b_;
     double bmax_;
-    
 
     public: 
     GippsCarFactory(double a, double b, double bmax, std::shared_ptr<CarLogger> logger);

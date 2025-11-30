@@ -13,8 +13,9 @@
 #include <exception>
 #include <filesystem>
 #include <memory>
+#include <expected>
 
-#include "yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
 #include "leadStrategy.hpp"
 #include "strategy.hpp"
 #include "carFactory.hpp"
@@ -30,12 +31,13 @@ class Parser {
 
     protected:
     YAML::Node cfg_;
+    std::filesystem::path configPath_; // Required for reproducing simulation runs
     std::shared_ptr<CarFactory> factory_;
     std::shared_ptr<CarLogger> logger_;
+    Lane lane_;
     double totaltime_;
     double dt_;
     uint64_t seed_;
-
 
 
     // Template Utility functions of parsing algorithm
@@ -44,21 +46,21 @@ class Parser {
      * @brief General stuff for all simulations
      * @details Log directory, Time, dt, seed
      */
-    void parseGeneral();
+    std::expected<void, std::string> parseGeneral();
     
     /**
      * @brief Parses the lead strategy
      * 
      * @throw Throws an error if the strategy does not supply the right data. 
      */
-    std::shared_ptr<LeadStrategy> parseLeadStrategy(YAML::Node leadNode);
+    std::expected<std::shared_ptr<LeadStrategy>, std::string> parseLeadStrategy(YAML::Node leadNode);
 
     /**
      * @brief Parses the Driver Factory. Can be either Gipps or Intelligent
      * @throw Throws an error if factory is not "Gipps" or "IDM" (case sensitive) or 
      * if the driver parameters are incorrect. 
      */
-    void parseCarFactory();
+    std::expected<void, std::string> parseCarFactory(void);
 
     /**
      * @brief Parses the node for Flow Generation parameters
@@ -66,24 +68,36 @@ class Parser {
      * @param flowNode Node with flow generation
      * @return FlowGenerator with zero flow. Override to parse flow. 
      */
-    virtual FlowGenerator parseFlow(YAML::Node flowNode){return FlowGenerator();}
+    virtual std::expected<FlowGenerator, std::string> parseFlow(YAML::Node flowNode){return FlowGenerator();}
 
     /**
      * @brief Fills a lane with cars. Hook Method
      * 
      * @param lane Lane to populate with cars
      */
-    virtual void  parseLane(Lane& lane){}
+    virtual std::expected<void, std::string> parseLane(){return {};}
+
+    template <typename T>
+    std::expected<T, std::string> ParseField(YAML::Node node, std::string key){
+        if (!node[key]){
+            return std::unexpected("Field not present");
+        }
+        try {
+            return node[key].as<T>();
+        } catch(const std::exception& e)  {
+            return std::unexpected(std::format("Error parsing {} field: {}", key, e.what()));
+        }   
+    }
 
     public:
-    Parser(YAML::Node cfg):cfg_{cfg}{};
+    Parser(YAML::Node cfg, std::filesystem::path cfgpath):cfg_{cfg},configPath_{cfgpath}{};
 
     /**
      * @brief Common algorithm to parse the inputs. 
      * 
-     * @return SimulatorInputs 
+     * @return Expected SimulatorInputs result or an error string
      */
-    SimulatorInputs parse();
+    std::expected<SimulatorInputs, std::string> parse();
 };
 
 /**
@@ -93,16 +107,15 @@ class Parser {
  */
 class DiscreteParser : public Parser {
 
-
     /**
      * @brief Fills a lane with cars for a discrete simulation
      * 
      * @param lane Lane to populate with cars
      */
-    void parseLane(Lane& lane) override;
+    virtual std::expected<void, std::string>  parseLane() override;
 
     public: 
-    DiscreteParser(YAML::Node cfg):Parser(cfg){};
+    using Parser::Parser;
 };
 
 class ContinuousParser : public Parser {
@@ -115,12 +128,11 @@ class ContinuousParser : public Parser {
      * @param flowNode 
      * @return FlowGenerator 
      */
-    FlowGenerator parseFlow(YAML::Node flowNode) override;
+    std::expected<FlowGenerator, std::string> parseFlow(YAML::Node flowNode) override;
 
-    void parseLane(Lane& lane) override;
+    std::expected<void, std::string> parseLane() override;
 
-
-    ContinuousParser(YAML::Node cfg):Parser(cfg){}
+    using Parser::Parser;
 };
 
 struct InvalidConfigError : public std::exception {

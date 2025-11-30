@@ -11,6 +11,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <expected>
 #include <yaml-cpp/yaml.h>
 
 #include "parser.hpp"
@@ -18,9 +19,10 @@
 class ParserFactory{
 
     YAML::Node cfg_;
-
+    std::filesystem::path cfgpath_;
+    
     public:
 
     ParserFactory(std::filesystem::path cfgpath);
-    std::unique_ptr<Parser> makeParser();
+    std::expected<std::unique_ptr<Parser>, std::string> makeParser();
 };
