@@ -11,6 +11,7 @@
 #include <optional>
 #include <ranges>
 #include <functional>
+#include <unordered_map>
 
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/core/macro/codegen.hpp"
@@ -26,6 +27,16 @@ class Controller : public oatpp::web::server::api::ApiController {
     
     std::shared_ptr<DBReader> reader_;
     JobManager manager_;
+    
+    static inline std::unordered_map<std::string, JOB_STATUS> map_ = {
+        {"INVALID", JOB_STATUS::INVALID}, 
+        {"QUEUED", JOB_STATUS::QUEUED},
+        {"RUNNING", JOB_STATUS::RUNNING},
+        {"DONE", JOB_STATUS::DONE},
+        {"ERROR", JOB_STATUS::ERROR}
+    };
+    
+
     // Error DTO Prototype in the class
     using ErrorResponse = ErrorDTO::Wrapper;
     ErrorResponse error_ = ErrorDTO::createShared();
@@ -97,8 +108,13 @@ class Controller : public oatpp::web::server::api::ApiController {
         auto job = JobDataDTO::createShared();
         job->jobname = j.jobName_;
         job->cfgfile = j.cfgPath_;
+        job->errorMessage = j.errorMsg_;
+        if (map_.find(j.status_) == map_.end()){
+            job->status = JOB_STATUS::INVALID;
+        }
         return job;
     }
+
 
     public:
 
@@ -242,5 +258,13 @@ class Controller : public oatpp::web::server::api::ApiController {
             }
         }
 };
+
+// std::unordered_map<std::string, JOB_STATUS> Controller::map_ = {
+//     {"INVALID", JOB_STATUS::INVALID}, 
+//     {"QUEUED", JOB_STATUS::QUEUED},
+//     {"RUNNING", JOB_STATUS::RUNNING},
+//     {"DONE", JOB_STATUS::DONE},
+//     {"ERROR", JOB_STATUS::ERROR}
+// };
 
 #include OATPP_CODEGEN_END(ApiController) ///< End Codegen

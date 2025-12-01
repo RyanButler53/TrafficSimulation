@@ -2,6 +2,17 @@
 #include "oatpp/core/data/mapping/type/Object.hpp"
 
 #include "oatpp/core/macro/codegen.hpp"
+#include "oatpp/codegen/dto/enum_define.hpp"
+
+#include OATPP_CODEGEN_BEGIN(DTO)
+ENUM(JOB_STATUS, uint8_t, 
+  VALUE(INVALID, 0),
+  VALUE(QUEUED,  1),
+  VALUE(RUNNING, 2),
+  VALUE(DONE,    3),
+  VALUE(ERROR,   4)
+);
+#include OATPP_CODEGEN_END(DTO)
 
 
 // Follow Model Params
@@ -11,7 +22,7 @@ class FollowModelDTO : public oatpp::DTO {
   DTO_INIT(FollowModelDTO, DTO);
 
   DTO_FIELD(String, model);
-  DTO_FIELD(Float64,  a);
+  DTO_FIELD(Float64, a);
   DTO_FIELD(Float64, b);
 };
 #include OATPP_CODEGEN_END(DTO)
@@ -91,6 +102,8 @@ class JobDataDTO : public oatpp::DTO {
 
   DTO_FIELD(String, jobname);
   DTO_FIELD(String, cfgfile);
+  DTO_FIELD(Enum<JOB_STATUS>, status);
+  DTO_FIELD(String, errorMessage);
 
 };
 #include OATPP_CODEGEN_END(DTO)

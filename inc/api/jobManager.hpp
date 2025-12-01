@@ -26,7 +26,7 @@ enum class JobStatus : uint8_t {
     QUEUED = 1,
     RUNNING = 2,
     DONE = 3,
-    FAILED = 4 // Jobs that throw runtime errors
+    ERROR = 4 // Jobs that throw runtime errors
 };
 
 class Job {

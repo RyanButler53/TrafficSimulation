@@ -68,6 +68,6 @@ JobStatus JobManager::status(uint32_t id){
 // Runs the job
 JobStatus Job::operator()(){
     // Loses the error message: Where should it go?
-    return Simulator(inputs_).run().transform([](){return JobStatus::DONE;}).value_or(JobStatus::FAILED);
+    return Simulator(inputs_).run().transform([](){return JobStatus::DONE;}).value_or(JobStatus::ERROR);
 }
 

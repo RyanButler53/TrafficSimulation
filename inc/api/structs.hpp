@@ -7,6 +7,8 @@
 struct JobData {
     std::string jobName_;
     std::string cfgPath_;
+    std::string errorMsg_; // Is empty when no error is present
+    std::string status_;
 };
 
 struct FollowModelParams {

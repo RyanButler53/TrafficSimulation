@@ -26,15 +26,6 @@ DBReader::DBReader(bool testDB){
 void DBReader::init(std::string connectionStr){
     try {   
         connect_ = std::make_shared<pqxx::connection>(connectionStr);
-        // Initialize tables if not initialized
-
-        /// @warning This code is duplicated from the DBLoggerBase's setup code
-        // Create 3 tables: Traffic Jobs Main Table, Car Data Table (including strategies), Main data table (with car x,v,t values)
-        pqxx::work tx(*connect_);
-        tx.exec("CREATE TABLE IF NOT EXISTS trafficJobs ( jobID int GENERATED ALWAYS AS IDENTITY PRIMARY KEY, configfile text, jobname text)");
-        tx.exec("CREATE TABLE IF NOT EXISTS carData (carID int, jobID int, follow text, lead text, FOREIGN KEY (jobID) REFERENCES trafficjobs(jobID) , PRIMARY KEY (carID, jobID))");
-        tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
-        tx.commit();
     } catch(const std::exception& e) {
         std::cout << "Error connecting to the database" << std::endl;
         std::cerr << e.what() << '\n';
@@ -47,7 +38,7 @@ void DBReader::init(std::string connectionStr){
 // JOB DATA
 
 std::expected<JobData, std::string> DBReader::queryJobs(std::string jobname){
-    std::string querystr = std::format("SELECT jobname, configfile FROM TrafficJobs WHERE jobname = '{}'", jobname);
+    std::string querystr = std::format("SELECT jobname, configfile, status, error  FROM TrafficJobs WHERE jobname = '{}'", jobname);
     pqxx::work tx{*connect_};
     pqxx::result result;
     try {
@@ -60,15 +51,18 @@ std::expected<JobData, std::string> DBReader::queryJobs(std::string jobname){
         return std::unexpected("No job named " + jobname);
     }
     pqxx::row r = result[0];
-    std::string name,cfgfile;
+    std::string name,cfgfile,error, status;
+    // JobStatus status = JobStatus::INVALID;
     try {
-        name = r[0].as<std::string>();
-        cfgfile = r[1].as<std::string>();
+        name = r["jobname"].as<std::string>();
+        cfgfile = r["configfile"].as<std::string>();
+        error = r["error"].as<std::string>();
+        status = r["status"].as<std::string>();
     } catch(const std::exception& e) {
         return std::unexpected("Error converting name or cfgfile to a string");
     }
-    
-    return JobData{name, cfgfile};
+
+    return JobData{name, cfgfile, error, status};
 }
 
 std::expected<std::vector<JobData>, std::string> DBReader::queryJobs(){
@@ -76,8 +70,8 @@ std::expected<std::vector<JobData>, std::string> DBReader::queryJobs(){
     pqxx::work tx{*connect_};
     std::vector<JobData> data;
     try {
-        for (auto [name, cfg] : tx.query<std::string, std::string>(querystr)){
-            data.push_back({name, cfg});
+        for (auto [name, cfg, status, error] : tx.query<std::string, std::string, std::string, std::string>(querystr)){
+            data.push_back({name, cfg, error, status});
         }    
     } catch(const std::exception& e) {
         return std::unexpected(std::format("Error in SELECT query from DB Reader: ", e.what()));

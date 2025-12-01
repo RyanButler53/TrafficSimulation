@@ -3,11 +3,15 @@
 #include "api/api.hpp"
 #include "api/appComponent.hpp"
 #include "api/Controller/controller.hpp"
+#include "database/databaseInit.hpp"
 #include "oatpp/network/Server.hpp"
 
 
 void TrafficApi::run() {
 
+    if (initDB::initDB(useTestDB_)){
+        return;
+    }
     // Registers these as COMPONENTS! (CRTP?)
     AppComponent components;
     // Makes a local var called "router" 

@@ -14,6 +14,7 @@
 #include "sim/simulator.hpp"
 #include "sim/parser.hpp"
 #include "sim/parserFactory.hpp"
+#include "database/databaseInit.hpp"
 #include <expected>
 
 
@@ -40,8 +41,11 @@ std::expected<void, std::string> Simulator::run(){
 }
 
 int Traffic::Simulate(std::string configfile){
+    if (initDB::initDB(false)){
+        return 1;
+    }
     ParserFactory parserFac(configfile);
-    return parserFac.makeParser()
+    return parserFac.makeParser() // this hits a DB. 
                     .and_then([](std::unique_ptr<Parser> p){return p->parse();})
                     .and_then([](SimulatorInputs inputs){return Simulator(inputs).run();})
                     .transform_error([](std::string err){std::cerr << err << std::endl; return err;})
