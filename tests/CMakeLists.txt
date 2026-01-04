@@ -42,10 +42,10 @@ target_link_libraries(regression PUBLIC simulation
                                         GTest::gtest_main
                                         pqxx_wrapper)
 
-add_executable(dbreader dbReader.cpp)
-target_link_libraries(dbreader PUBLIC simulation 
+add_executable(dbManagerTest dbManager.cpp)
+target_link_libraries(dbManagerTest PUBLIC simulation 
                                       jobManager 
-                                      dbReader
+                                      dbmanager
                                       GTest::gtest 
                                       GTest::gtest_main 
                                       pqxx_wrapper)

@@ -13,8 +13,7 @@ std::expected<void, std::string> initDB::initDB(bool useTestDB){
         
         pqxx::work tx(connect);
         
-        tx.exec("DO $$ BEGIN CREATE TYPE job_status AS ENUM ('INVALID', 'QUEUED', 'RUNNING', 'DONE', 'ERROR'); EXCEPTION WHEN duplicate_object THEN null; END $$");
-        tx.exec("CREATE TABLE IF NOT EXISTS trafficJobs ( jobID int GENERATED ALWAYS AS IDENTITY PRIMARY KEY, configfile text, jobname text, status job_status, error text)");
+        tx.exec("CREATE TABLE IF NOT EXISTS trafficJobs ( jobID int GENERATED ALWAYS AS IDENTITY PRIMARY KEY, configfile text, jobname text, status varchar(7), error text)");
         tx.exec("CREATE TABLE IF NOT EXISTS carData (carID int, jobID int, follow text, lead text, FOREIGN KEY (jobID) REFERENCES trafficjobs(jobID) , PRIMARY KEY (carID, jobID))");
         tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
         tx.commit();

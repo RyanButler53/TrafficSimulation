@@ -38,14 +38,12 @@ void JobManager::threadRoutine(){
 
 }
 
+// Do this with monads better
 std::expected<uint32_t, std::string> JobManager::submit(std::string path){
-
-    // Do the Parsing here since its so fast it can be redone later. 
     
     std::expected<SimulatorInputs, std::string> inputs = ParserFactory(path).makeParser()
-                                                                            .and_then([](std::unique_ptr<Parser> p){return p->parse();});
+                                                                            .and_then(std::mem_fn(&Parser::parse));
     if (!inputs.has_value()){
-        std::cout << "Input checking error" << std::endl;
         return std::unexpected("Input Checking Error: " + inputs.error());
     } 
     statuses_.push_back(JobStatus::QUEUED);
@@ -67,7 +65,7 @@ JobStatus JobManager::status(uint32_t id){
 
 // Runs the job
 JobStatus Job::operator()(){
-    // Loses the error message: Where should it go?
+    // Error message will go to the database if DB Logging is selected
     return Simulator(inputs_).run().transform([](){return JobStatus::DONE;}).value_or(JobStatus::ERROR);
 }
 

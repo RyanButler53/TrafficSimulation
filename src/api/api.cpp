@@ -9,7 +9,8 @@
 
 void TrafficApi::run() {
 
-    if (initDB::initDB(useTestDB_)){
+    if (!initDB::initDB(useTestDB_)){
+        std::cerr << "Cannot initialize database!" << std::endl;
         return;
     }
     // Registers these as COMPONENTS! (CRTP?)
@@ -18,7 +19,7 @@ void TrafficApi::run() {
     OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
 
     auto controller = std::make_shared<Controller>();
-    controller->setDBReader(useTestDB_);
+    controller->setDBManager(useTestDB_);
     router->addController(controller);
 
     OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler);

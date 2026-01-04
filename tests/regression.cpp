@@ -167,8 +167,8 @@ protected:
 };
 
 TEST_F(RegressionTest, FileDBEquivalence){
-    ASSERT_EQ(Traffic::Simulate("fileConfig.yaml"), 0);
-    ASSERT_EQ(Traffic::Simulate("dbConfig.yaml"), 0);
+    ASSERT_TRUE(Traffic::Simulate("fileConfig.yaml").has_value());
+    ASSERT_TRUE(Traffic::Simulate("dbConfig.yaml").has_value());
 
     // Need to compare both of them, car by car at each timestamp. 
 

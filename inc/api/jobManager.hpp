@@ -18,16 +18,10 @@
 #include <condition_variable>
 #include <atomic>
 #include <expected>
+#include "structs.hpp"
 #include "sim/simulator.hpp"
 
 
-enum class JobStatus : uint8_t {
-    INVALID = 0, // Jobs that can't parse
-    QUEUED = 1,
-    RUNNING = 2,
-    DONE = 3,
-    ERROR = 4 // Jobs that throw runtime errors
-};
 
 class Job {
 

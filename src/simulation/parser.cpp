@@ -22,18 +22,14 @@ std::expected<void, std::string> Parser::parseGeneral() {
     std::string logtype = ParseField<std::string>(cfg_, "logtype").value_or("file");
     std::string jobname = ParseField<std::string>(cfg_, "jobname").value(); // needs a default that is the specified by api call. 
     std::string logdir = ParseField<std::string>(cfg_, "logdir").value_or("."); // assumes user has rw access to current dir. 
-    if (logtype == "db"){
-        logger_ = std::make_shared<DBLogger>(jobname, configPath_);
-    } else if (logtype == "test"){
-        logger_ = std::make_shared<DBLoggerTest>(jobname, configPath_);
+
+    if (logtype == "db" or logtype == "test"){
+        return DBLogger::make(jobname, configPath_, logtype == "test").transform([this](std::shared_ptr<DBLogger> log){logger_ = log;});
+        
     } else {
         logger_ = std::make_shared<FileLogger>(logdir);
+        return {};
     }
-    
-    if (!logger_){
-        return std::unexpected("Error constructing the logger");
-    } 
-    return {};
 }
 
 std::expected<void, std::string> Parser::parseCarFactory(){
@@ -94,14 +90,10 @@ std::expected<std::shared_ptr<LeadStrategy>, std::string> Parser::parseLeadStrat
 
 // Put all the parsing together
 std::expected<SimulatorInputs, std::string> Parser::parse() {
+    return parseGeneral().and_then([this](){return parseCarFactory();})
+                         .and_then([this](){return parseLane();})
+                         .transform([this](){return SimulatorInputs{logger_, lane_, totaltime_, dt_};});
 
-    std::expected<void, std::string> result = parseGeneral().and_then([this](){return parseCarFactory();})
-                                                            .and_then([this](){return parseLane();});
-    if (result.has_value()){
-        return SimulatorInputs{logger_, lane_, totaltime_, dt_};
-    } else {
-        return std::unexpected(result.error());
-    }
 }
 
 // Discrete Parser specific functions
@@ -143,7 +135,6 @@ std::expected<void, std::string> DiscreteParser::parseLane(){
 }
 
 std::expected<void, std::string> ContinuousParser::parseLane(){
-    // YAML::Node lanenode = cfg_["lane"];
     std::expected<std::shared_ptr<LeadStrategy>, std::string> leadStrat = parseLeadStrategy(cfg_["leadCar"]);
     
     // If the flow is specified in the lane, parse and use that. Breaks down in single lane case
