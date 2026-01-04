@@ -12,6 +12,7 @@
 
 class DBManagerTest : public ::testing::Test {
 
+    protected:
     YAML::Node getConfigNode() {
         YAML::Node cfg;
         cfg["type"] = "continuous";
@@ -39,14 +40,26 @@ class DBManagerTest : public ::testing::Test {
         cfg["leadCar"]["vdes"] = 45;
 
         cfg["end"] = 1500;
+        cfg["logtype"] = "test";
+
         return cfg;
+    }
+
+    void clearDB() {
+        // Clear out the Test DB:
+        pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
+        pqxx::work tx(connect);
+
+        tx.exec("DROP TABLE IF EXISTS trafficjobs CASCADE");
+        tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
+        tx.exec("DROP TABLE IF EXISTS snapshotData");
+        tx.commit();
     }
 
     void SetUp() override {
 
         for (size_t i = 0; i < 3; ++i){
             YAML::Node dbLog = getConfigNode();
-            dbLog["logtype"] = "test";
             dbLog["jobname"] = std::format("test-dbreader{}", i);
             dbLog["seed"] = 70 + i;
 
@@ -56,14 +69,7 @@ class DBManagerTest : public ::testing::Test {
             dbCfg << dbout.c_str();
         }
 
-        // Clear out the Test DB:
-        pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
-        pqxx::work tx(connect);
-
-        tx.exec("DROP TABLE IF EXISTS trafficjobs CASCADE");
-        tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
-        tx.exec("DROP TABLE IF EXISTS snapshotData");
-        tx.commit();
+        clearDB();
 
         // Run the tests with the job scheduler. 
         JobManager j;
@@ -85,6 +91,31 @@ class DBManagerTest : public ::testing::Test {
     }
 
 };
+
+class ErrorLogTest : public DBManagerTest {
+
+    void SetUp() override {
+        YAML::Node dbLog = getConfigNode();
+        dbLog["jobname"] = "test-dbreader3";
+        dbLog["seed"] = 70;
+        dbLog["flow"]["rate"] = 1000;
+        dbLog["flow"]["v0"] = 40;
+
+        YAML::Emitter dbout;
+        std::ofstream dbCfg("dbConfig3.yaml");
+        dbout << dbLog;
+        dbCfg << dbout.c_str();
+
+        clearDB();
+
+    }
+
+    void TearDown() override {
+        std::filesystem::path fname = "dbConfig3.yaml";
+        // if (std::filesystem::exists(fname)) std::filesystem::remove(fname);
+    }
+};
+
 
 TEST_F(DBManagerTest, evaulateDB){
     DBManager reader(true);
@@ -151,3 +182,16 @@ TEST_F(DBManagerTest, evaulateDB){
     EXPECT_TRUE(jobsAll.value().empty());
 }
 
+TEST_F(ErrorLogTest, errorLogging){
+    // Need to see if the error exists. 
+
+    std::expected<void, std::string> result = Traffic::Simulate("dbConfig3.yaml");
+    ASSERT_TRUE(result.has_value()) << std::format("Error Querying Job test-dbreader3: {}", result.error());
+
+    DBManager reader(true);
+
+    std::expected<JobData, std::string> data = reader.queryJobs("test-dbreader3");
+    ASSERT_TRUE(data.has_value()) << std::format("Error Querying Job test-dbreader3: {}", data.error());
+    std::cout << data->errorMsg_ << std::endl;
+    std::cout << data->status_ << std::endl;
+}

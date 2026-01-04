@@ -88,6 +88,14 @@ class Car {
 
     void log() const;
     void log(std::ostream& os) const;
+
+    /**
+     * @brief Check if an "accident" has occured. 
+     * @details Checks if a gap is < 0 or velocity < 0
+     * 
+     * @return true if no issues, false if error. 
+     */
+    bool check() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Car& c);

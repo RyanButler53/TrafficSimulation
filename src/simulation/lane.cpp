@@ -12,11 +12,11 @@
 
 Lane::Lane(std::list<Car>& cars):cars_{std::move(cars)}{}
 
-void Lane::updateLane(double dt){
+std::expected<void, std::string> Lane::updateLane(double dt){
     if (cars_.empty()){
         std::cout << "Empty lane" << std::endl;
         addFlow(dt);
-        return;
+        return {};
     }
     
     std::list<Car>::iterator current = cars_.begin();
@@ -24,6 +24,7 @@ void Lane::updateLane(double dt){
     while (next != cars_.end()){
         Car& lead = *next;
         current->step(lead, dt);
+        if (!current->check()){return std::unexpected("Accident occured");}
         ++current;
         ++next;
     }
@@ -37,14 +38,11 @@ void Lane::updateLane(double dt){
     while (cars_.back().getPosition() > end_) {
         cars_.pop_back();
     }
-    
+    return {};
 }
 
 void Lane::addFlow(double dt){
-    std::optional<Car> nextCar = flowgen_.generateFlow(dt);
-    if (nextCar) {
-        cars_.push_front(*nextCar);
-    }
+    flowgen_.generateFlow(dt).transform([this](Car c){cars_.push_front(c); return c;});
 }
 
 void Lane::addCar(Car& c){

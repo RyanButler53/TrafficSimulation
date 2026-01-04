@@ -56,6 +56,10 @@ void Car::update(double dt){
     log();
 }
 
+bool Car::check() const {
+    return vel_ >= 0 || gap_ >= 0;
+}
+
 // Logging Methods
 
 void Car::log() const {

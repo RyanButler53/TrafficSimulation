@@ -24,14 +24,19 @@ Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
 
 std::expected<void, std::string> Simulator::mainLoop(){
     double t = 0;
+    std::expected <void, std::string> ret;
     while (t < totalTime_){
-        lane_.updateLane(dt_);
+        ret = lane_.updateLane(dt_);
+        if (!ret.has_value()){
+            break;
+        }
         t += dt_;
         
         if (lane_.done()){
             break;
         }
     }
+    logger_->writeData();
     return {};
 }
 
@@ -39,18 +44,15 @@ std::expected<void, std::string> Simulator::run(){
 
     return logger_->updateStatus("RUNNING")
                     .and_then([this]{return mainLoop();})
-                    .and_then([this]{return logger_->writeData();})
                     .and_then([this]{return logger_->updateStatus("DONE");})
                     .or_else([this](std::string msg){return logger_->logFailure(msg);});
 }
 
 std::expected<void, std::string> Traffic::Simulate(std::string configfile){
-    if (initDB::initDB(false)){
-        return {};
-    }
+
     ParserFactory parserFac(configfile);
-    return parserFac.makeParser() // this hits a DB. 
-                    .and_then(std::mem_fn(&Parser::parse))
+    return parserFac.makeParser()
+                    .and_then(std::mem_fn(&Parser::parse)) // this hits a DB. 
                     .and_then([](SimulatorInputs inputs){return Simulator(inputs).run();});
 
 }

@@ -48,7 +48,7 @@ std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
     } catch(const std::exception& e) {
         return std::unexpected(std::format("Error executing SELECT query: {}",  e.what()));
     }
-    
+
     if (result.empty()) {
         return std::unexpected("No job named " + jobname);
     }
