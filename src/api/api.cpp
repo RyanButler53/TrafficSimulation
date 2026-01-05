@@ -24,7 +24,7 @@ void TrafficApi::run() {
 
     OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler);
     OATPP_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, connectionProvider);
-  
+
     oatpp::network::Server server(connectionProvider, connectionHandler);
 
     /* Print info about server port */

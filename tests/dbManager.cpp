@@ -98,7 +98,7 @@ class ErrorLogTest : public DBManagerTest {
         YAML::Node dbLog = getConfigNode();
         dbLog["jobname"] = "test-dbreader3";
         dbLog["seed"] = 70;
-        dbLog["flow"]["rate"] = 1000;
+        dbLog["flow"]["rate"] = 900;
         dbLog["flow"]["v0"] = 40;
 
         YAML::Emitter dbout;
@@ -112,7 +112,7 @@ class ErrorLogTest : public DBManagerTest {
 
     void TearDown() override {
         std::filesystem::path fname = "dbConfig3.yaml";
-        // if (std::filesystem::exists(fname)) std::filesystem::remove(fname);
+        if (std::filesystem::exists(fname)) std::filesystem::remove(fname);
     }
 };
 
@@ -192,6 +192,6 @@ TEST_F(ErrorLogTest, errorLogging){
 
     std::expected<JobData, std::string> data = reader.queryJobs("test-dbreader3");
     ASSERT_TRUE(data.has_value()) << std::format("Error Querying Job test-dbreader3: {}", data.error());
-    std::cout << data->errorMsg_ << std::endl;
-    std::cout << data->status_ << std::endl;
+    ASSERT_EQ(data->errorMsg_, "Accident Occurred at time 10: Car 6 is at x = 39.24 and its predecessor is at x = 16.13");
+    ASSERT_EQ(data->status_, "ERROR");
 }

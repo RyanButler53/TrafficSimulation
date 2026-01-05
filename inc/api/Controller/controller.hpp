@@ -10,6 +10,7 @@
 #include <fstream>
 #include <optional>
 #include <ranges>
+#include <format>
 #include <functional>
 #include <unordered_map>
 
@@ -128,6 +129,7 @@ class Controller : public oatpp::web::server::api::ApiController {
     
     // Get simple information about a job
     ENDPOINT("GET", "/jobs/{job-name}", queryJobs, PATH(String, jobname, "job-name")){
+        OATPP_LOGI("Controller","Getting job information for job: \"%s\"", jobname->c_str());
 
         // Query Database for job
         auto data = dataManager_.queryJobs(jobname);
@@ -180,7 +182,7 @@ class Controller : public oatpp::web::server::api::ApiController {
     // Getting raw data about one car
     ENDPOINT("GET", "/data/{job-name}/raw/{car}", getRawData, 
             PATH(String, job, "job-name"), PATH(Int32, car, "car")){
-        OATPP_LOGI("Controller", "Getting raw data for car %d in %s", int(car), std::string(job).c_str());
+        OATPP_LOGI("Controller", "Getting raw data for car %d in %s", int(car), job->c_str());
 
         auto raw = dataManager_.queryData(job, car);
         return getReturnDto(raw.transform(Controller::convertRaw).transform_error(Controller::translateError));
@@ -189,6 +191,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         // Getting raw data about ALL cars (this is a big call)
     ENDPOINT("GET", "/data/{job-name}/raw/", getAllRawData, 
         PATH(String, job, "job-name")){
+            OATPP_LOGI("Controller", "Getting raw data for all cars in job %s", job->c_str());
 
         auto raw = dataManager_.queryData(job);
         auto translate = [](const std::vector<RawData>& raw){
@@ -244,6 +247,9 @@ class Controller : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("DELETE", "/delete/{job-name}", deleteJob, 
         PATH(String, jobname, "job-name")){
+
+            std::string msg = std::format("Attempting to delete job {}", std::string(jobname));
+            OATPP_LOGI("Controller", "%s", msg.c_str());
             // Delete job handles checking if it exists. 
             std::expected<void, std::string> result = dataManager_.deleteJob(jobname);
             if (result.has_value()){
@@ -258,13 +264,5 @@ class Controller : public oatpp::web::server::api::ApiController {
             }
         }
 };
-
-// std::unordered_map<std::string, JOB_STATUS> Controller::map_ = {
-//     {"INVALID", JOB_STATUS::INVALID}, 
-//     {"QUEUED", JOB_STATUS::QUEUED},
-//     {"RUNNING", JOB_STATUS::RUNNING},
-//     {"DONE", JOB_STATUS::DONE},
-//     {"ERROR", JOB_STATUS::ERROR}
-// };
 
 #include OATPP_CODEGEN_END(ApiController) ///< End Codegen

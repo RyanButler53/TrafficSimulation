@@ -11,6 +11,7 @@
 #include "sim/car.hpp"
 #include <algorithm>
 #include <memory>
+#include <format>
 
 
 Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
@@ -35,12 +36,17 @@ void Car::step(double dt){
     update(dt);
 }
 
-void Car::step(const Car& lead, double dt){
+std::optional<std::string> Car::step(const Car& lead, double dt){
 
     // Get information about lead car
     double xlead = lead.getPosition();
     double vlead = lead.getVelocity();
     double leadLen = lead.getLength();
+
+    // Check for an accident
+    if (xlead <= pos_){
+        return std::make_optional(std::format("Accident Occurred at time {}: Car {} is at x = {:.2f} and its predecessor is at x = {:.2f}", timestep_, id_, pos_, xlead));
+    }
 
     // Find the new velocity
     double gap = xlead - leadLen - pos_;
@@ -48,6 +54,7 @@ void Car::step(const Car& lead, double dt){
     
     // Update Position and time
     update(dt);
+    return std::nullopt;
 }
 
 void Car::update(double dt){
@@ -56,9 +63,6 @@ void Car::update(double dt){
     log();
 }
 
-bool Car::check() const {
-    return vel_ >= 0 || gap_ >= 0;
-}
 
 // Logging Methods
 

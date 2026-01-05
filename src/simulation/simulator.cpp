@@ -24,20 +24,16 @@ Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
 
 std::expected<void, std::string> Simulator::mainLoop(){
     double t = 0;
-    std::expected <void, std::string> ret;
+    std::expected <void, std::string> simStatus;
     while (t < totalTime_){
-        ret = lane_.updateLane(dt_);
-        if (!ret.has_value()){
-            break;
-        }
+        simStatus = lane_.updateLane(dt_);
         t += dt_;
-        
-        if (lane_.done()){
+        if (!simStatus.has_value() || lane_.done()){
             break;
         }
     }
     logger_->writeData();
-    return {};
+    return simStatus;
 }
 
 std::expected<void, std::string> Simulator::run(){

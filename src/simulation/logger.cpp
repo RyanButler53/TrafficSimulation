@@ -110,6 +110,13 @@ std::expected<void, std::string> FileLogger::writeData(){
     return {};
 }
 
+std::expected<void, std::string> FileLogger::logFailure(std::string message) {
+    std::ofstream errorOut(basepath_ / fs::path("error.txt"));
+    errorOut << "Job failed: " << message << std::endl;
+    errorOut.close();
+    return {};
+}
+
 // DATABASE LOGGER
 
 DBLogger::DBLogger(std::string jobname, std::string config, bool test):

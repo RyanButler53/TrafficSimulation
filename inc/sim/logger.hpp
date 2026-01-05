@@ -107,7 +107,7 @@ class CarLogger
 
 
     /**
-     * @brief Writes the simulation status as "DONE" with no error. 
+     * @brief Updates the simulation's status to a new status 
      * 
      * @return std::expected<void, std::string> 
      */
@@ -117,7 +117,7 @@ class CarLogger
      * @brief Writes and commits the job status as "ERROR" and populates the error message field
      * 
      */
-    virtual std::expected<void, std::string> logFailure(std::string message){return {};};
+    virtual std::expected<void, std::string> logFailure(std::string message) = 0;
 
     protected:
 
@@ -133,6 +133,7 @@ class FileLogger : public CarLogger {
 
     std::expected<void, std::string> writeData() override;
 
+    std::expected<void, std::string> logFailure(std::string message) override;
 };
 
 

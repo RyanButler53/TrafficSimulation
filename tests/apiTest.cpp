@@ -220,15 +220,14 @@ TEST_F(ApiTest, Waiting){
 
     CurlWrapper requester;
     CurlResponse response = requester.queryJobs();
-    ASSERT_TRUE(response.has_value()) << std::format("Error Querying Jobs: {}", response.error());
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying All Jobs: {}", response.error());
     ASSERT_EQ(response.value().code, 200);
+    size_t initialNumJobs = response.value().jsonData["jobs"].size();
 
     // No check for return code here, 200 and 400 are both valid. Just clearing out the DB. 
     response = requester.deleteJob("apiTest");
     ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
-    
 
-    size_t initialNumJobs = response.value().jsonData["jobs"].size();
     response = requester.postJob("apiTest", std::filesystem::absolute("./apiConfig.yml"));
     ASSERT_TRUE(response.has_value()) << std::format("Error Submitting Simulation: {}", response.error());
 

@@ -1,0 +1,27 @@
+type: continuous
+time: 15
+timestep: 1
+driverType: Gipps
+driverParams:
+  a: 1.981
+  b: -2.8955
+  bmax: -5.505
+  a_stdev: 0.1
+  bmax_stdev: 0.1
+flow:
+  rate: 900
+  v0: 40
+  vdes: 35
+leadCar:
+  leadType: function
+  function:
+    sine:
+      a: 5
+      b: 0.04
+      c: 40
+  v0: 40
+  vdes: 45
+end: 1500
+logtype: test
+jobname: crash
+seed: 70

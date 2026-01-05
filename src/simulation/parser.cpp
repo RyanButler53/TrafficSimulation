@@ -21,7 +21,7 @@ std::expected<void, std::string> Parser::parseGeneral() {
 
     std::string logtype = ParseField<std::string>(cfg_, "logtype").value_or("file");
     std::string jobname = ParseField<std::string>(cfg_, "jobname").value(); // needs a default that is the specified by api call. 
-    std::string logdir = ParseField<std::string>(cfg_, "logdir").value_or("."); // assumes user has rw access to current dir. 
+    std::string logdir = ParseField<std::string>(cfg_, "logdir").value_or(std::format("./{}", jobname)); // assumes user has rw access to current dir. 
 
     if (logtype == "db" or logtype == "test"){
         return DBLogger::make(jobname, configPath_, logtype == "test").transform([this](std::shared_ptr<DBLogger> log){logger_ = log;});
@@ -44,8 +44,8 @@ std::expected<void, std::string> Parser::parseCarFactory(){
         factory_ = std::make_shared<GippsCarFactory>(a,b,bmax, logger_);
     } else if (drivertype == "IDM") {
         double a = ParseField<double>(driverParams, "a").value_or(2.0);
-        double b = ParseField<double>(driverParams, "a").value_or(3.0);
-        double s0 =ParseField<double>(driverParams, "a").value_or(5);
+        double b = ParseField<double>(driverParams, "b").value_or(3.0);
+        double s0 =ParseField<double>(driverParams, "s0").value_or(5);
         factory_ = std::make_shared<IDMCarFactory>(a,b,s0, logger_);
     } else {
         return std::unexpected("Valid driverType values are [\"Gipps\" and \"IDM\"]");
@@ -69,7 +69,7 @@ std::expected<std::shared_ptr<LeadStrategy>, std::string> Parser::parseLeadStrat
         YAML::Node sine = getNode("function", "sine");
         double a = ParseField<double>(sine, "a").value_or(40);
         double b = ParseField<double>(sine, "b").value_or(0);
-        double c = ParseField<double>(sine, "a").value_or(0);
+        double c = ParseField<double>(sine, "c").value_or(0);
         return std::make_shared<FunctionLead>(a,b,c);
         
     } else if (leadtype == "discrete") {
@@ -135,7 +135,6 @@ std::expected<void, std::string> DiscreteParser::parseLane(){
 }
 
 std::expected<void, std::string> ContinuousParser::parseLane(){
-    std::expected<std::shared_ptr<LeadStrategy>, std::string> leadStrat = parseLeadStrategy(cfg_["leadCar"]);
     
     // If the flow is specified in the lane, parse and use that. Breaks down in single lane case
     if (cfg_["flow"]){
@@ -148,11 +147,14 @@ std::expected<void, std::string> ContinuousParser::parseLane(){
     // Handle start and ending point of lane. (End defaults to infinity)
     double start = ParseField<double>(cfg_, "start").value_or(0);
     lane_.setEnd(ParseField<double>(cfg_, "end").value_or(std::numeric_limits<double>::infinity()));
- 
+
     // Lead Car:
     double v0 = cfg_["leadCar"]["v0"].as<double>();
     double vdes = cfg_["leadCar"]["vdes"].as<double>();
+    std::shared_ptr<LeadStrategy> leadStrat = parseLeadStrategy(cfg_["leadCar"]).value_or(std::make_shared<ConstantLead>(vdes));
+
     Car c = factory_->makeCar(start, v0, vdes, 0);
+    c.setLeadStrategy(leadStrat);
     lane_.addCar(c);
     return {};
 }

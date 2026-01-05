@@ -23,8 +23,8 @@ std::expected<void, std::string> Lane::updateLane(double dt){
     std::list<Car>::iterator next = ++cars_.begin();
     while (next != cars_.end()){
         Car& lead = *next;
-        current->step(lead, dt);
-        if (!current->check()){return std::unexpected("Accident occured");}
+        std::optional<std::string> status = current->step(lead, dt);
+        if (status) {return std::unexpected(*status);}
         ++current;
         ++next;
     }
@@ -35,7 +35,7 @@ std::expected<void, std::string> Lane::updateLane(double dt){
     addFlow(dt);
 
     // Remove cars past the end
-    while (cars_.back().getPosition() > end_) {
+    while (!cars_.empty() && cars_.back().getPosition() > end_) {
         cars_.pop_back();
     }
     return {};
