@@ -58,7 +58,26 @@ class CarLogger
 
     void clearLogs();
 
+    /**
+     * @brief Utility for accessing the logs of a specific car. Is expensive unless partition() has been called
+     * 
+     * @param id Car ID to get logs from
+     * @return std::vector<CarLog> vector of logs
+     */
+    std::vector<CarSnapshot> getCar(size_t id);
+
+    
+    /**
+     * @brief Splits the logs up by which car id. To speed up getCar queries. 
+     * 
+     * @param n Number of cars. If not present, then logger needs to compute this 
+     */
+    void partition(size_t n = 0);
+
+    std::vector<std::vector<CarSnapshot>>& getPartition();
+
     public:
+
     CarLogger() = default;
     virtual ~CarLogger(){};
 
@@ -86,30 +105,22 @@ class CarLogger
      */
     virtual void addCar(size_t id, std::string lead, std::string follow);
 
-    /**
-     * @brief Initialize the logger. Called after constructor to allow virtual methods.
-     * 
-     */
-    virtual std::expected<void, std::string> init(){return {};};
 
-    protected:
     /**
-     * @brief Utility for accessing the logs of a specific car. Is expensive unless partition() has been called
+     * @brief Updates the simulation's status to a new status 
      * 
-     * @param id Car ID to get logs from
-     * @return std::vector<CarLog> vector of logs
+     * @return std::expected<void, std::string> 
      */
-    std::vector<CarSnapshot> getCar(size_t id);
-
+    virtual std::expected<void, std::string> updateStatus(std::string newStatus) {return {};}
     
     /**
-     * @brief Splits the logs up by which car id. To speed up getCar queries. 
+     * @brief Writes and commits the job status as "ERROR" and populates the error message field
      * 
-     * @param n Number of cars. If not present, then logger needs to compute this 
      */
-    void partition(size_t n = 0);
+    virtual std::expected<void, std::string> logFailure(std::string message) = 0;
 
-    std::vector<std::vector<CarSnapshot>>& getPartition();
+    protected:
+
 
 };
 
@@ -122,42 +133,41 @@ class FileLogger : public CarLogger {
 
     std::expected<void, std::string> writeData() override;
 
+    std::expected<void, std::string> logFailure(std::string message) override;
 };
 
 
-class DBLoggerBase : public CarLogger {
+/**
+ * @class DBLogger
+ * @brief Database Logger. Used for both Test and Prod DBs. 
+ * 
+ */
+class DBLogger : public CarLogger {
 
     std::string configFile_; // important for traceability
     std::string jobname_;
+    std::string connectionStr_;
     int jobid_;
 
+    DBLogger(std::string jobname, std::string config, bool test);
+    
     public: 
-    DBLoggerBase(std::string jobname, std::string config);
-    virtual ~DBLoggerBase(){};
 
-    std::expected<void, std::string> init() override;
-
-    virtual std::string getConnectionString() const = 0;
-
+    /**
+     * @brief Makes a Database Logger
+     * 
+     * @param jobname Job Name the logger represents
+     * @param config Config file to use
+     * @param test True to use test db, false for prod DB
+     * @return std::expected<DBLogger*, std::string> 
+     */
+    static std::expected<std::shared_ptr<DBLogger>, std::string> make(std::string jobname, std::string config, bool test);
+    ~DBLogger(){};
 
     // Commits to the database
     std::expected<void, std::string> writeData() override;
-};
 
-class DBLogger : public DBLoggerBase {
+    std::expected<void, std::string> updateStatus(std::string newStatus) override;
 
-    using DBLoggerBase::DBLoggerBase;
-
-    virtual std::string getConnectionString() const override {
-        return "host=localhost port=5432 dbname=trafficDB";
-    }
-};
-
-class DBLoggerTest: public DBLoggerBase {
-
-    using DBLoggerBase::DBLoggerBase;
-
-    virtual std::string getConnectionString() const override  {
-        return "host=localhost port=5432 dbname=trafficDBTest";
-    }
+    std::expected<void, std::string> logFailure(std::string message) override;
 };

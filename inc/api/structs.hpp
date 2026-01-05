@@ -7,6 +7,8 @@
 struct JobData {
     std::string jobName_;
     std::string cfgPath_;
+    std::string errorMsg_; // Is empty when no error is present
+    std::string status_;
 };
 
 struct FollowModelParams {
@@ -28,3 +30,10 @@ struct RawData {
     int id_;
 };
 
+enum class JobStatus : uint8_t {
+    INVALID = 0, // Jobs that can't parse
+    QUEUED = 1,
+    RUNNING = 2,
+    DONE = 3,
+    ERROR = 4 // Jobs that throw runtime errors
+};

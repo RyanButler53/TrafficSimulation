@@ -23,6 +23,7 @@ private:
     double totalTime_;
     double dt_;
 
+    std::expected<void, std::string> mainLoop();
 public:
     Simulator(SimulatorInputs input);
     ~Simulator() =default;
@@ -37,7 +38,7 @@ namespace Traffic {
      * 
      * @param configfile config yaml passed to parser and simulator
      */
-    int Simulate(std::string configfile);
+    std::expected<void, std::string> Simulate(std::string configfile);
 }
 
 

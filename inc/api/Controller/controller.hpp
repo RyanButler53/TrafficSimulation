@@ -2,7 +2,7 @@
 
 #include "api/DTOs/DTOs.hpp"
 #include "api/structs.hpp"
-#include "api/DBReader.hpp"
+#include "api/DBManager.hpp"
 #include "api/jobManager.hpp"
 #include <iostream>
 #include <filesystem>
@@ -10,7 +10,9 @@
 #include <fstream>
 #include <optional>
 #include <ranges>
+#include <format>
 #include <functional>
+#include <unordered_map>
 
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/core/macro/codegen.hpp"
@@ -24,8 +26,18 @@ using namespace oatpp;
 
 class Controller : public oatpp::web::server::api::ApiController {
     
-    std::shared_ptr<DBReader> reader_;
-    JobManager manager_;
+    DBManager dataManager_;
+    JobManager jobManager_;
+    
+    static inline std::unordered_map<std::string, JOB_STATUS> map_ = {
+        {"INVALID", JOB_STATUS::INVALID}, 
+        {"QUEUED", JOB_STATUS::QUEUED},
+        {"RUNNING", JOB_STATUS::RUNNING},
+        {"DONE", JOB_STATUS::DONE},
+        {"ERROR", JOB_STATUS::ERROR}
+    };
+    
+
     // Error DTO Prototype in the class
     using ErrorResponse = ErrorDTO::Wrapper;
     ErrorResponse error_ = ErrorDTO::createShared();
@@ -97,24 +109,30 @@ class Controller : public oatpp::web::server::api::ApiController {
         auto job = JobDataDTO::createShared();
         job->jobname = j.jobName_;
         job->cfgfile = j.cfgPath_;
+        job->errorMessage = j.errorMsg_;
+        job->status = map_.at(j.status_);
         return job;
     }
+
 
     public:
 
     Controller(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, mapper))
         // Call base class constructor. Pass the object mapper component
-        :oatpp::web::server::api::ApiController(mapper){}
+        :oatpp::web::server::api::ApiController(mapper){
 
-    void setDBReader(bool testDB){
-        reader_ = std::make_shared<DBReader>(testDB);
+        }
+
+    void setDBManager(bool testDB){
+        dataManager_ = DBManager(testDB);
     }
     
     // Get simple information about a job
     ENDPOINT("GET", "/jobs/{job-name}", queryJobs, PATH(String, jobname, "job-name")){
+        OATPP_LOGI("Controller","Getting job information for job: \"%s\"", jobname->c_str());
 
         // Query Database for job
-        auto data = reader_->queryJobs(jobname);
+        auto data = dataManager_.queryJobs(jobname);
         return getReturnDto(data.transform(Controller::convertJob).transform_error(Controller::translateError));
     }
 
@@ -122,7 +140,7 @@ class Controller : public oatpp::web::server::api::ApiController {
     ENDPOINT("GET", "/jobs", allJobs){
         OATPP_LOGI("Controller", "Getting job information for all jobs");
 
-        std::expected<std::vector<JobData>, std::string> jobs = reader_->queryJobs();
+        std::expected<std::vector<JobData>, std::string> jobs = dataManager_.queryJobs();
         auto translateJobList = [](const std::vector<JobData>& jobs){ // std::function<JobDataListDTO::Wrapper(std::vector<JobData>)>
             auto response = JobDataListDTO::createShared();
             response->jobs = {};
@@ -139,7 +157,7 @@ class Controller : public oatpp::web::server::api::ApiController {
 
         OATPP_LOGI("Controller", "Getting job information for car %d in %s", int(id), std::string(job).c_str());
 
-        std::expected<CarMetadata, std::string> cm = reader_->queryCars(job, id);
+        std::expected<CarMetadata, std::string> cm = dataManager_.queryCars(job, id);
         return getReturnDto(cm.transform(Controller::convertCar).transform_error(Controller::translateError));
 
     }
@@ -149,7 +167,7 @@ class Controller : public oatpp::web::server::api::ApiController {
             PATH(String, job, "job-name")){
         OATPP_LOGI("Controller", "Getting job information for all cars in %s", std::string(job).c_str());
 
-        auto cars = reader_->queryCars(job);
+        auto cars = dataManager_.queryCars(job);
         auto translate = [](std::vector<CarMetadata> carlist){
             auto response = CarMetadataListDTO::createShared();
             response->numCars = carlist.size();
@@ -164,17 +182,18 @@ class Controller : public oatpp::web::server::api::ApiController {
     // Getting raw data about one car
     ENDPOINT("GET", "/data/{job-name}/raw/{car}", getRawData, 
             PATH(String, job, "job-name"), PATH(Int32, car, "car")){
-        OATPP_LOGI("Controller", "Getting raw data for car %d in %s", int(car), std::string(job).c_str());
+        OATPP_LOGI("Controller", "Getting raw data for car %d in %s", int(car), job->c_str());
 
-        auto raw = reader_->queryData(job, car);
+        auto raw = dataManager_.queryData(job, car);
         return getReturnDto(raw.transform(Controller::convertRaw).transform_error(Controller::translateError));
     }
 
         // Getting raw data about ALL cars (this is a big call)
     ENDPOINT("GET", "/data/{job-name}/raw/", getAllRawData, 
         PATH(String, job, "job-name")){
+            OATPP_LOGI("Controller", "Getting raw data for all cars in job %s", job->c_str());
 
-        auto raw = reader_->queryData(job);
+        auto raw = dataManager_.queryData(job);
         auto translate = [](const std::vector<RawData>& raw){
             auto response = RawDataDTO::createShared();
             response->data = {};
@@ -199,7 +218,7 @@ class Controller : public oatpp::web::server::api::ApiController {
 
     std::string msg = std::format("Submitting Job {}", std::string(jobname));
     OATPP_LOGI("Controller", "%s", msg.c_str());
-    std::expected<std::vector<int>, std::string> exists = reader_->getJobId(jobname);
+    std::expected<std::vector<int>, std::string> exists = dataManager_.getJobId(jobname);
 
     // Exists has value -> jobid has been found and jobname is taken. 
     if (exists.has_value()){
@@ -208,7 +227,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         return createDtoResponse(Status::CODE_409, error);
         // Job is not found . Submit one. 
     } else if (exists.error() == std::format("No jobs with job name \"{}\" not found", std::string(jobname))) {
-        std::expected<uint32_t, std::string> submit = manager_.submit(path);
+        std::expected<uint32_t, std::string> submit = jobManager_.submit(path);
         if (!submit){
             auto error = ErrorDTO::createShared();
             error->errmsg = submit.error();
@@ -228,8 +247,11 @@ class Controller : public oatpp::web::server::api::ApiController {
 
     ENDPOINT("DELETE", "/delete/{job-name}", deleteJob, 
         PATH(String, jobname, "job-name")){
+
+            std::string msg = std::format("Attempting to delete job {}", std::string(jobname));
+            OATPP_LOGI("Controller", "%s", msg.c_str());
             // Delete job handles checking if it exists. 
-            std::expected<void, std::string> result = reader_->deleteJob(jobname);
+            std::expected<void, std::string> result = dataManager_.deleteJob(jobname);
             if (result.has_value()){
                 // Return an error code
                 auto response = DeleteDTO::createShared();

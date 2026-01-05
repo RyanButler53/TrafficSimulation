@@ -1,16 +1,18 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #include <algorithm>
+#include <fstream>
 
-#include "api/DBReader.hpp"
+#include "api/DBManager.hpp"
 #include "api/jobManager.hpp"
 #include "api/structs.hpp"
 #include "yaml-cpp/yaml.h"
 
 #include <pqxx/pqxx>
 
-class DBReaderTest : public ::testing::Test {
+class DBManagerTest : public ::testing::Test {
 
+    protected:
     YAML::Node getConfigNode() {
         YAML::Node cfg;
         cfg["type"] = "continuous";
@@ -38,14 +40,26 @@ class DBReaderTest : public ::testing::Test {
         cfg["leadCar"]["vdes"] = 45;
 
         cfg["end"] = 1500;
+        cfg["logtype"] = "test";
+
         return cfg;
+    }
+
+    void clearDB() {
+        // Clear out the Test DB:
+        pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
+        pqxx::work tx(connect);
+
+        tx.exec("DROP TABLE IF EXISTS trafficjobs CASCADE");
+        tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
+        tx.exec("DROP TABLE IF EXISTS snapshotData");
+        tx.commit();
     }
 
     void SetUp() override {
 
         for (size_t i = 0; i < 3; ++i){
             YAML::Node dbLog = getConfigNode();
-            dbLog["logtype"] = "test";
             dbLog["jobname"] = std::format("test-dbreader{}", i);
             dbLog["seed"] = 70 + i;
 
@@ -55,14 +69,7 @@ class DBReaderTest : public ::testing::Test {
             dbCfg << dbout.c_str();
         }
 
-        // Clear out the Test DB:
-        pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
-        pqxx::work tx(connect);
-
-        tx.exec("DROP TABLE IF EXISTS trafficjobs CASCADE");
-        tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
-        tx.exec("DROP TABLE IF EXISTS snapshotData");
-        tx.commit();
+        clearDB();
 
         // Run the tests with the job scheduler. 
         JobManager j;
@@ -70,7 +77,7 @@ class DBReaderTest : public ::testing::Test {
             j.submit(std::format("dbConfig{}.yaml", i));
         }
         for (size_t i = 0; i < 3; ++i){
-            while(j.status(i) != JobStatus::DONE){
+            while(j.status(i) != JobStatus::DONE && j.status(i) != JobStatus::ERROR){
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
@@ -83,25 +90,45 @@ class DBReaderTest : public ::testing::Test {
         }
     }
 
-    protected:
-    template <typename T>
-    void checkError(std::expected<T, std::string>& result){
-        if (!result){  FAIL() << result.error(); }
+};
+
+class ErrorLogTest : public DBManagerTest {
+
+    void SetUp() override {
+        YAML::Node dbLog = getConfigNode();
+        dbLog["jobname"] = "test-dbreader3";
+        dbLog["seed"] = 70;
+        dbLog["flow"]["rate"] = 900;
+        dbLog["flow"]["v0"] = 40;
+
+        YAML::Emitter dbout;
+        std::ofstream dbCfg("dbConfig3.yaml");
+        dbout << dbLog;
+        dbCfg << dbout.c_str();
+
+        clearDB();
+
+    }
+
+    void TearDown() override {
+        std::filesystem::path fname = "dbConfig3.yaml";
+        if (std::filesystem::exists(fname)) std::filesystem::remove(fname);
     }
 };
 
-TEST_F(DBReaderTest, evaulateDB){
-    DBReader reader("host=localhost port=5432 dbname=trafficDBTest");
+
+TEST_F(DBManagerTest, evaulateDB){
+    DBManager reader(true);
 
     // Job General Data
     std::vector<JobData> jobsSingle;
     for (size_t i = 0; i < 3; ++i){
         std::expected<JobData, std::string> data = reader.queryJobs(std::format("test-dbreader{}", i));
-        checkError(data);
+        ASSERT_TRUE(data.has_value()) << std::format("Error Querying Job {}: {}", i, data.error());
         jobsSingle.push_back(*data);
     }
     std::expected<std::vector<JobData>, std::string> jobsAll = reader.queryJobs();
-    checkError(jobsAll);
+    ASSERT_TRUE(jobsAll.has_value()) << std::format("Error Querying All Jobs: {}", jobsAll.error());
     EXPECT_EQ(jobsSingle.size(), jobsAll->size());
     for (auto [single, all] : std::views::zip(jobsSingle, *jobsAll)){
         EXPECT_EQ(single.cfgPath_, all.cfgPath_);
@@ -110,11 +137,11 @@ TEST_F(DBReaderTest, evaulateDB){
 
     std::vector<CarMetadata> singleMetadata;
     std::expected<std::vector<CarMetadata>, std::string> allCarMetadata = reader.queryCars("test-dbreader1");
-    checkError(allCarMetadata);
+    EXPECT_TRUE(allCarMetadata.has_value()) << std::format("Error querying all cars metadata: {}", allCarMetadata.error());
     size_t ncars = allCarMetadata->size();
     for (size_t i = 0; i < ncars; ++i){
         auto data = reader.queryCars("test-dbreader1", i);
-        checkError(data);
+        EXPECT_TRUE(data.has_value()) << std::format("Error Querying Car {}: {}",i,  data.error());
         singleMetadata.push_back(*data);
     }
 
@@ -129,10 +156,10 @@ TEST_F(DBReaderTest, evaulateDB){
     // Due to the size of the raw data, just check if X is increasing 
     std::vector<RawData> singleRawData;
     std::expected<std::vector<RawData>, std::string> allRawData = reader.queryData("test-dbreader1");
-    checkError(allCarMetadata);
+    EXPECT_TRUE(allRawData.has_value()) << std::format("Error querying all cars snapshots: {}", allRawData.error());
     for (size_t i = 0; i < ncars; ++i){
         auto cardata = reader.queryData("test-dbreader1", i);
-        checkError(cardata);
+        EXPECT_TRUE(cardata.has_value()) << std::format("Error querying car {}: {}", i, cardata.error());
         singleRawData.push_back(*cardata);
         std::vector<float>& xs = singleRawData.back().x_;
         ASSERT_TRUE(std::ranges::is_sorted(xs));
@@ -148,10 +175,23 @@ TEST_F(DBReaderTest, evaulateDB){
     // Clean up jobs: 
     for (size_t i = 0; i < 3; ++i){
         std::expected<void, std::string> result = reader.deleteJob(std::format("test-dbreader{}", i));
-        checkError(result);
+        EXPECT_TRUE(result.has_value()) << std::format("Error deleting job {}: {}", i, result.error());
     }
     jobsAll = reader.queryJobs();
-    checkError(jobsAll);
+    ASSERT_TRUE(jobsAll.has_value()) << std::format("Error Querying All Jobs: {}", jobsAll.error());
     EXPECT_TRUE(jobsAll.value().empty());
 }
 
+TEST_F(ErrorLogTest, errorLogging){
+    // Need to see if the error exists. 
+
+    std::expected<void, std::string> result = Traffic::Simulate("dbConfig3.yaml");
+    ASSERT_TRUE(result.has_value()) << std::format("Error Querying Job test-dbreader3: {}", result.error());
+
+    DBManager reader(true);
+
+    std::expected<JobData, std::string> data = reader.queryJobs("test-dbreader3");
+    ASSERT_TRUE(data.has_value()) << std::format("Error Querying Job test-dbreader3: {}", data.error());
+    ASSERT_EQ(data->errorMsg_, "Accident Occurred at time 10: Car 6 is at x = 39.24 and its predecessor is at x = 16.13");
+    ASSERT_EQ(data->status_, "ERROR");
+}

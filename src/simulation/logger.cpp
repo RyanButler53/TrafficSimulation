@@ -3,12 +3,13 @@
  * @author Ryan Butler (rmbutler@outlook.com)
  * @brief  Implements the Car Logger Base class, File Logger and Database Logger
  * @note Relies on libpqxx and libpostgres
- * @version 0.1
+ * @version 0.2
  * @date 2025-07-13
  * 
  * @copyright Copyright (c) 2025
  * 
  */
+
 #include "sim/logger.hpp"
 #include <numeric>
 #include <fstream>
@@ -18,6 +19,7 @@
 
 // Database
 #include <pqxx/pqxx>
+#include "database/databaseInit.hpp"
 
 namespace fs = std::filesystem;
 
@@ -108,46 +110,50 @@ std::expected<void, std::string> FileLogger::writeData(){
     return {};
 }
 
-// DATABASE LOGGER
-
-DBLoggerBase::DBLoggerBase(std::string jobname, std::string config):
-    jobname_{jobname}, configFile_{std::filesystem::absolute(config)}{
+std::expected<void, std::string> FileLogger::logFailure(std::string message) {
+    std::ofstream errorOut(basepath_ / fs::path("error.txt"));
+    errorOut << "Job failed: " << message << std::endl;
+    errorOut.close();
+    return {};
 }
 
-std::expected<void, std::string> DBLoggerBase::init() {
+// DATABASE LOGGER
 
-    // Initialize Database connection: 
-    std::string connStr = getConnectionString();
+DBLogger::DBLogger(std::string jobname, std::string config, bool test):
+    jobname_{jobname}, configFile_{std::filesystem::absolute(config)}{
+    if (test){
+        connectionStr_ = "host=localhost port=5432 dbname=trafficDBTest";
+    } else {
+        connectionStr_ = "host=localhost port=5432 dbname=trafficDB";
+    }
+}
+
+std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string jobname, std::string config, bool test){
+    DBLogger* logger = new DBLogger(jobname, config, test);
     try {
-        
-        pqxx::connection connect(connStr);
 
-        // Create 3 tables: Traffic Jobs Main Table, Car Data Table (including strategies), Main data table (with car x,v,t values)
+        initDB::initDB(test);
+
+        pqxx::connection connect(logger->connectionStr_);
         pqxx::work tx(connect);
-        tx.exec("CREATE TABLE IF NOT EXISTS trafficJobs ( jobID int GENERATED ALWAYS AS IDENTITY PRIMARY KEY, configfile text, jobname text)");
-        tx.exec("CREATE TABLE IF NOT EXISTS carData (carID int, jobID int, follow text, lead text, FOREIGN KEY (jobID) REFERENCES trafficjobs(jobID) , PRIMARY KEY (carID, jobID))");
-        tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
+       
 
-        // Check if row for the job exists. Otherwise, add it. Will overwrite a duplicate job name. 
-        pqxx::result jobExists;
-        
-        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname)\nVALUES ('{}', '{}') RETURNING jobID", configFile_, jobname_);
+        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error)\nVALUES ('{}', '{}', 'QUEUED', '') RETURNING jobID", config, jobname);
         pqxx::result result = tx.exec(row);
-        jobid_ = result.one_field().as<int>();
+        logger->jobid_ = result.one_field().as<int>();
         tx.commit();
     } catch(const std::exception& e) {
         std::unexpected(std::format("Error setting up database: {}",e.what()));
     }
-    return {};
+    return std::shared_ptr<DBLogger>(logger);
 }
 
- std::expected<void, std::string> DBLoggerBase::writeData() {
+ std::expected<void, std::string> DBLogger::writeData() {
 
     std::vector<std::vector<CarSnapshot>> byCar = getPartition();
     size_t n = byCar.size();
 
-    std::string connStr = getConnectionString();
-    pqxx::connection connect(connStr);
+    pqxx::connection connect(connectionStr_);
 
     // Add rows for all the new cars seen. 
     try {
@@ -176,6 +182,38 @@ std::expected<void, std::string> DBLoggerBase::init() {
             return std::unexpected(std::format("Error inserting car raw snapshot data into database", e.what()));
         }
     }
-
+    
     return {};
+}
+
+std::expected<void, std::string> DBLogger::updateStatus(std::string newStatus) {
+    try {
+        pqxx::connection connect(connectionStr_);
+        pqxx::work finish_tx(connect);
+
+        std::string updateStatus = std::format("UPDATE ONLY trafficJobs SET status = '{}' WHERE jobid = '{}'", newStatus, jobid_);
+        finish_tx.exec(updateStatus); 
+        finish_tx.commit();
+        return {};
+    } catch(const std::exception& e) {
+        return std::unexpected(std::format("Error updating the Job Status: {} ", e.what()));
+    }
+}
+
+std::expected<void, std::string> DBLogger::logFailure(std::string message) {
+
+    return updateStatus("ERROR").and_then([this, &message]() -> std::expected<void, std::string>{
+            try {
+                pqxx::connection connect(connectionStr_);
+                pqxx::work finish_tx(connect);
+        
+                std::string updateMsg = std::format("UPDATE ONLY trafficJobs SET error = '{}' WHERE jobid = '{}'", message, jobid_);
+                finish_tx.exec(updateMsg);
+                finish_tx.commit();
+                return {};
+            } catch(const std::exception& e) {
+                return std::unexpected(std::format("Error updating the Job Status: {} ", e.what()));
+            }
+        });
+   
 }

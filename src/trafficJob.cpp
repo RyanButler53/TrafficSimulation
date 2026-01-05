@@ -20,6 +20,7 @@ int main(int argc, char** argv){
     }
     
     std::string configfile(argv[1]);
-    int err = Traffic::Simulate(configfile);
-    return err;
+    return Traffic::Simulate(configfile)
+            .transform_error([](std::string e){std::cerr << e << std::endl; return 1;})
+            .transform([](){return 0;}).value_or(1);
 }

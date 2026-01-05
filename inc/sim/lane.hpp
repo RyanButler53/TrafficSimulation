@@ -5,6 +5,7 @@
 
 #include <list>
 #include <numeric>
+#include <expected>
 
 #include "car.hpp"
 #include "flowGenerator.hpp"
@@ -37,8 +38,9 @@ public:
     /**
      * @brief Updates a line by timestep dt
      * @param dt Timestep
+     * @return std::expected<void, std::string> Error string if there is an error (e.g. car accident);
      */
-    void updateLane(double dt);
+    std::expected<void, std::string> updateLane(double dt);
 
     /// @brief Adds a car to the BACK of the lane
     void addCar(Car& c);

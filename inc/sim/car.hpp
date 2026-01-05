@@ -12,6 +12,7 @@
 
 #include <ostream>
 #include <iostream>
+#include <optional>
 #include "strategy.hpp"
 #include "leadStrategy.hpp"
 #include "logger.hpp"
@@ -83,11 +84,13 @@ class Car {
      * 
      * @param lead Leader car. Passed by reference
      * @param dt Timestep. 
+     * @return Empty expected if 
      */
-    void step(const Car& lead, double dt);
+    std::optional<std::string> step(const Car& lead, double dt);
 
     void log() const;
     void log(std::ostream& os) const;
+
 };
 
 std::ostream& operator<<(std::ostream& os, const Car& c);

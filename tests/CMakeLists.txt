@@ -23,16 +23,6 @@ target_link_libraries(dumpdb PRIVATE libpqxx::pqxx)
 find_package(OpenSSL)
 find_package(CURL)
 
-# Only get json if doing API test
-if (CURL_FOUND)
-    message(STATUS "Found CURL: Fetching JSON and enabling API Test")
-    include(FetchContent)
-    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
-    FetchContent_MakeAvailable(json)
-endif()
-
-
-
 add_executable(regression regression.cpp)
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
 target_link_libraries(regression PUBLIC simulation 
@@ -42,16 +32,22 @@ target_link_libraries(regression PUBLIC simulation
                                         GTest::gtest_main
                                         pqxx_wrapper)
 
-add_executable(dbreader dbReader.cpp)
-target_link_libraries(dbreader PUBLIC simulation 
+add_executable(dbManagerTest dbManager.cpp)
+target_link_libraries(dbManagerTest PUBLIC simulation 
                                       jobManager 
-                                      dbReader
+                                      dbmanager
                                       GTest::gtest 
                                       GTest::gtest_main 
                                       pqxx_wrapper)
 
 
 if (CURL_FOUND)
+    # Bring in Json Dependency
+    message(STATUS "Found CURL: Fetching JSON and enabling API Test")
+    include(FetchContent)
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
+    FetchContent_MakeAvailable(json)
+
     add_executable(apiTest apiTest.cpp)
     target_link_libraries(apiTest PUBLIC api
                                         nlohmann_json::nlohmann_json

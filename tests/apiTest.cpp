@@ -210,12 +210,6 @@ class ApiTest : public ::testing::Test {
         apiThread_.join();
         oatpp::base::Environment::destroy();
     }
-
-    template <typename T>
-    void checkError(std::expected<T, std::string>& result){
-        if (!result){  FAIL() << result.error(); }
-    }
-
 };
 
 std::thread ApiTest::apiThread_;
@@ -226,17 +220,16 @@ TEST_F(ApiTest, Waiting){
 
     CurlWrapper requester;
     CurlResponse response = requester.queryJobs();
-    checkError(response);
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying All Jobs: {}", response.error());
     ASSERT_EQ(response.value().code, 200);
+    size_t initialNumJobs = response.value().jsonData["jobs"].size();
 
     // No check for return code here, 200 and 400 are both valid. Just clearing out the DB. 
     response = requester.deleteJob("apiTest");
-    checkError(response);
-    
+    ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
 
-    size_t initialNumJobs = response.value().jsonData["jobs"].size();
     response = requester.postJob("apiTest", std::filesystem::absolute("./apiConfig.yml"));
-    checkError(response);
+    ASSERT_TRUE(response.has_value()) << std::format("Error Submitting Simulation: {}", response.error());
 
     ASSERT_EQ(response.value().code, 200);
     json data = response.value().jsonData;
@@ -248,22 +241,22 @@ TEST_F(ApiTest, Waiting){
     // Wait 1 second to let the job finish running. Would be cool to be able to check the status of the job from the api...
     std::this_thread::sleep_for(std::chrono::seconds(1));
     response = requester.queryJob("apiTest");
-    checkError(response);
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying for Job: {}", response.error());
     EXPECT_EQ(response.value().code, 200);
     ASSERT_EQ(response.value().jsonData["jobname"], "apiTest");
 
     response = requester.queryJobs();
-    checkError(response);
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying For Jobs: {}", response.error());
     ASSERT_EQ(response->jsonData["jobs"].size(), initialNumJobs + 1);
 
     response = requester.queryCarDatas("apiTest");
-    checkError(response);
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying Car Data {}", response.error());
     ASSERT_EQ(response.value().code, 200);
     ASSERT_EQ(response->jsonData["cars"].size(), 6); // number of cars in the job, not number of jobs
 
 
     response = requester.queryRawDatas("apiTest");
-    checkError(response);
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying Raw Data: {}", response.error());
     ASSERT_EQ(response.value().code, 200);
     for (const json& carXVT : response->jsonData["data"]){
         std::vector<float> xs = carXVT["x"];
@@ -271,7 +264,7 @@ TEST_F(ApiTest, Waiting){
     }
 
     response = requester.deleteJob("apiTest");
-    checkError(response);
+    ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
     
     EXPECT_EQ(response.value().jsonData["msg"], "Successfully deleted apiTest");
 

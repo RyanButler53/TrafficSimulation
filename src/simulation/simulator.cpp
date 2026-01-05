@@ -14,37 +14,41 @@
 #include "sim/simulator.hpp"
 #include "sim/parser.hpp"
 #include "sim/parserFactory.hpp"
+#include "database/databaseInit.hpp"
 #include <expected>
-
+#include <functional>
 
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
     lane_{input.lane_}, totalTime_{input.totalTime_}, dt_{input.dt_}{}
 
-std::expected<void, std::string> Simulator::run(){
-    if (!logger_->init().has_value()){
-        return std::unexpected("Error initalizing Logger");
-    }
 
+std::expected<void, std::string> Simulator::mainLoop(){
     double t = 0;
-
+    std::expected <void, std::string> simStatus;
     while (t < totalTime_){
-        lane_.updateLane(dt_);
+        simStatus = lane_.updateLane(dt_);
         t += dt_;
-        
-        if (lane_.done()){
+        if (!simStatus.has_value() || lane_.done()){
             break;
         }
     }
-    // Fits all logs in memory.
-    return logger_->writeData();
+    logger_->writeData();
+    return simStatus;
 }
 
-int Traffic::Simulate(std::string configfile){
+std::expected<void, std::string> Simulator::run(){
+
+    return logger_->updateStatus("RUNNING")
+                    .and_then([this]{return mainLoop();})
+                    .and_then([this]{return logger_->updateStatus("DONE");})
+                    .or_else([this](std::string msg){return logger_->logFailure(msg);});
+}
+
+std::expected<void, std::string> Traffic::Simulate(std::string configfile){
+
     ParserFactory parserFac(configfile);
     return parserFac.makeParser()
-                    .and_then([](std::unique_ptr<Parser> p){return p->parse();})
-                    .and_then([](SimulatorInputs inputs){return Simulator(inputs).run();})
-                    .transform_error([](std::string err){std::cerr << err << std::endl; return err;})
-                    .transform([](){return 0;}).value_or(1);
+                    .and_then(std::mem_fn(&Parser::parse)) // this hits a DB. 
+                    .and_then([](SimulatorInputs inputs){return Simulator(inputs).run();});
 
 }

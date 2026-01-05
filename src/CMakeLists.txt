@@ -1,6 +1,6 @@
 add_subdirectory(simulation)
 add_subdirectory(api)
-
+add_subdirectory(database)
 # traffic driver executable
 add_executable(traffic trafficJob.cpp)
 target_link_libraries(traffic PRIVATE simulation)

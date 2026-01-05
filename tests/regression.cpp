@@ -167,8 +167,8 @@ protected:
 };
 
 TEST_F(RegressionTest, FileDBEquivalence){
-    ASSERT_EQ(Traffic::Simulate("fileConfig.yaml"), 0);
-    ASSERT_EQ(Traffic::Simulate("dbConfig.yaml"), 0);
+    ASSERT_TRUE(Traffic::Simulate("fileConfig.yaml").has_value());
+    ASSERT_TRUE(Traffic::Simulate("dbConfig.yaml").has_value());
 
     // Need to compare both of them, car by car at each timestamp. 
 
@@ -219,7 +219,7 @@ TEST_F(RegressionTest, FileHashEquivalence){
         hashes += hash;
     }
     std::string hash = hashBytes(hashes.data(),hashes.size());
-    const std::string expectedHash("b908503a9209ad2bd547e68259e37664123c252316a6f2cf2c3f09aed7487df4");
+    const std::string expectedHash("d3e4767ae4085484ecb21d35a1aa915e1e0ba8c5dce2f03cf74d607f2dbe41fc");
 
     ASSERT_EQ(hash, expectedHash);
 }
