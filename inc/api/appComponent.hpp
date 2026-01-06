@@ -10,7 +10,7 @@
 #include "oatpp/core/macro/component.hpp"
 
 
-// Going to set up applicatino compenents and registers them. 
+// Going to set up application compenents and registers them. 
 class AppComponent {
 
     // Connection Provider
