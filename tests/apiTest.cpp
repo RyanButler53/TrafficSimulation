@@ -216,7 +216,7 @@ std::thread ApiTest::apiThread_;
 TrafficApi ApiTest::apiRunner_(true);
 
 
-TEST_F(ApiTest, Waiting){
+TEST_F(ApiTest, ValidRequests){
 
     CurlWrapper requester;
     CurlResponse response = requester.queryJobs();
@@ -263,9 +263,50 @@ TEST_F(ApiTest, Waiting){
         ASSERT_TRUE(std::ranges::is_sorted(xs));
     }
 
+    // Query for car not present in the job
+    response = requester.queryCarData("apiTest", 1500);
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying for apiTest job: {}", response.error());
+
+    ASSERT_EQ(response.value().code, 400) << "Found data for a car that shouldn't exist!";
+    EXPECT_EQ(response.value().jsonData["errmsg"], "No car with id 1500 in job named apiTest");
+
     response = requester.deleteJob("apiTest");
     ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
     
     EXPECT_EQ(response.value().jsonData["msg"], "Successfully deleted apiTest");
+
+}
+
+TEST_F(ApiTest, ErrorRequests){
+
+    CurlWrapper requester;
+    CurlResponse response = requester.queryJobs();
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying All Jobs: {}", response.error());
+    ASSERT_EQ(response.value().code, 200);
+    size_t initialNumJobs = response.value().jsonData["jobs"].size();
+
+    // No check for return code here, 200 and 400 are both valid. Just clearing out the DB. 
+    response = requester.deleteJob("apiTest");
+    ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
+
+    // Delete job that doesn't exist
+    response = requester.deleteJob("apiTest");
+    ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
+    ASSERT_EQ(response.value().code, 400) << "Found ApiTest, which is supposed to be deleted!";
+
+    // Job data with incorrect job name
+    response = requester.queryJob("wrongJobName");
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying for fake Job: {}", response.error());
+
+    ASSERT_EQ(response.value().code, 400) << "Found a job that shouldn't exist!";
+    EXPECT_EQ(response.value().jsonData["errmsg"], "No job named wrongJobName");
+
+    // Car Metadata with incorrect job name
+    response = requester.queryCarDatas("wrongJobName");
+    ASSERT_TRUE(response.has_value()) << std::format("Error Querying for fake Job: {}", response.error());
+
+    ASSERT_EQ(response.value().code, 400) << "Found a job that shouldn't exist!";
+    EXPECT_EQ(response.value().jsonData["errmsg"], "No Data found. Check to see if the job exists");
+
 
 }

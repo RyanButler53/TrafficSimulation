@@ -94,7 +94,7 @@ std::expected<CarMetadata, std::string>  DBManager::queryCars(std::string jobnam
     std::string querystr = std::format("SELECT follow, lead FROM CarData INNER JOIN TrafficJobs ON TrafficJobs.JobID = CarData.JobID WHERE jobname = '{}' and carid = {}", jobname, carid);
     pqxx::result result = tx.exec(querystr);
     if (result.empty()) {
-        return std::unexpected("No job named " + jobname);
+        return std::unexpected(std::format("No car with id {} in job named {}", carid, jobname));
     }
     pqxx::row r = result[0];
     return CarMetadata{r[0].as<std::string>(), r[1].as<std::string>(), {}, carid};
@@ -142,6 +142,9 @@ std::expected<RawData, std::string>  DBManager::queryData(std::string jobname, i
         return std::unexpected(std::format("Error querying Raw Data from car {} in job {}: {}",jobname, carid, e.what()));
     }
         
+    if (raw.t_.empty()){
+        return std::unexpected(std::format("No car snapshot data from car {} found", carid));
+    }
     return raw;
 }
 
