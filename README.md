@@ -53,6 +53,8 @@ CarID and JobID is a foreign key to CarData's CarID and JobID values. CarID, Job
 
 # List of Api Endpoints
 
+The API is hosted locally on port 8000 so the base url is `http://localhost:8000`
+
 `GET "/jobs/{jobname}"` -> Returns Jobname and Config file for job name
 
 `GET "/jobs"` -> Returns a list of all the jobs that have been submitted. 
