@@ -16,9 +16,6 @@ target_link_libraries(parsing PUBLIC yaml-cpp::yaml-cpp PRIVATE GTest::gtest)
 # Database Stuff
 find_package(libpqxx CONFIG REQUIRED)
 
-add_executable(dumpdb dumpDB.cpp)
-target_link_libraries(dumpdb PRIVATE libpqxx::pqxx)
-
 # Optional Dependencies
 find_package(OpenSSL)
 find_package(CURL)

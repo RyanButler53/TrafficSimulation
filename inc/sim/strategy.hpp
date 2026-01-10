@@ -42,7 +42,7 @@ struct FollowStrategy {
     /**
      * @brief Returns the string for database logging
      */
-    virtual std::string str() const = 0;
+    virtual std::tuple<double, double, double> params() const = 0;
     
 };
 
@@ -73,7 +73,7 @@ class Gipps : public FollowStrategy{
      */
     double update(double v, double vlead, double gap, double dt) const override;
 
-    std::string str() const override;
+    std::tuple<double, double, double> params() const override {return {a_, b_, bMax_};};
 };
 
 class Intelligent : public FollowStrategy {
@@ -97,6 +97,6 @@ class Intelligent : public FollowStrategy {
 
     double update(double v, double vlead, double gap, double dt) const override;
 
-    std::string str() const override;
+    std::tuple<double, double, double> params() const override {return {a_, b_, s0_};};
 
 };

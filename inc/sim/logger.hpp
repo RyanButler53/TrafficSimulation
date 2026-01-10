@@ -35,7 +35,9 @@ struct CarSnapshot {
  */
 struct CarData {
     std::string leadStrategy;
-    std::string followStrategy;
+    double a; // acceleration
+    double b; // braking
+    double c; // max braking in Gipps, min gap in IDM
     size_t id;
 };
 
@@ -103,7 +105,7 @@ class CarLogger
      * @brief Adds information about a specific car. 
      * 
      */
-    virtual void addCar(size_t id, std::string lead, std::string follow);
+    virtual void addCar(size_t id, std::string lead, const std::tuple<double, double, double>& follow);
 
 
     /**
@@ -118,8 +120,6 @@ class CarLogger
      * 
      */
     virtual std::expected<void, std::string> logFailure(std::string message) = 0;
-
-    protected:
 
 
 };
@@ -158,10 +158,11 @@ class DBLogger : public CarLogger {
      * 
      * @param jobname Job Name the logger represents
      * @param config Config file to use
+     * @param Follow Model Type (Gipps/IDM/...)
      * @param test True to use test db, false for prod DB
      * @return std::expected<DBLogger*, std::string> 
      */
-    static std::expected<std::shared_ptr<DBLogger>, std::string> make(std::string jobname, std::string config, bool test);
+    static std::expected<std::shared_ptr<DBLogger>, std::string> make(std::string jobname, std::string config, std::string followType, bool test);
     ~DBLogger(){};
 
     // Commits to the database

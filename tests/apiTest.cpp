@@ -221,7 +221,7 @@ TEST_F(ApiTest, ValidRequests){
     CurlWrapper requester;
     CurlResponse response = requester.queryJobs();
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying All Jobs: {}", response.error());
-    ASSERT_EQ(response.value().code, 200);
+    ASSERT_EQ(response->code, 200);
     size_t initialNumJobs = response.value().jsonData["jobs"].size();
 
     // No check for return code here, 200 and 400 are both valid. Just clearing out the DB. 
@@ -231,8 +231,8 @@ TEST_F(ApiTest, ValidRequests){
     response = requester.postJob("apiTest", std::filesystem::absolute("./apiConfig.yml"));
     ASSERT_TRUE(response.has_value()) << std::format("Error Submitting Simulation: {}", response.error());
 
-    ASSERT_EQ(response.value().code, 200);
-    json data = response.value().jsonData;
+    EXPECT_EQ(response->code, 200);
+    json data = response->jsonData;
 
     ASSERT_EQ(data["jobname"], "apiTest");
     ASSERT_EQ(data["configpath"], std::filesystem::absolute("./apiConfig.yml").string()); // Should return the config path back
@@ -242,8 +242,11 @@ TEST_F(ApiTest, ValidRequests){
     std::this_thread::sleep_for(std::chrono::seconds(1));
     response = requester.queryJob("apiTest");
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying for Job: {}", response.error());
-    EXPECT_EQ(response.value().code, 200);
-    ASSERT_EQ(response.value().jsonData["jobname"], "apiTest");
+    EXPECT_EQ(response->code, 200);
+    EXPECT_EQ(response->jsonData["jobname"], "apiTest");
+    EXPECT_EQ(response->jsonData["driverModel"], "Gipps");
+    EXPECT_EQ(response->jsonData["status"], "DONE");
+    EXPECT_EQ(response->jsonData["numCars"], 6);
 
     response = requester.queryJobs();
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying For Jobs: {}", response.error());
@@ -251,13 +254,18 @@ TEST_F(ApiTest, ValidRequests){
 
     response = requester.queryCarDatas("apiTest");
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying Car Data {}", response.error());
-    ASSERT_EQ(response.value().code, 200);
-    ASSERT_EQ(response->jsonData["cars"].size(), 6); // number of cars in the job, not number of jobs
+    EXPECT_EQ(response->code, 200);
 
+    // Homogeneous traffic
+    for (size_t i = 0; i < response->jsonData["cars"].size();++i){
+        EXPECT_FLOAT_EQ(response->jsonData["cars"][i]["followModel"]["a"], 1.981 );
+        EXPECT_FLOAT_EQ(response->jsonData["cars"][i]["followModel"]["b"], -2.8955);
+        EXPECT_FLOAT_EQ(response->jsonData["cars"][i]["followModel"]["c"], -5.505);
+    }
 
     response = requester.queryRawDatas("apiTest");
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying Raw Data: {}", response.error());
-    ASSERT_EQ(response.value().code, 200);
+    EXPECT_EQ(response->code, 200);
     for (const json& carXVT : response->jsonData["data"]){
         std::vector<float> xs = carXVT["x"];
         ASSERT_TRUE(std::ranges::is_sorted(xs));
@@ -267,14 +275,13 @@ TEST_F(ApiTest, ValidRequests){
     response = requester.queryCarData("apiTest", 1500);
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying for apiTest job: {}", response.error());
 
-    ASSERT_EQ(response.value().code, 400) << "Found data for a car that shouldn't exist!";
-    EXPECT_EQ(response.value().jsonData["errmsg"], "No car with id 1500 in job named apiTest");
+    EXPECT_EQ(response->code, 400) << "Found data for a car that shouldn't exist!";
+    EXPECT_EQ(response->jsonData["errmsg"], "No car with id 1500 in job named apiTest");
 
     response = requester.deleteJob("apiTest");
     ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
     
-    EXPECT_EQ(response.value().jsonData["msg"], "Successfully deleted apiTest");
-
+    EXPECT_EQ(response->jsonData["msg"], "Successfully deleted apiTest");
 }
 
 TEST_F(ApiTest, ErrorRequests){
@@ -292,21 +299,21 @@ TEST_F(ApiTest, ErrorRequests){
     // Delete job that doesn't exist
     response = requester.deleteJob("apiTest");
     ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
-    ASSERT_EQ(response.value().code, 400) << "Found ApiTest, which is supposed to be deleted!";
+    ASSERT_EQ(response->code, 400) << "Found ApiTest, which is supposed to be deleted!";
 
     // Job data with incorrect job name
     response = requester.queryJob("wrongJobName");
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying for fake Job: {}", response.error());
 
     ASSERT_EQ(response.value().code, 400) << "Found a job that shouldn't exist!";
-    EXPECT_EQ(response.value().jsonData["errmsg"], "No job named wrongJobName");
+    EXPECT_EQ(response->jsonData["errmsg"], "No job named wrongJobName");
 
     // Car Metadata with incorrect job name
     response = requester.queryCarDatas("wrongJobName");
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying for fake Job: {}", response.error());
 
-    ASSERT_EQ(response.value().code, 400) << "Found a job that shouldn't exist!";
-    EXPECT_EQ(response.value().jsonData["errmsg"], "No Data found. Check to see if the job exists");
+    ASSERT_EQ(response->code, 400) << "Found a job that shouldn't exist!";
+    EXPECT_EQ(response->jsonData["errmsg"], "No Data found. Check to see if the job exists");
 
 
 }

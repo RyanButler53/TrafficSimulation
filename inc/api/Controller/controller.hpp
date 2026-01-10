@@ -96,10 +96,10 @@ class Controller : public oatpp::web::server::api::ApiController {
         auto response = CarMetadataDTO::createShared();
         auto followModel = FollowModelDTO::createShared();
         response->leadStrategy = cm.lead_;
-        response->followStrategy = cm.follow_;
 
         followModel->a = cm.model_.a_;
         followModel->b = cm.model_.b_;
+        followModel->c = cm.model_.c_;
         response->followModel = followModel;
         response->carid = cm.id_; // id
         return response;
@@ -111,6 +111,8 @@ class Controller : public oatpp::web::server::api::ApiController {
         job->cfgfile = j.cfgPath_;
         job->errorMessage = j.errorMsg_;
         job->status = map_.at(j.status_);
+        job->driverModel = j.driverModel_;
+        job->numCars = j.numCars_;
         return job;
     }
 

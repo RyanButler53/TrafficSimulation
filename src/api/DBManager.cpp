@@ -37,7 +37,7 @@ std::expected<pqxx::connection, std::string> DBManager::getConnection(){
 // JOB DATA
 
 std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
-    std::string querystr = std::format("SELECT jobname, configfile, status, error  FROM TrafficJobs WHERE jobname = '{}'", jobname);
+    std::string querystr = std::format("SELECT jobname, configfile, status, error, followModel, numCars  FROM TrafficJobs WHERE jobname = '{}'", jobname);
 
     auto connect = getConnection();
     if (!connect){return std::unexpected(connect.error());}
@@ -53,29 +53,32 @@ std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
         return std::unexpected("No job named " + jobname);
     }
     pqxx::row r = result[0];
-    std::string name,cfgfile,error, status;
+    std::string name, cfgfile, error, status, followModel;
+    int numCars;
     try {
         name = r["jobname"].as<std::string>();
         cfgfile = r["configfile"].as<std::string>();
         error = r["error"].as<std::string>();
         status = r["status"].as<std::string>();
+        followModel = r["followModel"].as<std::string>();
+        numCars = r["numCars"].as<int>();
 
     } catch(const std::exception& e) {
         return std::unexpected("Error converting name, cfgfile, error or status to a string");
     }
 
-    return JobData{name, cfgfile, error, status};
+    return JobData{name, cfgfile, error, status, followModel, numCars};
 }
 
 std::expected<std::vector<JobData>, std::string> DBManager::queryJobs(){
-    std::string querystr = std::format("SELECT jobname, configfile, status, error FROM TrafficJobs");
+    std::string querystr = std::format("SELECT jobname, configfile, status, error, followModel, numCars FROM TrafficJobs");
     auto connect = getConnection();
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
     std::vector<JobData> data;
     try {
-        for (auto [name, cfg, status, error] : tx.query<std::string, std::string, std::string, std::string>(querystr)){
-            data.push_back({name, cfg, error, status});
+        for (auto [name, cfg, status, error, followModel, numCars] : tx.query<std::string, std::string, std::string, std::string, std::string, int>(querystr)){
+            data.push_back({name, cfg, error, status, followModel, numCars});
         }    
     } catch(const std::exception& e) {
         return std::unexpected(std::format("Error in SELECT query from DB Reader: ", e.what()));
@@ -91,26 +94,35 @@ std::expected<CarMetadata, std::string>  DBManager::queryCars(std::string jobnam
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
 
-    std::string querystr = std::format("SELECT follow, lead FROM CarData INNER JOIN TrafficJobs ON TrafficJobs.JobID = CarData.JobID WHERE jobname = '{}' and carid = {}", jobname, carid);
+    std::string querystr = std::format("SELECT follow_a, follow_b, follow_c, lead FROM CarData INNER JOIN TrafficJobs ON TrafficJobs.JobID = CarData.JobID WHERE jobname = '{}' and carid = {}", jobname, carid);
     pqxx::result result = tx.exec(querystr);
     if (result.empty()) {
         return std::unexpected(std::format("No car with id {} in job named {}", carid, jobname));
     }
-    pqxx::row r = result[0];
-    return CarMetadata{r[0].as<std::string>(), r[1].as<std::string>(), {}, carid};
+    try {
+        pqxx::row r = result[0];
+        FollowModelParams modelParams = {
+            r["follow_a"].as<float>(),
+            r["follow_b"].as<float>(),
+            r["follow_c"].as<float>()
+        };
+        return CarMetadata{r["lead"].as<std::string>(), modelParams, carid};
+    } catch(const std::exception& e) {
+        return std::unexpected(std::format("Error getting Car Metadata: {}", e.what()));
+    }
 }
 
 std::expected<std::vector<CarMetadata>, std::string> DBManager::queryCars(std::string jobname){
     auto connect = getConnection();
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
-    std::string querystr = std::format("SELECT carid, follow, lead FROM CarData INNER JOIN TrafficJobs ON TrafficJobs.JobID = CarData.JobID WHERE jobname = '{}'", jobname);
+    std::string querystr = std::format("SELECT carid, follow_a, follow_b, follow_c, lead FROM CarData INNER JOIN TrafficJobs ON TrafficJobs.JobID = CarData.JobID WHERE jobname = '{}'", jobname);
 
     std::vector<CarMetadata> data;
     
     try {
-        for (auto [carid, lead, follow] : tx.query<int, std::string, std::string>(querystr)){
-            data.push_back({lead, follow, {}, carid});
+        for (auto [carid, a, b, c, lead] : tx.query<int, float, float, float, std::string>(querystr)){
+            data.push_back({lead, {a,b,c}, carid});
         }    }
     catch(const std::exception& e){
         return std::unexpected(std::format("Error Querying all Cars from {}: {}", jobname, e.what()));
