@@ -32,7 +32,7 @@ class Reader():
         data = response.json()
         if response.status_code != 200:
             raise RuntimeError(f"Error with api request: {data["errmsg"]}")
-        return data
+        return data["cars"]
     
     def metadata(self, car_id):
         response = requests.get(f"{self.base_url}//data/{self.jobname}/cars/{car_id}")
@@ -115,6 +115,22 @@ class Reader():
     def travel_time_stats(self, x0, xf):
         all_times = self.all_travel_times(x0, xf)
         return np.average(all_times), np.std(all_times)
+    
+    def plot_travel_time(self, x0, xf, param):
+        """
+        Plots the Travel Time as a function of the car follow parameter. 
+        """
+        all_data = self.all_snapshots()
+        all_times = [self._travel_time(snap, x0, xf) for snap in all_data["data"]]
+        all_cars = self.all_metadata()
+        parms = [metadata["followModel"][param] for metadata in all_cars]
 
+        times, param_vals = [], []
+        for t,p in zip (all_times, parms):
+            if (t):
+                times.append(t)
+                param_vals.append(p)
 
-datareader = Reader("crash-test10")
+    
+        plt.scatter(param_vals, times)
+        plt.show()
