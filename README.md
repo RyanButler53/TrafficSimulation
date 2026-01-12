@@ -30,17 +30,17 @@ Both have 3 tables: trafficJobs, carData, snapshotData
 
 TrafficJobs: 
 
-| jobID (int) | configfile (text) | jobname (text) |
-| --- | --- | --- |
-| Unique Job identifier | Configuration file for the simulation | User provided jobname (in input file) |
+| jobID (int) | configfile (text) | jobname (text) | status (varchar 7) | error (text) | followModel (varchar 5) | numCars (int) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Unique Job identifier | Configuration file for the simulation | User provided jobname (in input file) | Job Status (Queued, Running Error, Done) | Error message for erroring jobs | Follow model type: Gipps/IDM | Number of total cars in the simulation. 
 
 CarData:
 
-| carID (int) | jobID (int) | Follow Strategy (text) | Lead Strategy (text) |
-| --- | --- | --- | --- |
-| Unique Car Id to its simulation | Job ID that the car belongs to | Car Following strategy when not in lead | Car Lead strategy when in lead |
+| carID (int) | jobID (int) | Follow Strategy A (float)  | Follow Strategy B (float) | Follow Strategy C (float) | Lead Strategy (text) |
+| --- | --- | --- | --- | --- | --- |
+| Unique Car Id to its simulation | Job ID that the car belongs to | Acceleration parameter to Car Following Strategy | Braking coefficent for car following strategy | C coefficent. C is either max braking for Gipps Car Following model or Minimum allowable gap for Intelligent driver model | Car Lead strategy when in lead |
 
-JobID is a foreign key to the TrafficJobs table. CarID and JobID are gauranteed to be unique. 
+JobID is a foreign key to the TrafficJobs table. The combination CarID and JobID are gauranteed to be unique. 
 
 Snapshot Data:
 
@@ -49,7 +49,7 @@ Snapshot Data:
 | Car Id for simulation | Job the car belongs to | position | velocity | timestamp |
 
 
-CarID and JobID is a foreign key to CarData's CarID and JobID values. CarID, JobID and timestamp (t) are gauranteed to be unique. 
+CarID and JobID is a foreign key to CarData's CarID and JobID values. The triplet CarID, JobID and timestamp (t) are gauranteed to be unique. 
 
 # List of Api Endpoints
 

@@ -9,6 +9,7 @@ Submit one job that uses the file logger. Compare the hashes of the logs with th
 Submit one job that uses the file logger. submit one that uses the Test db logger. 
 Compare those to see if they are the same via SHA 256 (Requires OpenSSL)
 
-Api Integration Test: 
+Api Integration Test: (Requires curl and json)
 Runs the API in Test mode
-Sends api requests and checks the status codes for code 200 (Requires curl and json)
+Sends api requests and checks the status codes for code 200 
+Sends bad api requests and checks for appropriate error messages and code 400

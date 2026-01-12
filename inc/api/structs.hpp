@@ -9,16 +9,18 @@ struct JobData {
     std::string cfgPath_;
     std::string errorMsg_; // Is empty when no error is present
     std::string status_;
+    std::string driverModel_;
+    int numCars_;
 };
 
 struct FollowModelParams {
-    double a_;
-    double b_;
+    float a_;
+    float b_;
+    float c_;
 };
 
 struct CarMetadata {
     std::string lead_;
-    std::string follow_;
     FollowModelParams model_;
     int id_;
 };

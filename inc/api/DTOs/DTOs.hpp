@@ -20,10 +20,10 @@ ENUM(JOB_STATUS, uint8_t,
 class FollowModelDTO : public oatpp::DTO {
 
   DTO_INIT(FollowModelDTO, DTO);
-
-  DTO_FIELD(String, model);
-  DTO_FIELD(Float64, a);
-  DTO_FIELD(Float64, b);
+  // Float precision reduced to single precision
+  DTO_FIELD(Float32, a);
+  DTO_FIELD(Float32, b);
+  DTO_FIELD(Float32, c);
 };
 #include OATPP_CODEGEN_END(DTO)
 
@@ -38,7 +38,6 @@ class CarMetadataDTO : public oatpp::DTO {
   
     DTO_FIELD(Int64, carid);
     DTO_FIELD(String, leadStrategy);
-    DTO_FIELD(String, followStrategy);
     DTO_FIELD(Object<FollowModelDTO>, followModel);
 
 };
@@ -66,8 +65,8 @@ class CarSnapshotDTO : public oatpp::DTO {
 
     DTO_INIT(CarSnapshotDTO, DTO);
   
-    DTO_FIELD(Vector<Float32>, x);   // Status code field
-    DTO_FIELD(Vector<Float32>, v);     // Message field
+    DTO_FIELD(Vector<Float32>, x);
+    DTO_FIELD(Vector<Float32>, v);
     DTO_FIELD(Vector<Float32>, t);
 };
 
@@ -104,6 +103,8 @@ class JobDataDTO : public oatpp::DTO {
   DTO_FIELD(String, cfgfile);
   DTO_FIELD(Enum<JOB_STATUS>, status);
   DTO_FIELD(String, errorMessage);
+  DTO_FIELD(String, driverModel);
+  DTO_FIELD(Int32, numCars);
 
 };
 #include OATPP_CODEGEN_END(DTO)

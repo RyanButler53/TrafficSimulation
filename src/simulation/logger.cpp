@@ -27,8 +27,8 @@ void CarLogger::log(size_t id, double x, double v, double t) {
     logs_.push_back({id, x, v, t});
     cached = false;
 }; 
-void CarLogger::addCar(size_t id, std::string lead, std::string follow){
-    cars_.push_back({lead, follow, id});
+void CarLogger::addCar(size_t id, std::string lead, const std::tuple<double, double, double>& follow){
+    cars_.push_back({lead, std::get<0>(follow), std::get<1>(follow),std::get<2>(follow), id});
 }
 
 std::vector<CarSnapshot> CarLogger::getCar(size_t id){
@@ -128,7 +128,7 @@ DBLogger::DBLogger(std::string jobname, std::string config, bool test):
     }
 }
 
-std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string jobname, std::string config, bool test){
+std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string jobname, std::string config, std::string followType, bool test){
     DBLogger* logger = new DBLogger(jobname, config, test);
     try {
 
@@ -138,7 +138,7 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
         pqxx::work tx(connect);
        
 
-        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error)\nVALUES ('{}', '{}', 'QUEUED', '') RETURNING jobID", config, jobname);
+        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error, followModel, numCars)\nVALUES ('{}', '{}', 'QUEUED', '', '{}', 0) RETURNING jobID", config, jobname, followType);
         pqxx::result result = tx.exec(row);
         logger->jobid_ = result.one_field().as<int>();
         tx.commit();
@@ -151,15 +151,14 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
  std::expected<void, std::string> DBLogger::writeData() {
 
     std::vector<std::vector<CarSnapshot>> byCar = getPartition();
-    size_t n = byCar.size();
 
     pqxx::connection connect(connectionStr_);
 
-    // Add rows for all the new cars seen. 
+    // Add rows for all the new cars seen. This breaks when splitting up writing into 2 or more steps
     try {
         pqxx::work tx(connect);
         for (CarData& cdata : cars_){
-            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow, lead)\nVALUES ({}, {}, '{}', '{}')", cdata.id, jobid_, cdata.followStrategy, cdata.leadStrategy));
+            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c, lead)\nVALUES ({}, {}, {}, {}, {}, '{}')", cdata.id, jobid_, cdata.a, cdata.b, cdata.c, cdata.leadStrategy));
         }
         tx.commit();
     } catch(const std::exception& e) {
@@ -182,7 +181,21 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
             return std::unexpected(std::format("Error inserting car raw snapshot data into database", e.what()));
         }
     }
-    
+
+    // Update the number of cars.  This will break if writing to the DB is done in chunks. Number of Unique cars is the number of rows found in car metadata
+    try {
+        pqxx::connection connect(connectionStr_);
+        pqxx::work finish_tx(connect);
+
+        std::string updateStatus = std::format("UPDATE ONLY trafficJobs SET numCars = {} WHERE jobid = '{}'", byCar.size(), jobid_);
+        finish_tx.exec(updateStatus); 
+        finish_tx.commit();
+        return {};
+    } catch(const std::exception& e) {
+        return std::unexpected(std::format("Error updating the Number of Cars: {} ", e.what()));
+    }
+
+    clearLogs();
     return {};
 }
 
@@ -212,7 +225,7 @@ std::expected<void, std::string> DBLogger::logFailure(std::string message) {
                 finish_tx.commit();
                 return {};
             } catch(const std::exception& e) {
-                return std::unexpected(std::format("Error updating the Job Status: {} ", e.what()));
+                return std::unexpected(std::format("Error updating the erroe message {} ", e.what()));
             }
         });
    

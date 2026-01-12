@@ -11,13 +11,14 @@
 #include "sim/car.hpp"
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <format>
 
 
 Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
         id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, followStrategy_{follow}{
         leadStrategy_ = std::make_shared<ConstantLead>(v0);
-        logger->addCar(id_, leadStrategy_->str(), followStrategy_->str());
+        logger->addCar(id_, leadStrategy_->str(), followStrategy_->params());
         logger->log(id_, x0, v0, t0);
 
     }
@@ -26,7 +27,7 @@ Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> 
          std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead):
         id_{id},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, 
         leadStrategy_{lead}, followStrategy_{follow}{
-            logger->addCar(id_, leadStrategy_->str(), followStrategy_->str());
+            logger->addCar(id_, leadStrategy_->str(), followStrategy_->params());
             logger->log(id_, x0, v0, t0);
         }
 
@@ -45,7 +46,8 @@ std::optional<std::string> Car::step(const Car& lead, double dt){
 
     // Check for an accident
     if (xlead <= pos_){
-        return std::make_optional(std::format("Accident Occurred at time {}: Car {} is at x = {:.2f} and its predecessor is at x = {:.2f}", timestep_, id_, pos_, xlead));
+        std::string msg = std::format("Accident Occurred at time {}: Car {} is at x = {:.2f} and its predecessor is at x = {:.2f}", timestep_, id_, pos_, xlead);
+        return std::make_optional(msg);
     }
 
     // Find the new velocity

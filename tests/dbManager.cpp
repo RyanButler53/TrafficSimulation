@@ -133,6 +133,15 @@ TEST_F(DBManagerTest, evaulateDB){
     for (auto [single, all] : std::views::zip(jobsSingle, *jobsAll)){
         EXPECT_EQ(single.cfgPath_, all.cfgPath_);
         EXPECT_EQ(single.jobName_, all.jobName_);
+        EXPECT_EQ(single.errorMsg_, all.errorMsg_);
+        EXPECT_EQ(single.driverModel_, all.driverModel_);
+        EXPECT_EQ(single.numCars_, all.numCars_);
+
+        // Check individual values that should be the same throughout all the jobs
+        EXPECT_EQ(all.driverModel_, "Gipps");
+        EXPECT_EQ(all.errorMsg_, "");
+        EXPECT_EQ(all.status_, "DONE");
+        EXPECT_GT(all.numCars_, 0);
     }
 
     std::vector<CarMetadata> singleMetadata;
@@ -147,10 +156,18 @@ TEST_F(DBManagerTest, evaulateDB){
 
     for (auto [single, all] : std::views::zip(singleMetadata, *allCarMetadata)){
         EXPECT_EQ(single.id_, all.id_);
-        EXPECT_EQ(single.follow_, all.follow_);
+        EXPECT_EQ(single.model_.a_, all.model_.a_);
+        EXPECT_EQ(single.model_.b_, all.model_.b_);
+        EXPECT_EQ(single.model_.c_, all.model_.c_);
+
         EXPECT_EQ(single.lead_, all.lead_);
         EXPECT_EQ(single.model_.a_, all.model_.a_);
         EXPECT_EQ(single.model_.b_, all.model_.b_);
+
+        // Confirm the data is being read from the DB correctly. 
+        EXPECT_FLOAT_EQ(all.model_.a_,  1.981);
+        EXPECT_FLOAT_EQ(all.model_.b_, -2.8955);
+        EXPECT_FLOAT_EQ(all.model_.c_, -5.505);
     }
 
     // Due to the size of the raw data, just check if X is increasing 

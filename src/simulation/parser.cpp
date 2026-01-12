@@ -22,10 +22,10 @@ std::expected<void, std::string> Parser::parseGeneral() {
     std::string logtype = ParseField<std::string>(cfg_, "logtype").value_or("file");
     std::string jobname = ParseField<std::string>(cfg_, "jobname").value(); // needs a default that is the specified by api call. 
     std::string logdir = ParseField<std::string>(cfg_, "logdir").value_or(std::format("./{}", jobname)); // assumes user has rw access to current dir. 
+    std::string drivertype = ParseField<std::string>(cfg_, "driverType").value_or("Gipps");
 
     if (logtype == "db" or logtype == "test"){
-        return DBLogger::make(jobname, configPath_, logtype == "test").transform([this](std::shared_ptr<DBLogger> log){logger_ = log;});
-        
+        return DBLogger::make(jobname, configPath_, drivertype, logtype == "test").transform([this](std::shared_ptr<DBLogger> log){logger_ = log;});
     } else {
         logger_ = std::make_shared<FileLogger>(logdir);
         return {};
