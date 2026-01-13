@@ -174,7 +174,6 @@ TEST_F(RegressionTest, FileDBEquivalence){
 
     size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
     // Read in each file, query the DB for each specific car id. Then check if they are ASSERT_EQ
-    std::cout <<"numCars " << numCars << std::endl;
     pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
     for (size_t carid = 0; carid < numCars; ++carid){
         pqxx::work transaction(connect);

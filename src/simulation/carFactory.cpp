@@ -19,7 +19,7 @@ CarFactory::CarFactory(std::shared_ptr<CarLogger> logger):logger_{logger}, carid
 GippsCarFactory::GippsCarFactory(double a, double b, double bmax,
     double a_stdev, double b_stdev, double bmax_stdev,  std::shared_ptr<CarLogger> logger):
     CarFactory(logger),
-    a_dist{a, a_stdev}, b_dist{b, b_stdev}, bmax_dist{bmax_stdev} {}
+    a_dist{a, a_stdev}, b_dist{b, b_stdev}, bmax_dist{bmax, bmax_stdev} {}
 
 
 Car GippsCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
