@@ -6,6 +6,14 @@ import os
 BASE_URL ="http://localhost:8000"
 import requests
 
+def jobs():
+    response = requests.get(f"{BASE_URL}/jobs/")
+    if (response.status_code != 200):
+        return response
+    else:
+        data = response.json()
+        return [x['jobname'] for x in data["jobs"]]
+
 def submit(jobname, config):
     file = os.path.abspath(config)
     if not os.path.exists(file):

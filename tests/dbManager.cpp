@@ -24,9 +24,9 @@ class DBManagerTest : public ::testing::Test {
         cfg["driverParams"]["a"] = 1.981;
         cfg["driverParams"]["b"] = -2.8955;
         cfg["driverParams"]["bmax"] = -5.505;
-        cfg["driverParams"]["a_stdev"] = 0.1;
-        cfg["driverParams"]["a_stdev"] = 0.1;
-        cfg["driverParams"]["bmax_stdev"] = 0.1;
+        cfg["driverParams"]["a_stdev"] = 0;
+        cfg["driverParams"]["a_stdev"] = 0;
+        cfg["driverParams"]["bmax_stdev"] = 0;
 
         cfg["flow"]["rate"] = 600;
         cfg["flow"]["v0"] = 30;
@@ -209,6 +209,7 @@ TEST_F(ErrorLogTest, errorLogging){
 
     std::expected<JobData, std::string> data = reader.queryJobs("test-dbreader3");
     ASSERT_TRUE(data.has_value()) << std::format("Error Querying Job test-dbreader3: {}", data.error());
-    ASSERT_EQ(data->errorMsg_, "Accident Occurred at time 10: Car 6 is at x = 39.24 and its predecessor is at x = 16.13");
+
+    ASSERT_EQ(data->errorMsg_, "Accident at t = 10: Car 6: x = 39.24 Leader: x = 16.13");
     ASSERT_EQ(data->status_, "ERROR");
 }

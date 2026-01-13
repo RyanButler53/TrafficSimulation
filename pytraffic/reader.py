@@ -99,7 +99,6 @@ class Reader():
         for car in data["data"]:
             ax[0].plot(car["t"], car["x"])
             ax[1].plot(car["t"], car["v"])
-        print("plotted")
         plt.tight_layout()
         if (fname):
             plt.savefig(f"{fname}.png")
