@@ -49,9 +49,9 @@ private:
         cfg["driverParams"]["a"] = 1.981;
         cfg["driverParams"]["b"] = -2.8955;
         cfg["driverParams"]["bmax"] = -5.505;
-        cfg["driverParams"]["a_stdev"] = 0.1;
-        cfg["driverParams"]["b_stdev"] = 0.1;
-        cfg["driverParams"]["bmax_stdev"] = 0.1;
+        cfg["driverParams"]["a_stdev"] = 0;
+        cfg["driverParams"]["b_stdev"] = 0;
+        cfg["driverParams"]["bmax_stdev"] = 0;
 
         cfg["flow"]["rate"] = 600;
         cfg["flow"]["v0"] = 30;
@@ -102,10 +102,10 @@ protected:
     // Note that these tests CANNOT be run in parallel 
     // since they are interacting with the SAME files. 
     void TearDown() override {
-        if (std::filesystem::exists("fileConfig.yaml")) std::filesystem::remove("fileConfig.yaml");
-        if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
+        // if (std::filesystem::exists("fileConfig.yaml")) std::filesystem::remove("fileConfig.yaml");
+        // if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
 
-        if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
+        // if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
     }
 
     void getXVTFromFIle(std::vector<XVT>& xvts, std::filesystem::path file){
@@ -174,7 +174,7 @@ TEST_F(RegressionTest, FileDBEquivalence){
 
     size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
     // Read in each file, query the DB for each specific car id. Then check if they are ASSERT_EQ
-    
+    std::cout <<"numCars " << numCars << std::endl;
     pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
     for (size_t carid = 0; carid < numCars; ++carid){
         pqxx::work transaction(connect);
