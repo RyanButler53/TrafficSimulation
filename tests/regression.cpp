@@ -102,10 +102,10 @@ protected:
     // Note that these tests CANNOT be run in parallel 
     // since they are interacting with the SAME files. 
     void TearDown() override {
-        // if (std::filesystem::exists("fileConfig.yaml")) std::filesystem::remove("fileConfig.yaml");
-        // if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
+        if (std::filesystem::exists("fileConfig.yaml")) std::filesystem::remove("fileConfig.yaml");
+        if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
 
-        // if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
+        if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
     }
 
     void getXVTFromFIle(std::vector<XVT>& xvts, std::filesystem::path file){
