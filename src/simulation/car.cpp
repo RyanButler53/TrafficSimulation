@@ -46,7 +46,7 @@ std::optional<std::string> Car::step(const Car& lead, double dt){
 
     // Check for an accident
     if (xlead <= pos_){
-        std::string msg = std::format("Accident Occurred at time {}: Car {} is at x = {:.2f} and its predecessor is at x = {:.2f}", timestep_, id_, pos_, xlead);
+        std::string msg = std::format("Accident at t = {}: Car {}: x = {:.2f} Leader: x = {:.2f}", timestep_, id_, pos_, xlead);
         return std::make_optional(msg);
     }
 

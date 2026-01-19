@@ -41,12 +41,18 @@ std::expected<void, std::string> Parser::parseCarFactory(){
         double a = ParseField<double>(driverParams, "a").value_or(2.0);
         double b = ParseField<double>(driverParams, "b").value_or(-3.0);
         double bmax = ParseField<double>(driverParams, "bmax").value_or(-3.5);
-        factory_ = std::make_shared<GippsCarFactory>(a,b,bmax, logger_);
+        double a_stdev = ParseField<double>(driverParams, "a_stdev").value_or(0);
+        double b_stdev = ParseField<double>(driverParams, "b_stdev").value_or(0);
+        double bmax_stdev = ParseField<double>(driverParams, "bmax_stdev").value_or(0);
+        factory_ = std::make_shared<GippsCarFactory>(a,b,bmax, a_stdev, b_stdev, bmax_stdev, logger_);
     } else if (drivertype == "IDM") {
         double a = ParseField<double>(driverParams, "a").value_or(2.0);
         double b = ParseField<double>(driverParams, "b").value_or(3.0);
         double s0 =ParseField<double>(driverParams, "s0").value_or(5);
-        factory_ = std::make_shared<IDMCarFactory>(a,b,s0, logger_);
+        double a_stdev = ParseField<double>(driverParams, "a_stdev").value_or(0);
+        double b_stdev = ParseField<double>(driverParams, "b_stdev").value_or(0);
+        double s0_stdev = ParseField<double>(driverParams, "s0_stdev").value_or(0);
+        factory_ = std::make_shared<IDMCarFactory>(a,b,s0, a_stdev, b_stdev, s0_stdev, logger_);
     } else {
         return std::unexpected("Valid driverType values are [\"Gipps\" and \"IDM\"]");
     }
