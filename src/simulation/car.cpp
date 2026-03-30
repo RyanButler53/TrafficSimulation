@@ -90,6 +90,10 @@ void Car::update(double dt){
     log();
 }
 
+void Car::update(double acceleration, double dt){
+    vel_ += acceleration * dt;
+    update(dt);
+}
 
 // Logging Methods
 

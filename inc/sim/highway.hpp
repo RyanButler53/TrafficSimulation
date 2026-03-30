@@ -16,7 +16,7 @@
 
 class Highway {
 
-
+    
     public: 
 
     /**
@@ -33,16 +33,21 @@ class Highway {
 
 class CpuHighway : public Highway {
 
-    // TODO make these all configurable
-    const double delta_a = 0.1;
-    const double a_bias = 0.3;
-    size_t nLanes_;
+    std::vector<FlowGenerator> flowGenerators_;
     std::shared_ptr<std::set<Car>[]> lanes_;
-    
+    size_t nLanes_;
 
+
+    // TODO make these all configurable
+    const double changeThreshold_ = 0.1;
+    const double a_bias = 0.3;
+    
+    std::optional<std::string> getAccelerationCache(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt);
+
+    void moveVehicles(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt);
     public: 
 
-    CpuHighway(size_t numLanes);
+    CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows);
     std::expected<void, std::string> update(double dt);
 };
 

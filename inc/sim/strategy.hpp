@@ -43,7 +43,12 @@ struct FollowStrategy {
      * @brief Returns the string for database logging
      */
     virtual std::tuple<double, double, double> params() const = 0;
-    
+
+    /**
+     * @brief Returns the maximum braking coefficient. 
+     * 
+     */
+    virtual double maxBraking() const = 0;    
 };
 
 /**
@@ -74,6 +79,8 @@ class Gipps : public FollowStrategy{
     double update(double v, double vlead, double gap, double dt) const override;
 
     std::tuple<double, double, double> params() const override {return {a_, b_, bMax_};};
+
+    double maxBraking() const override {return bMax_;}
 };
 
 class Intelligent : public FollowStrategy {
@@ -98,5 +105,7 @@ class Intelligent : public FollowStrategy {
     double update(double v, double vlead, double gap, double dt) const override;
 
     std::tuple<double, double, double> params() const override {return {a_, b_, s0_};};
+
+    double maxBraking() const override {return b_;}
 
 };

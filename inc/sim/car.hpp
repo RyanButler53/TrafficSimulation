@@ -56,6 +56,8 @@ class Car {
      * @param dt Timestep to incrememtn by 
      */
     void update(double dt);
+
+
     
     public: 
 
@@ -70,6 +72,7 @@ class Car {
     double getVelocity() const {return vel_;}
     double getLength() const {return len_;}
     double politeness() const {return politeness_;}
+    double braking() const {return followStrategy_->maxBraking();}
 
     // Set Lead Strategy 
     void setLeadStrategy(std::shared_ptr<LeadStrategy> ls) {leadStrategy_ = ls;}
@@ -94,6 +97,16 @@ class Car {
      */
     std::expected<double, std::string> acceleration(const Car& lead, double dt) const;
 
+
+    /**
+     * @brief Update based on acceleration. Forwards to other update overload. 
+     * 
+     * @param acceleration a
+     * @param dt timestep
+     */
+    void update(double acceleration, double dt);
+
+    
     /**
      * @brief Takes a step forward in time. This overload is for when the car is the LEADER
      * 
