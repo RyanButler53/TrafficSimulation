@@ -48,7 +48,7 @@ public:
     void addFlow(double dt);
 
     /// @brief Sets the flow gen
-    /// @param fgen Flow generarot
+    /// @param fgen Flow generator
     void setFlowGen(FlowGenerator& fgen);
 
     /// @brief sets the end of the lane. 

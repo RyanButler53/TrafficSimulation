@@ -29,8 +29,33 @@ Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> 
         leadStrategy_{lead}, followStrategy_{follow}{
             logger->addCar(id_, leadStrategy_->str(), followStrategy_->params());
             logger->log(id_, x0, v0, t0);
-        }
+}
 
+
+double Car::acceleration(double dt) const {
+    return (leadStrategy_->nextVelocity(dt) - vel_)/dt;
+}
+
+
+std::expected<double, std::string> Car::acceleration(const Car& lead, double dt) const {
+    // Get information about lead car
+    double xlead = lead.getPosition();
+    double vlead = lead.getVelocity();
+    double leadLen = lead.getLength();
+
+    // Check for an accident
+    if (xlead <= pos_){
+        std::string msg = std::format("Accident at t = {}: Car {}: x = {:.2f} Leader: x = {:.2f}", timestep_, id_, pos_, xlead);
+        return std::unexpected(msg);
+    }
+
+    // Find the new velocity
+    double gap = xlead - leadLen - pos_;
+    double vf = followStrategy_->update(vel_, vlead, gap, dt);
+
+    // a = dv/dt
+    return (vf - vel_)/ dt;
+}
 
 void Car::step(double dt){
     vel_ = leadStrategy_->nextVelocity(dt);

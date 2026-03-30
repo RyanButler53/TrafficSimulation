@@ -36,6 +36,9 @@ class Car {
     /// @brief Gap between car and tail end of car in front of it. 
     double gap_;
 
+    /// @brief Politeness during lane changing. 
+    double politeness_; 
+
     /// @brief Lead Car strategy. Constant, Discrete or Functional
     std::shared_ptr<LeadStrategy> leadStrategy_;
 
@@ -66,9 +69,30 @@ class Car {
     double getPosition() const {return pos_;}
     double getVelocity() const {return vel_;}
     double getLength() const {return len_;}
+    double politeness() const {return politeness_;}
 
     // Set Lead Strategy 
     void setLeadStrategy(std::shared_ptr<LeadStrategy> ls) {leadStrategy_ = ls;}
+
+
+    /**
+     * @brief Calculates the acceleration of the car at current state
+     * 
+     * @overload Overload for the lead car with no. 
+     * @param dt Timestep
+     * @return double acceleration a
+     */
+    double acceleration(double dt) const;
+
+    /**
+     * @brief Calculates the acceleration of the car with a leader car
+     * 
+     * @overload OVerload for car with a leader
+     * @param lead lead car
+     * @param dt timestep
+     * @return std::expected<double, std::string> acceleration on success, string on failure. 
+     */
+    std::expected<double, std::string> acceleration(const Car& lead, double dt) const;
 
     /**
      * @brief Takes a step forward in time. This overload is for when the car is the LEADER
@@ -90,6 +114,10 @@ class Car {
 
     void log() const;
     void log(std::ostream& os) const;
+
+    bool operator<(const Car& other){
+        return pos_ < other.pos_;
+    }
 
 };
 
