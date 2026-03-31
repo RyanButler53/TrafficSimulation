@@ -56,15 +56,13 @@ class Car {
      * @param dt Timestep to incrememtn by 
      */
     void update(double dt);
-
-
     
     public: 
 
     // Constructors
-    Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 
+    Car(size_t id, double x0, double v0, double t0, double politeness, std::shared_ptr<CarLogger> logger, 
         std::shared_ptr<FollowStrategy> follow);
-    Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger>logger, 
+    Car(size_t id, double x0, double v0, double t0, double politeness, std::shared_ptr<CarLogger>logger, 
         std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead);
 
     // Getters:
@@ -106,7 +104,7 @@ class Car {
      */
     void update(double acceleration, double dt);
 
-    
+
     /**
      * @brief Takes a step forward in time. This overload is for when the car is the LEADER
      * 

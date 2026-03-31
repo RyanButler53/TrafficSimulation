@@ -14,33 +14,35 @@
 
 #include <memory>
 
-CarFactory::CarFactory(std::shared_ptr<CarLogger> logger):logger_{logger}, carid_{0}{}
+CarFactory::CarFactory(std::shared_ptr<CarLogger> logger, double politeness, double p_stdev):
+    logger_{logger}, carid_{0}, politeness_dist_{politeness, politeness_dist_}{}
 
-GippsCarFactory::GippsCarFactory(double a, double b, double bmax,
-    double a_stdev, double b_stdev, double bmax_stdev,  std::shared_ptr<CarLogger> logger):
-    CarFactory(logger),
+GippsCarFactory::GippsCarFactory(double a, double b, double bmax, double p,
+    double a_stdev, double b_stdev, double bmax_stdev, double p_stdev, std::shared_ptr<CarLogger> logger):
+    CarFactory(logger, p , p_stdev),
     a_dist{a, a_stdev}, b_dist{b, b_stdev}, bmax_dist{bmax, bmax_stdev} {}
-
 
 Car GippsCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
     double a = a_dist(rng_);
     double b = b_dist(rng_);
     double bmax = bmax_dist(rng_);
+    double p = std::clamp<double>(politeness_dist_(rng_),0, 1);
     auto follow = std::make_shared<Gipps>(a, b, bmax, vdes);
-    return Car(carid_++, x0, v0, t0, logger_, follow);
+    return Car(carid_++, x0, v0, t0, p, logger_, follow);
 }
 
-IDMCarFactory::IDMCarFactory(double a, double b, double s0,
-    double a_stdev, double b_stdev, double s0_stdev, std::shared_ptr<CarLogger> logger):
-    CarFactory(logger), rng_{std::random_device{}()}, 
+IDMCarFactory::IDMCarFactory(double a, double b, double s0, double p,
+    double a_stdev, double b_stdev, double s0_stdev, double p_stdev, std::shared_ptr<CarLogger> logger):
+    CarFactory(logger, p, p_stdev), rng_{std::random_device{}()}, 
     a_dist{a, a_stdev}, b_dist{b, b_stdev}, s0_dist{s0, s0_stdev} {}
 
 Car IDMCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
     double a = a_dist(rng_);
     double b = b_dist(rng_);
     double s0 = s0_dist(rng_);
-    
+    double p = std::clamp<double>(politeness_dist_(rng_),0, 1);
+
     auto follow = std::make_shared<Intelligent>(a, b, s0, vdes);
-    return Car(carid_++, x0, v0, t0, logger_, follow);
+    return Car(carid_++, x0, v0, t0, p, logger_, follow);
 }
     

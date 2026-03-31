@@ -15,17 +15,17 @@
 #include <format>
 
 
-Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
-        id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, followStrategy_{follow}{
+Car::Car(size_t id, double x0, double v0, double t0, double p, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
+        id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p}, logger_{logger}, followStrategy_{follow}{
         leadStrategy_ = std::make_shared<ConstantLead>(v0);
         logger->addCar(id_, leadStrategy_->str(), followStrategy_->params());
         logger->log(id_, x0, v0, t0);
 
     }
 
-Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 
+Car::Car(size_t id, double x0, double v0, double t0,  double p, std::shared_ptr<CarLogger> logger, 
          std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead):
-        id_{id},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, 
+        id_{id},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p},  logger_{logger}, 
         leadStrategy_{lead}, followStrategy_{follow}{
             logger->addCar(id_, leadStrategy_->str(), followStrategy_->params());
             logger->log(id_, x0, v0, t0);
