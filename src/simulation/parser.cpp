@@ -34,29 +34,27 @@ std::expected<void, std::string> Parser::parseGeneral() {
 }
 
 std::expected<void, std::string> Parser::parseCarFactory(){
-    // this can raise an exception...
     std::string drivertype = ParseField<std::string>(cfg_, "driverType").value_or("Gipps");
-    YAML::Node driverParams = cfg_["driverParams"] ;
 
     if (drivertype == "Gipps"){
-        double a = ParseField<double>(driverParams, "a").value_or(2.0);
-        double b = ParseField<double>(driverParams, "b").value_or(-3.0);
-        double bmax = ParseField<double>(driverParams, "bmax").value_or(-3.5);
-        double p = ParseField<double>(driverParams, "p").value_or(0.2);
-        double a_stdev = ParseField<double>(driverParams, "a_stdev").value_or(0);
-        double b_stdev = ParseField<double>(driverParams, "b_stdev").value_or(0);
-        double bmax_stdev = ParseField<double>(driverParams, "bmax_stdev").value_or(0);
-        double p_stdev = ParseField<double>(driverParams, "p_stdev").value_or(0);
+        double a = ParseField<double>(cfg_, "driverParams", "a").value_or(2.0);
+        double b = ParseField<double>(cfg_, "driverParams", "b").value_or(-3.0);
+        double bmax = ParseField<double>(cfg_, "driverParams",  "bmax").value_or(-3.5);
+        double p = ParseField<double>(cfg_, "driverParams", "p").value_or(0.2);
+        double a_stdev = ParseField<double>(cfg_, "driverParams", "a_stdev").value_or(0);
+        double b_stdev = ParseField<double>(cfg_, "driverParams", "b_stdev").value_or(0);
+        double bmax_stdev = ParseField<double>(cfg_, "driverParams", "bmax_stdev").value_or(0);
+        double p_stdev = ParseField<double>(cfg_, "driverParams", "p_stdev").value_or(0);
         factory_ = std::make_shared<GippsCarFactory>(a, b, bmax, p, a_stdev, b_stdev, bmax_stdev, p_stdev, logger_);
     } else if (drivertype == "IDM") {
-        double a = ParseField<double>(driverParams, "a").value_or(2.0);
-        double b = ParseField<double>(driverParams, "b").value_or(3.0);
-        double s0 =ParseField<double>(driverParams, "s0").value_or(5);
-        double p = ParseField<double>(driverParams, "p").value_or(0.2);
-        double a_stdev = ParseField<double>(driverParams, "a_stdev").value_or(0);
-        double b_stdev = ParseField<double>(driverParams, "b_stdev").value_or(0);
-        double s0_stdev = ParseField<double>(driverParams, "s0_stdev").value_or(0);
-        double p_stdev = ParseField<double>(driverParams, "p_stdev").value_or(0);
+        double a = ParseField<double>(cfg_, "driverParams", "a").value_or(2.0);
+        double b = ParseField<double>(cfg_, "driverParams", "b").value_or(3.0);
+        double s0 =ParseField<double>(cfg_, "driverParams", "s0").value_or(5);
+        double p = ParseField<double>(cfg_, "driverParams", "p").value_or(0.2);
+        double a_stdev = ParseField<double>(cfg_, "driverParams", "a_stdev").value_or(0);
+        double b_stdev = ParseField<double>(cfg_, "driverParams", "b_stdev").value_or(0);
+        double s0_stdev = ParseField<double>(cfg_, "driverParams", "s0_stdev").value_or(0);
+        double p_stdev = ParseField<double>(cfg_, "driverParams", "p_stdev").value_or(0);
         factory_ = std::make_shared<IDMCarFactory>(a, b, s0, p, a_stdev, b_stdev, s0_stdev, p_stdev, logger_);
     } else {
         return std::unexpected("Valid driverType values are [\"Gipps\" and \"IDM\"]");
@@ -83,19 +81,13 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
 
     std::vector<FlowGenerator> flows(laneNode.size());
     for (const YAML::Node& node : laneNode) {
-        // TODO: Refactor this into a fn to use monads properly for fatal vs non fatal errors
-        
-        double rate, v0, vdes, start, end;
-        size_t position;
 
-        YAML::Node flowNode = ParseField<YAML::Node>(node, "flow").value();
-        rate = ParseFieldRecursive<double>(node, "flow", "rate").value_or(100);
-        // rate = ParseField<double>(flowNode, "rate").value_or(100);
-        v0 = ParseField<double>(flowNode, "v0").value_or(30);
-        vdes = ParseField<double>(flowNode, "vdes").value_or(35);
-        start = ParseField<double>(node, "start").value_or(0);
-        end = ParseField<double>(node, "end").value_or(1000);
-        position = ParseField<double>(node, "position").value_or(0);
+        double rate = ParseField<double>(node, "flow", "rate").value_or(100);
+        double v0 = ParseField<double>(node, "flow", "v0").value_or(30);
+        double vdes = ParseField<double>(node, "flow", "vdes").value_or(35);
+        double start = ParseField<double>(node, "start").value_or(0);
+        double end = ParseField<double>(node, "end").value_or(1000);
+        size_t position = ParseField<double>(node, "position").value_or(0);
 
         flows[position] = FlowGenerator(rate, start, v0, vdes, factory_, seed_);
     }

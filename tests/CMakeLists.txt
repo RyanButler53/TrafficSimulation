@@ -9,16 +9,18 @@ add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
 add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
 add_link_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
-
-add_executable(parsing parsing.cpp)
-target_link_libraries(parsing PUBLIC yaml-cpp::yaml-cpp PRIVATE GTest::gtest)
-
 # Database Stuff
 find_package(libpqxx CONFIG REQUIRED)
 
 # Optional Dependencies
 find_package(OpenSSL)
 find_package(CURL)
+
+add_executable(parsing parsing.cpp)
+target_link_libraries(parsing PUBLIC simulation 
+                                     yaml-cpp::yaml-cpp 
+                              PRIVATE GTest::gtest GTest::gtest_main)
+
 
 add_executable(regression regression.cpp)
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
