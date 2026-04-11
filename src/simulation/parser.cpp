@@ -89,8 +89,8 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
         size_t position;
 
         YAML::Node flowNode = ParseField<YAML::Node>(node, "flow").value();
-
-        rate = ParseField<double>(flowNode, "rate").value_or(100);
+        rate = ParseFieldRecursive<double>(node, "flow", "rate").value_or(100);
+        // rate = ParseField<double>(flowNode, "rate").value_or(100);
         v0 = ParseField<double>(flowNode, "v0").value_or(30);
         vdes = ParseField<double>(flowNode, "vdes").value_or(35);
         start = ParseField<double>(node, "start").value_or(0);

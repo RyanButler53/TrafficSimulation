@@ -83,6 +83,22 @@ class Parser {
         }   
     }
 
+    template <typename T, typename... Fields>
+    std::expected<T, std::string> ParseFieldRecursive(YAML::Node node, std::string key, Fields... keys){
+        // Base case: There is only one field. 
+        if constexpr (sizeof...(keys) == 0){
+            return ParseField<T>(node, key);
+        } else {
+            // More than one key. Need to grab a node can call recursively 
+            std::expected<YAML::Node, std::string> newNode = ParseField<YAML::Node>(node, key);
+            if (newNode.has_value()){
+                return ParseFieldRecursive<T>(newNode.value(), keys...);
+            } else {
+                return std::unexpected(newNode.error());
+            }
+        }
+    }
+
     public:
     Parser(YAML::Node cfg, std::filesystem::path cfgpath):cfg_{cfg},configPath_{cfgpath}{};
     virtual ~Parser() {}
