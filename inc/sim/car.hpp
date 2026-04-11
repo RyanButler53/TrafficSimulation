@@ -17,6 +17,7 @@
 #include "strategy.hpp"
 #include "logStructs.hpp"
 
+template <FollowModel Model_t>
 class Car {
     /// @brief Unique id for each card
     size_t id_;
@@ -55,7 +56,7 @@ class Car {
 
     // Constructors
     Car(size_t id, double x0, double v0, double t0, double politeness,
-        std::shared_ptr<FollowStrategy> follow);
+        FollowModel follow);
 
     // Getters:
     double getPosition() const {return pos_;}
