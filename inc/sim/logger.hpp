@@ -34,7 +34,6 @@ struct CarSnapshot {
  * 
  */
 struct CarData {
-    std::string leadStrategy;
     double a; // acceleration
     double b; // braking
     double c; // max braking in Gipps, min gap in IDM
@@ -105,7 +104,7 @@ class CarLogger
      * @brief Adds information about a specific car. 
      * 
      */
-    virtual void addCar(size_t id, std::string lead, const std::tuple<double, double, double>& follow);
+    virtual void addCar(size_t id, const std::tuple<double, double, double>& follow);
 
 
     /**

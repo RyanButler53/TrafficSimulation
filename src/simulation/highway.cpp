@@ -5,7 +5,7 @@
 #include <map>
 #include <numeric>
 
-#include "highway.hpp"
+#include "sim/highway.hpp"
 
 
 CpuHighway::CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows):flowGenerators_{flows}, 
@@ -81,7 +81,8 @@ std::expected<void, std::string> CpuHighway::update(double dt){
             // Calculate the lane change:
             auto calculateUtility = [&](int curLane, int newLane, double bias){
                 double a_alpha = accelerationCache[curLane].at(alpha->getPosition());
-                std::set<Car>::const_iterator l_hat = std::upper_bound(lanes_[newLane].begin(), lanes_[newLane].end(), *alpha);
+                const Car& a = *alpha;
+                std::set<Car>::const_iterator l_hat = std::upper_bound(lanes_[newLane].begin(), lanes_[newLane].end(), a);
                 double a_alphaChange = alpha->acceleration(*l_hat, dt).value_or(std::numeric_limits<double>::min());
                 // Current Follower Terms
                 double a_f = accelerationCache[curLane].at(follow->getPosition());
@@ -138,7 +139,9 @@ std::expected<void, std::string> CpuHighway::update(double dt){
 
     // Phase 6: Generate flow for each lane 
     for (size_t i : std::views::iota(0UL, nLanes_)){
-        flowGenerators_[i].generateFlow(dt).transform([this, i](Car c){lanes_[i].insert(c);});
+        auto c = flowGenerators_[i].generateFlow(dt);
+        lanes_[i].insert(*c);
+        // .transform([this, i](Car c){lanes_[i].insert(c);});
     }
     return {};
 }

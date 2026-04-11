@@ -19,16 +19,16 @@
 #include <functional>
 
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
-    lane_{input.lane_}, totalTime_{input.totalTime_}, dt_{input.dt_}{}
+    highway_{input.highway_}, totalTime_{input.totalTime_}, dt_{input.dt_}{}
 
 
 std::expected<void, std::string> Simulator::mainLoop(){
     double t = 0;
     std::expected <void, std::string> simStatus;
     while (t < totalTime_){
-        simStatus = lane_.updateLane(dt_);
+        simStatus = highway_->update(dt_);
         t += dt_;
-        if (!simStatus.has_value() || lane_.done()){
+        if (!simStatus.has_value()){
             break;
         }
     }

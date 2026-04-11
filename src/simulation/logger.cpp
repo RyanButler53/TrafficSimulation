@@ -27,8 +27,8 @@ void CarLogger::log(size_t id, double x, double v, double t) {
     logs_.push_back({id, x, v, t});
     cached = false;
 }; 
-void CarLogger::addCar(size_t id, std::string lead, const std::tuple<double, double, double>& follow){
-    cars_.push_back({lead, std::get<0>(follow), std::get<1>(follow),std::get<2>(follow), id});
+void CarLogger::addCar(size_t id, const std::tuple<double, double, double>& follow){
+    cars_.push_back({std::get<0>(follow), std::get<1>(follow),std::get<2>(follow), id});
 }
 
 std::vector<CarSnapshot> CarLogger::getCar(size_t id){
@@ -158,7 +158,7 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
     try {
         pqxx::work tx(connect);
         for (CarData& cdata : cars_){
-            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c, lead)\nVALUES ({}, {}, {}, {}, {}, '{}')", cdata.id, jobid_, cdata.a, cdata.b, cdata.c, cdata.leadStrategy));
+            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c)\nVALUES ({}, {}, {}, {}, {})", cdata.id, jobid_, cdata.a, cdata.b, cdata.c));
         }
         tx.commit();
     } catch(const std::exception& e) {

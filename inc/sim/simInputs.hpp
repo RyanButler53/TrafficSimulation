@@ -10,13 +10,13 @@
  */
 #pragma once
 
-#include "lane.hpp"
+#include "highway.hpp"
 #include "logger.hpp"
 
 
 struct SimulatorInputs {
     std::shared_ptr<CarLogger> logger_;
-    Lane lane_;
+    std::shared_ptr<Highway> highway_;
     double totalTime_;
     double dt_;
 };

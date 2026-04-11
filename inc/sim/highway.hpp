@@ -8,17 +8,18 @@
  * @copyright Copyright (c) 2026
  * 
  */
+
+#pragma once
 #include <expected>
 #include <set>
+#include <unordered_map>
 
 #include "car.hpp"
 #include "flowGenerator.hpp"
 
-class Highway {
+struct Highway {
 
-    
-    public: 
-
+    virtual ~Highway(){}
     /**
      * @brief Steps the highway forward dt seconds. 
      * 
@@ -45,20 +46,21 @@ class CpuHighway : public Highway {
     std::optional<std::string> getAccelerationCache(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt);
 
     void moveVehicles(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt);
+
     public: 
 
     CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows);
-    std::expected<void, std::string> update(double dt);
+    std::expected<void, std::string> update(double dt) override;
 };
 
-#ifdef TRAFFIC_WITH_KOKKOS
-// class KokkosHighway : public Highway {
+// #ifdef TRAFFIC_WITH_KOKKOS
+// // class KokkosHighway : public Highway {
 
-// };
-#endif
+// // };
+// #endif
 
-#ifdef TRAFFIC_WITH_METAL
-// class MetalHighway : public Highway{
+// #ifdef TRAFFIC_WITH_METAL
+// // class MetalHighway : public Highway{
 
-// };
-#endif
+// // };
+// #endif

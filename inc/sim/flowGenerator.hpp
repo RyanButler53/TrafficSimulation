@@ -30,8 +30,22 @@ private:
     double time_{0};
 
 public:
-    FlowGenerator(); // Defaults to no flow at all. Rate of 0
-    FlowGenerator(double rate, double x0, double v0, double vdes, uint64_t seed = 0);
+    /**
+     * @brief Construct a new Flow Generator object with no flow
+     * 
+     */
+    FlowGenerator();
+
+    /**
+     * @brief Construct a new Flow Generator object with a specified Rate
+     * 
+     * @param rate 
+     * @param x0 
+     * @param v0 
+     * @param vdes 
+     * @param seed 
+     */
+    FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory, uint64_t seed = 0);
     ~FlowGenerator() = default;
 
     /**
@@ -49,6 +63,5 @@ public:
      */
     bool hasFlow() const {return rate_ != 0;}
 
-    void setFactory(std::shared_ptr<CarFactory> factory);
 };
 

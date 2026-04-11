@@ -1,5 +1,6 @@
 #include "sim/parser.hpp"
 #include "sim/simInputs.hpp"
+#include "sim/highway.hpp"
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -41,139 +42,70 @@ std::expected<void, std::string> Parser::parseCarFactory(){
         double a = ParseField<double>(driverParams, "a").value_or(2.0);
         double b = ParseField<double>(driverParams, "b").value_or(-3.0);
         double bmax = ParseField<double>(driverParams, "bmax").value_or(-3.5);
+        double p = ParseField<double>(driverParams, "p").value_or(0.2);
         double a_stdev = ParseField<double>(driverParams, "a_stdev").value_or(0);
         double b_stdev = ParseField<double>(driverParams, "b_stdev").value_or(0);
         double bmax_stdev = ParseField<double>(driverParams, "bmax_stdev").value_or(0);
-        factory_ = std::make_shared<GippsCarFactory>(a,b,bmax, a_stdev, b_stdev, bmax_stdev, logger_);
+        double p_stdev = ParseField<double>(driverParams, "p_stdev").value_or(0);
+        factory_ = std::make_shared<GippsCarFactory>(a, b, bmax, p, a_stdev, b_stdev, bmax_stdev, p_stdev, logger_);
     } else if (drivertype == "IDM") {
         double a = ParseField<double>(driverParams, "a").value_or(2.0);
         double b = ParseField<double>(driverParams, "b").value_or(3.0);
         double s0 =ParseField<double>(driverParams, "s0").value_or(5);
+        double p = ParseField<double>(driverParams, "p").value_or(0.2);
         double a_stdev = ParseField<double>(driverParams, "a_stdev").value_or(0);
         double b_stdev = ParseField<double>(driverParams, "b_stdev").value_or(0);
         double s0_stdev = ParseField<double>(driverParams, "s0_stdev").value_or(0);
-        factory_ = std::make_shared<IDMCarFactory>(a,b,s0, a_stdev, b_stdev, s0_stdev, logger_);
+        double p_stdev = ParseField<double>(driverParams, "p_stdev").value_or(0);
+        factory_ = std::make_shared<IDMCarFactory>(a, b, s0, p, a_stdev, b_stdev, s0_stdev, p_stdev, logger_);
     } else {
         return std::unexpected("Valid driverType values are [\"Gipps\" and \"IDM\"]");
     }
     return {};
 }
 
-std::expected<std::shared_ptr<LeadStrategy>, std::string> Parser::parseLeadStrategy(YAML::Node leadNode){
-    std::string leadtype = ParseField<std::string>(leadNode, "leadType").value_or(""); // hold error
-
-    // Utility to get yaml[fntype][key] and error check. 
-    std::function<YAML::Node(std::string, std::string)> getNode = [this, &leadNode](std::string fntype, std::string key){
-        return  ParseField<YAML::Node>(leadNode, fntype).and_then([this, key](YAML::Node n){
-            return ParseField<YAML::Node>(n, key);
-        }).value_or(YAML::Node());
-    };
-    if (leadtype == "function"){
-        // looking for Sine, Constant, Piecewise
-        // Do piecewise later. 
-        // YAML::Node sine = leadNode["function"]["sine"];
-        YAML::Node sine = getNode("function", "sine");
-        double a = ParseField<double>(sine, "a").value_or(40);
-        double b = ParseField<double>(sine, "b").value_or(0);
-        double c = ParseField<double>(sine, "c").value_or(0);
-        return std::make_shared<FunctionLead>(a,b,c);
-        
-    } else if (leadtype == "discrete") {
-        std::vector<double> velocities;
-        YAML::Node discrete = getNode("discrete", "velocities");
-        /// @warning This operation may throw an error if there is a bad conversion. 
-        std::transform(discrete.begin(), discrete.end(), std::back_inserter(velocities), [](const YAML::Node& n){return n.as<double>();});
-        return std::make_shared<DiscreteLead>(velocities);
-    } else if (leadtype == "constant") {
-        double v = ParseField<YAML::Node>(leadNode, "constant")
-                                        .and_then([this](const YAML::Node& n){return ParseField<double>(n, "velocity");})
-                                        .value_or(30.0);
-        return std::make_shared<ConstantLead>(v);
-    } else {
-        return std::unexpected("Invalid leadType value. Valid leadType values are [\"function\", \"discrete\", and \"constant\"]");
-    }
-}
-
 // Put all the parsing together
 std::expected<SimulatorInputs, std::string> Parser::parse() {
     return parseGeneral().and_then([this](){return parseCarFactory();})
-                         .and_then([this](){return parseLane();})
-                         .transform([this](){return SimulatorInputs{logger_, lane_, totaltime_, dt_};});
+                         .and_then([this](){return parseHighway();})
+                         .transform([this](){return SimulatorInputs{logger_, highway_, totaltime_, dt_};});
 
 }
 
-// Discrete Parser specific functions
+std::expected<void, std::string> ContinuousParser::parseHighway(){
+    
+    // If the flow is specified in the lane, parse and use that. 
+    YAML::Node laneNode = cfg_["lanes"];
+    if (!laneNode){
+        return std::unexpected("Must provide a list of lanes with Flow generation and x values.");
+    } 
+    std::string hwyType = ParseField<std::string>(cfg_, "highway-type").value_or("cpu"); // cpu, kokkos, metal
 
-std::expected<void, std::string> DiscreteParser::parseLane(){
-
-    std::expected<YAML::Node, std::string> carsNode = ParseField<YAML::Node>(cfg_, "cars");
-    if (!carsNode){ return std::unexpected("Must have field \"cars\"");}
-    // Get all the cars in a list/vector. Sort by x coordinate in reverse. 
-    std::vector<Car> cars;
-    for (YAML::Node n : *carsNode){
-        try {
-            double x0 = n["x0"].as<double>();
-            double v0 = n["v0"].as<double>();
-            double vdes = n["vdes"].as<double>();
-            cars.push_back(factory_->makeCar(x0, v0, vdes, 0));
-        } catch(const std::exception& e) { // any exception here is a failure condition. 
-            return std::unexpected(std::format("Error parsing data about a car: {}", e.what()));
-        }
+    std::vector<FlowGenerator> flows(laneNode.size());
+    for (const YAML::Node& node : laneNode) {
+        // TODO: Refactor this into a fn to use monads properly for fatal vs non fatal errors
         
+        double rate, v0, vdes, start, end;
+        size_t position;
 
-    }
-    // Gets the REVERSE sort so the most forward car is at the front
-    std::ranges::sort(cars, [](const Car& c1, const Car& c2)->bool {return c1.getPosition() > c2.getPosition();});
-    
-    // Set the lead strategy 
-    std::expected<std::shared_ptr<LeadStrategy>, std::string> leadStrat = ParseField<YAML::Node>(cfg_, "leadCar")
-                                                                         .and_then([this](auto n){return parseLeadStrategy(n);});
+        YAML::Node flowNode = ParseField<YAML::Node>(node, "flow").value();
 
-    // if no lead strategy, return unexpected
-    if (!leadStrat){ return std::unexpected(leadStrat.error()); }
-    cars[0].setLeadStrategy(*leadStrat);
-    
-    // Add to lane
-    for (Car& c : cars){
-        lane_.addCar(c);
+        rate = ParseField<double>(flowNode, "rate").value_or(100);
+        v0 = ParseField<double>(flowNode, "v0").value_or(30);
+        vdes = ParseField<double>(flowNode, "vdes").value_or(35);
+        start = ParseField<double>(node, "start").value_or(0);
+        end = ParseField<double>(node, "end").value_or(1000);
+        position = ParseField<double>(node, "position").value_or(0);
+
+        flows[position] = FlowGenerator(rate, start, v0, vdes, factory_, seed_);
     }
+
+    // Make correct highway depending on highway type
+    if (hwyType == "cpu"){
+        highway_ = std::make_shared<CpuHighway>(flows.size(), flows);
+    } else {
+        return std::unexpected("No other highway implementation implemented");
+    }
+
     return {};
-}
-
-std::expected<void, std::string> ContinuousParser::parseLane(){
-    
-    // If the flow is specified in the lane, parse and use that. Breaks down in single lane case
-    if (cfg_["flow"]){
-        std::function<void(FlowGenerator)> setupLane = [this](FlowGenerator f){
-            f.setFactory(factory_);
-            lane_.setFlowGen(f);
-        };
-        std::expected<void, std::string> flow = parseFlow(cfg_["flow"]).transform(setupLane);
-    }
-    // Handle start and ending point of lane. (End defaults to infinity)
-    double start = ParseField<double>(cfg_, "start").value_or(0);
-    lane_.setEnd(ParseField<double>(cfg_, "end").value_or(std::numeric_limits<double>::infinity()));
-
-    // Lead Car:
-    double v0 = cfg_["leadCar"]["v0"].as<double>();
-    double vdes = cfg_["leadCar"]["vdes"].as<double>();
-    std::shared_ptr<LeadStrategy> leadStrat = parseLeadStrategy(cfg_["leadCar"]).value_or(std::make_shared<ConstantLead>(vdes));
-
-    Car c = factory_->makeCar(start, v0, vdes, 0);
-    c.setLeadStrategy(leadStrat);
-    lane_.addCar(c);
-    return {};
-}
-
-std::expected<FlowGenerator, std::string> ContinuousParser::parseFlow(YAML::Node flowNode){
-    double rate = ParseField<double>(flowNode, "rate").value_or(100); // 100 veh/hr default
-    double v0 = ParseField<double>(flowNode, "v0").value_or(30); // 30 m/s default
-    double vdes = ParseField<double>(flowNode, "vdes").value_or(30); // 30 m/s desired default
-    double x0 = ParseField<double>(flowNode, "x0").value_or(0);
-
-    if (rate < 0 or v0 < 0 or vdes < 0){
-        return std::unexpected("Flow rate, initial velocity and desired velocity must be positive");
-    }
-    return FlowGenerator(rate, x0, v0, vdes, seed_);
-
 }

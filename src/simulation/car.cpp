@@ -17,23 +17,13 @@
 
 Car::Car(size_t id, double x0, double v0, double t0, double p, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
         id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p}, logger_{logger}, followStrategy_{follow}{
-        leadStrategy_ = std::make_shared<ConstantLead>(v0);
-        logger->addCar(id_, leadStrategy_->str(), followStrategy_->params());
         logger->log(id_, x0, v0, t0);
-
     }
-
-Car::Car(size_t id, double x0, double v0, double t0,  double p, std::shared_ptr<CarLogger> logger, 
-         std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead):
-        id_{id},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p},  logger_{logger}, 
-        leadStrategy_{lead}, followStrategy_{follow}{
-            logger->addCar(id_, leadStrategy_->str(), followStrategy_->params());
-            logger->log(id_, x0, v0, t0);
-}
 
 
 double Car::acceleration(double dt) const {
-    return (leadStrategy_->nextVelocity(dt) - vel_)/dt;
+    // With no lead car 
+    return std::get<0>(followStrategy_->params());
 }
 
 
@@ -58,7 +48,7 @@ std::expected<double, std::string> Car::acceleration(const Car& lead, double dt)
 }
 
 void Car::step(double dt){
-    vel_ = leadStrategy_->nextVelocity(dt);
+    vel_ = acceleration(dt) * dt;
     update(dt);
 }
 

@@ -2,8 +2,8 @@
 
 FlowGenerator::FlowGenerator():rate_{0}{}
 
-FlowGenerator::FlowGenerator(double rate, double x0, double v0, double vdes, uint64_t seed):
-    rate_{rate}, x0_{x0}, v0_{v0}, vdes_{vdes}
+FlowGenerator::FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory, uint64_t seed):
+    rate_{rate}, x0_{x0}, v0_{v0}, vdes_{vdes}, factory_{factory}
 {
     if (!seed) seed = time(nullptr);
     rng_ = std::mt19937(seed);
@@ -18,8 +18,3 @@ std::optional<Car> FlowGenerator::generateFlow(double dt){
     time_ += dt;
     return c;
 }
-
-void FlowGenerator::setFactory(std::shared_ptr<CarFactory> factory){
-    factory_ = factory;
-}
-

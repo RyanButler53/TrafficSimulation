@@ -11,6 +11,7 @@ set (SHARED_SRC
     car.cpp
     flowGenerator.cpp
     lane.cpp
+    highway.cpp
     logger.cpp
     strategy.cpp)
 

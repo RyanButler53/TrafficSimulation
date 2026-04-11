@@ -15,11 +15,11 @@
 #include <memory>
 
 CarFactory::CarFactory(std::shared_ptr<CarLogger> logger, double politeness, double p_stdev):
-    logger_{logger}, carid_{0}, politeness_dist_{politeness, politeness_dist_}{}
+    logger_{logger}, carid_{0}, politeness_dist_{politeness, p_stdev}{}
 
 GippsCarFactory::GippsCarFactory(double a, double b, double bmax, double p,
     double a_stdev, double b_stdev, double bmax_stdev, double p_stdev, std::shared_ptr<CarLogger> logger):
-    CarFactory(logger, p , p_stdev),
+    CarFactory(logger, p , p_stdev), rng_{std::random_device{}()},
     a_dist{a, a_stdev}, b_dist{b, b_stdev}, bmax_dist{bmax, bmax_stdev} {}
 
 Car GippsCarFactory::makeCar(double x0, double v0, double vdes, double t0) {

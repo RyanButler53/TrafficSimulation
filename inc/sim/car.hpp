@@ -14,7 +14,6 @@
 #include <iostream>
 #include <optional>
 #include "strategy.hpp"
-#include "leadStrategy.hpp"
 #include "logger.hpp"
 
 class Car {
@@ -39,9 +38,6 @@ class Car {
     /// @brief Politeness during lane changing. 
     double politeness_; 
 
-    /// @brief Lead Car strategy. Constant, Discrete or Functional
-    std::shared_ptr<LeadStrategy> leadStrategy_;
-
     /// @brief Car Following Strategy Either Intelligent or Gipps Driver Models
     std::shared_ptr<FollowStrategy> followStrategy_;
 
@@ -62,8 +58,6 @@ class Car {
     // Constructors
     Car(size_t id, double x0, double v0, double t0, double politeness, std::shared_ptr<CarLogger> logger, 
         std::shared_ptr<FollowStrategy> follow);
-    Car(size_t id, double x0, double v0, double t0, double politeness, std::shared_ptr<CarLogger>logger, 
-        std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead);
 
     // Getters:
     double getPosition() const {return pos_;}
@@ -71,9 +65,6 @@ class Car {
     double getLength() const {return len_;}
     double politeness() const {return politeness_;}
     double braking() const {return followStrategy_->maxBraking();}
-
-    // Set Lead Strategy 
-    void setLeadStrategy(std::shared_ptr<LeadStrategy> ls) {leadStrategy_ = ls;}
 
 
     /**
@@ -126,7 +117,7 @@ class Car {
     void log() const;
     void log(std::ostream& os) const;
 
-    bool operator<(const Car& other){
+    bool operator<(const Car& other) const{
         return pos_ < other.pos_;
     }
 
