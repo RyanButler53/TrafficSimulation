@@ -55,19 +55,12 @@ class Parser {
     std::expected<void, std::string> parseCarFactory(void);
 
     /**
-     * @brief Parses the node for Flow Generation parameters
-     * 
-     * @param flowNode Node with flow generation
-     * @return FlowGenerator with zero flow. Override to parse flow. 
-     */
-    virtual std::expected<FlowGenerator, std::string> parseFlow(YAML::Node flowNode){return FlowGenerator();}
-
-    /**
      * @brief Creates the highway and sets up flow generators for highway construction. 
      * 
      * @param lane Lane to populate with cars
      */
-    virtual std::expected<void, std::string> parseHighway() = 0;
+    template <FollowModel Model>
+    std::expected<CarFactory<Model>, std::string> parseHighway();
 
     template <typename T>
     static std::expected<T, std::string> ParseField(YAML::Node node, std::string key){
@@ -103,13 +96,4 @@ class Parser {
      * @return Expected SimulatorInputs result or an error string
      */
     std::expected<SimulatorInputs, std::string> parse();
-};
-
-class ContinuousParser : public Parser {
-
-    public:
-
-    std::expected<void, std::string> parseHighway() override;
-
-    using Parser::Parser;
 };

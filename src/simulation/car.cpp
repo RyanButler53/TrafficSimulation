@@ -14,8 +14,8 @@
 #include <optional>
 #include <format>
 
-
-Car::Car(size_t id, double x0, double v0, double t0, double p, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
+template <FollowModel Model>
+Car::Car(size_t id, double x0, double v0, double t0, double p, std::shared_ptr<CarLogger> logger, Model follow):
         id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p}, logger_{logger}, followStrategy_{follow}{
         logger->log(id_, x0, v0, t0);
     }

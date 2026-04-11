@@ -70,7 +70,7 @@ std::expected<SimulatorInputs, std::string> Parser::parse() {
 
 }
 
-std::expected<void, std::string> ContinuousParser::parseHighway(){
+std::expected<void, std::string> Parser::parseHighway(){
     
     // If the flow is specified in the lane, parse and use that. 
     YAML::Node laneNode = cfg_["lanes"];

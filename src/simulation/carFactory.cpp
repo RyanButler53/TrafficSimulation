@@ -42,6 +42,7 @@ Car IDMCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
     double s0 = s0_dist(rng_);
     double p = std::clamp<double>(politeness_dist_(rng_),0, 1);
 
+    Intelligent follow(a, b, s0, vdes);
     auto follow = std::make_shared<Intelligent>(a, b, s0, vdes);
     return Car(carid_++, x0, v0, t0, p, logger_, follow);
 }
