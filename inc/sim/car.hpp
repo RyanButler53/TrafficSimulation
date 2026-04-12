@@ -39,7 +39,7 @@ class Car {
     double politeness_; 
 
     /// @brief Car Following Strategy Either Intelligent or Gipps Driver Models
-    std::shared_ptr<FollowStrategy> followStrategy_;
+    FollowModel followStrategy_;
 
     /// @brief Logger. Could log to files and evantually a DB
     std::shared_ptr<CarLogger> logger_;
@@ -64,7 +64,7 @@ class Car {
     double getVelocity() const {return vel_;}
     double getLength() const {return len_;}
     double politeness() const {return politeness_;}
-    double braking() const {return followStrategy_->maxBraking();}
+    double braking() const {return followStrategy_.braking();}
 
 
     /**
@@ -96,23 +96,23 @@ class Car {
     void update(double acceleration, double dt);
 
 
-    /**
-     * @brief Takes a step forward in time. This overload is for when the car is the LEADER
-     * 
-     * @param dt 
-     */
-    void step(double dt);
+    // /**
+    //  * @brief Takes a step forward in time. This overload is for when the car is the LEADER
+    //  * 
+    //  * @param dt 
+    //  */
+    // void step(double dt);
 
-    /**
-     * @brief Takes a step forward in time. 
-     * @details Takes the car in front of it into account based on the car in
-     * front of it and its following strategy
-     * 
-     * @param lead Leader car. Passed by reference
-     * @param dt Timestep. 
-     * @return Empty expected if 
-     */
-    std::optional<std::string> step(const Car& lead, double dt);
+    // /**
+    //  * @brief Takes a step forward in time. 
+    //  * @details Takes the car in front of it into account based on the car in
+    //  * front of it and its following strategy
+    //  * 
+    //  * @param lead Leader car. Passed by reference
+    //  * @param dt Timestep. 
+    //  * @return Empty expected if 
+    //  */
+    // std::optional<std::string> step(const Car& lead, double dt);
 
     void log() const;
     void log(std::ostream& os) const;

@@ -16,14 +16,17 @@
 
 
 Car::Car(size_t id, double x0, double v0, double t0, double p, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
-        id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p}, logger_{logger}, followStrategy_{follow}{
+        id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p}, logger_{logger} {
+        if (follow){ followStrategy_ = *follow;}
+        // Remove this!
         logger->log(id_, x0, v0, t0);
     }
 
 
 double Car::acceleration(double dt) const {
     // With no lead car 
-    return std::get<0>(followStrategy_->params());
+    Car lead(0, 1000000, vel_, 0, 0, nullptr, nullptr);
+    return acceleration(lead, dt).value();
 }
 
 
@@ -41,38 +44,38 @@ std::expected<double, std::string> Car::acceleration(const Car& lead, double dt)
 
     // Find the new velocity
     double gap = xlead - leadLen - pos_;
-    double vf = followStrategy_->update(vel_, vlead, gap, dt);
+    double vf = followStrategy_.update(vel_, vlead, gap, dt);
 
     // a = dv/dt
     return (vf - vel_)/ dt;
 }
 
-void Car::step(double dt){
-    vel_ = acceleration(dt) * dt;
-    update(dt);
-}
+// void Car::step(double dt){
+//     vel_ = acceleration(dt) * dt;
+//     update(dt);
+// }
 
-std::optional<std::string> Car::step(const Car& lead, double dt){
+// std::optional<std::string> Car::step(const Car& lead, double dt){
 
-    // Get information about lead car
-    double xlead = lead.getPosition();
-    double vlead = lead.getVelocity();
-    double leadLen = lead.getLength();
+//     // Get information about lead car
+//     double xlead = lead.getPosition();
+//     double vlead = lead.getVelocity();
+//     double leadLen = lead.getLength();
 
-    // Check for an accident
-    if (xlead <= pos_){
-        std::string msg = std::format("Accident at t = {}: Car {}: x = {:.2f} Leader: x = {:.2f}", timestep_, id_, pos_, xlead);
-        return std::make_optional(msg);
-    }
+//     // Check for an accident
+//     if (xlead <= pos_){
+//         std::string msg = std::format("Accident at t = {}: Car {}: x = {:.2f} Leader: x = {:.2f}", timestep_, id_, pos_, xlead);
+//         return std::make_optional(msg);
+//     }
 
-    // Find the new velocity
-    double gap = xlead - leadLen - pos_;
-    vel_ = followStrategy_->update(vel_, vlead, gap, dt);
+//     // Find the new velocity
+//     double gap = xlead - leadLen - pos_;
+//     vel_ = followStrategy_->update(vel_, vlead, gap, dt);
     
-    // Update Position and time
-    update(dt);
-    return std::nullopt;
-}
+//     // Update Position and time
+//     update(dt);
+//     return std::nullopt;
+// }
 
 void Car::update(double dt){
     pos_ += vel_*dt;

@@ -10,8 +10,20 @@
  */
 
 #include <string>
+#include <functional>
 
  #pragma once
+
+/**
+ * @brief Concrete struct to pass into Car objects
+ * 
+ */
+struct FollowModel {
+    std::function<double(double, double, double, double)> update;
+    std::function<double()> braking;
+    double a, b, c;
+
+};
 
  /**
  * @class FollowStrategy is a an Abstract Class for implementing a car following strategy
@@ -48,14 +60,21 @@ struct FollowStrategy {
      * @brief Returns the maximum braking coefficient. 
      * 
      */
-    virtual double maxBraking() const = 0;    
+    virtual double maxBraking() const = 0;
+
+    /**
+     * @brief Convert to a Follow Model struct to pass to the car object
+     * 
+     * @return FollowModel 
+     */
+    operator FollowModel() const;
 };
 
 /**
  * @class Gipps
  * @brief Gipps Model is a model of car following. Implements the update function 
  */
-class Gipps : public FollowStrategy{
+class Gipps : public FollowStrategy {
 
     /// @brief acceleration
     double a_; 
