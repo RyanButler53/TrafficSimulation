@@ -16,6 +16,7 @@
 
 #include "car.hpp"
 #include "flowGenerator.hpp"
+#include "logger.hpp"
 
 struct Highway {
 
@@ -27,6 +28,13 @@ struct Highway {
      * @return std::expected<void, std::string> Nothing on success, string on error. 
      */
     virtual std::expected<void, std::string> update(double dt) = 0;
+
+    /**
+     * @brief Converts the state of the highway at the current timestep into 
+     * 
+     * @return std::vector<CarSnapshot> 
+     */
+    virtual std::vector<CarSnapshot> log(double t) = 0;
 
 };
 
@@ -51,6 +59,7 @@ class CpuHighway : public Highway {
 
     CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows);
     std::expected<void, std::string> update(double dt) override;
+    std::vector<CarSnapshot> log(double t) override;
 };
 
 // #ifdef TRAFFIC_WITH_KOKKOS

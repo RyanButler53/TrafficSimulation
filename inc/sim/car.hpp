@@ -13,8 +13,9 @@
 #include <ostream>
 #include <iostream>
 #include <optional>
+#include <expected>
 #include "strategy.hpp"
-#include "logger.hpp"
+#include "logStructs.hpp"
 
 class Car {
     /// @brief Unique id for each card
@@ -41,22 +42,19 @@ class Car {
     /// @brief Car Following Strategy Either Intelligent or Gipps Driver Models
     FollowModel followStrategy_;
 
-    /// @brief Logger. Could log to files and evantually a DB
-    std::shared_ptr<CarLogger> logger_;
-    
     // Private Methods
 
     /**
      * @brief Updates position and time
      * 
-     * @param dt Timestep to incrememtn by 
+     * @param dt Timestep to incrememnt by 
      */
     void update(double dt);
     
     public: 
 
     // Constructors
-    Car(size_t id, double x0, double v0, double t0, double politeness, std::shared_ptr<CarLogger> logger, 
+    Car(size_t id, double x0, double v0, double t0, double politeness,
         std::shared_ptr<FollowStrategy> follow);
 
     // Getters:
@@ -95,27 +93,7 @@ class Car {
      */
     void update(double acceleration, double dt);
 
-
-    // /**
-    //  * @brief Takes a step forward in time. This overload is for when the car is the LEADER
-    //  * 
-    //  * @param dt 
-    //  */
-    // void step(double dt);
-
-    // /**
-    //  * @brief Takes a step forward in time. 
-    //  * @details Takes the car in front of it into account based on the car in
-    //  * front of it and its following strategy
-    //  * 
-    //  * @param lead Leader car. Passed by reference
-    //  * @param dt Timestep. 
-    //  * @return Empty expected if 
-    //  */
-    // std::optional<std::string> step(const Car& lead, double dt);
-
-    void log() const;
-    void log(std::ostream& os) const;
+    CarSnapshot snapshot(double t, uint16_t lane) const;
 
     bool operator<(const Car& other) const{
         return pos_ < other.pos_;
@@ -123,5 +101,4 @@ class Car {
 
 };
 
-std::ostream& operator<<(std::ostream& os, const Car& c);
 

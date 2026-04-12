@@ -17,12 +17,11 @@
 class CarFactory {
 
 protected: 
-    std::shared_ptr<CarLogger> logger_;
     std::normal_distribution<double> politeness_dist_;
     mutable size_t carid_;
 
 public:
-    CarFactory(std::shared_ptr<CarLogger> logger, double politeness, double p_stdev);
+    CarFactory(double politeness, double p_stdev);
     virtual ~CarFactory() = default;
 
     virtual Car makeCar(double x0, double v0, double vdes, double t0 = 0) = 0;
@@ -36,8 +35,7 @@ class GippsCarFactory : public CarFactory {
 
     public: 
     GippsCarFactory(double a, double b, double bmax, double p,
-                    double a_stdev , double b_stdev , double bmax_stdev, double p_stdev,
-                    std::shared_ptr<CarLogger> logger);
+                    double a_stdev , double b_stdev , double bmax_stdev, double p_stdev);
 
     ~GippsCarFactory() = default;
 
@@ -53,8 +51,7 @@ class IDMCarFactory : public CarFactory {
 
     public: 
     IDMCarFactory(double a, double b, double s0, double p,
-        double a_stdev , double b_stdev , double s0_stdev, double p_stdev,
-        std::shared_ptr<CarLogger> logger);
+        double a_stdev , double b_stdev , double s0_stdev, double p_stdev);
     ~IDMCarFactory() = default;
 
     Car makeCar(double x0, double v0, double vdes, double t0) override;

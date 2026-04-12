@@ -3,6 +3,7 @@
 #include <utility>
 #include <algorithm>
 #include <map>
+#include <ranges>
 #include <numeric>
 
 #include "sim/highway.hpp"
@@ -146,3 +147,21 @@ std::expected<void, std::string> CpuHighway::update(double dt){
     return {};
 }
 
+std::vector<CarSnapshot> CpuHighway::log(double t){
+
+    // Calculate number of cars
+    size_t ncars = 0;
+    for (auto ilane : std::views::iota(0UL, nLanes_)){
+        ncars += lanes_[ilane].size();
+    }
+
+    // Allocate data memory up front and collect data. 
+    std::vector<CarSnapshot> data;
+    data.reserve(ncars);
+    for (auto ilane : std::views::iota(0UL, nLanes_)){
+        for (auto car : lanes_[ilane]){
+            data.push_back(car.snapshot(t, ilane));
+        }
+    }
+    return data;
+}

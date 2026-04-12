@@ -28,6 +28,7 @@ std::expected<void, std::string> Simulator::mainLoop(){
     while (t < totalTime_){
         simStatus = highway_->update(dt_);
         t += dt_;
+        logger_->fromHighway(highway_->log(t));
         if (!simStatus.has_value()){
             break;
         }

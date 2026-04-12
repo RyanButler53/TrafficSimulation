@@ -17,29 +17,8 @@
 #include <ranges>
 #include <filesystem>
 #include <expected>
+#include "logStructs.hpp"
 
-/**
- * @brief Struct containing the minimum data about each car at a given timestep
- * @details Enough information to reconstruct and visualize the simulation with ffmpeg. 
- */
-struct CarSnapshot {
-    size_t id;
-    double x;
-    double v;
-    double t;
-    uint16_t lane;
-};
-
-/**
- * @brief Struct containing data about a specific car
- * 
- */
-struct CarData {
-    double a; // acceleration
-    double b; // braking
-    double c; // max braking in Gipps, min gap in IDM
-    size_t id;
-};
 
 class CarLogger 
 {
@@ -126,7 +105,7 @@ class CarLogger
      * 
      * @param data 
      */
-    void fromHighway(std::vector<CarSnapshot>& data);
+    void fromHighway(std::vector<CarSnapshot> data);
 };
 
 class FileLogger : public CarLogger {

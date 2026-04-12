@@ -29,7 +29,7 @@ void CarLogger::log(size_t id, double x, double v, double t) {
     cached = false;
 };
 
-void CarLogger::fromHighway(std::vector<CarSnapshot>& data){
+void CarLogger::fromHighway(std::vector<CarSnapshot> data){
     logs_.append_range(data);
     cached = false;
 }
