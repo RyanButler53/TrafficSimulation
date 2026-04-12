@@ -16,14 +16,6 @@
 
 // Gipps Driver Model
 
-FollowStrategy::operator FollowModel() const {
-    auto [a, b, c] = params();
-    auto updateFunc = [this](double v, double vlead, double gap, double dt){
-        return update(v, vlead, gap, dt);
-    };
-    auto braking = [this](){return maxBraking();};
-    return FollowModel{updateFunc, braking, a, b, c};
-}
 
 Gipps::Gipps(double accel, double braking, double bMax, double vDes):
     vDes_{vDes}, a_{accel}, b_{braking},bMax_{bMax} {}
