@@ -20,13 +20,14 @@
 
 /**
  * @brief Struct containing the minimum data about each car at a given timestep
- * 
+ * @details Enough information to reconstruct and visualize the simulation with ffmpeg. 
  */
 struct CarSnapshot {
     size_t id;
     double x;
     double v;
     double t;
+    uint16_t lane;
 };
 
 /**
@@ -120,7 +121,12 @@ class CarLogger
      */
     virtual std::expected<void, std::string> logFailure(std::string message) = 0;
 
-
+    /**
+     * @brief Adds all the data logs from the highway at a specific timestep to the internal logs
+     * 
+     * @param data 
+     */
+    void fromHighway(std::vector<CarSnapshot>& data);
 };
 
 class FileLogger : public CarLogger {

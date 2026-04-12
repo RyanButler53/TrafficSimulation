@@ -16,6 +16,7 @@
 #include <chrono>
 #include <format>
 #include <iostream>
+#include <ranges>
 
 // Database
 #include <pqxx/pqxx>
@@ -26,7 +27,13 @@ namespace fs = std::filesystem;
 void CarLogger::log(size_t id, double x, double v, double t) {
     logs_.push_back({id, x, v, t});
     cached = false;
-}; 
+};
+
+void CarLogger::fromHighway(std::vector<CarSnapshot>& data){
+    logs_.append_range(data);
+    cached = false;
+}
+
 void CarLogger::addCar(size_t id, const std::tuple<double, double, double>& follow){
     cars_.push_back({std::get<0>(follow), std::get<1>(follow),std::get<2>(follow), id});
 }
