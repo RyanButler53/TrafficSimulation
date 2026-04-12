@@ -5,7 +5,7 @@ type: "continuous" # differentiates between adding cars upfront or online
 time: 1500
 timestep: 1
 seed: 70
-logtype: "db"
+logtype: "file"
 highway-type: "cpu" # "cpu", "kokkos" or "metal".
 
 # Driver Model

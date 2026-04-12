@@ -105,12 +105,12 @@ std::expected<void, std::string> FileLogger::writeData(){
         fs::path fname = basepath_ / fs::path("car" + std::to_string(i) + ".csv");
         if (!fs::exists(fname)){
             std::ofstream out(fname);
-            out << "x,v,t\n";
+            out << "x,v,t,l\n";
         }
         
         std::ofstream logfile(fname, std::ios::app);
         for (CarSnapshot& c : byCar[i]){
-            logfile << c.x << "," << c.v << ","<< c.t<<"\n";
+            logfile << c.x << "," << c.v << ","<< c.t << "," << c.l<<"\n";
         }
     }
     clearLogs();

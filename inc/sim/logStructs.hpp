@@ -17,11 +17,11 @@
  * @details Enough information to reconstruct and visualize the simulation with ffmpeg. 
  */
 struct CarSnapshot {
-    std::size_t id;
-    double x;
-    double v;
-    double t;
-    uint16_t lane;
+    std::size_t id; // car id
+    double x; /// position
+    double v; // velocity
+    double t; // time
+    uint16_t l; // lane
 };
 
 
@@ -33,5 +33,5 @@ struct CarData {
     double a; // acceleration
     double b; // braking
     double c; // max braking in Gipps, min gap in IDM
-    size_t id;
+    size_t id; // car id
 };
