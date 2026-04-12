@@ -30,8 +30,8 @@ struct Highway {
     virtual std::expected<void, std::string> update(double dt) = 0;
 
     /**
-     * @brief Converts the state of the highway at the current timestep into 
-     * 
+     * @brief Converts the state of the highway at the current timestep into car snapshots
+     * @details Each derived class stores cars differently and has a different conversion algorithm. 
      * @return std::vector<CarSnapshot> 
      */
     virtual std::vector<CarSnapshot> log(double t) = 0;
@@ -43,7 +43,7 @@ struct Highway {
 class CpuHighway : public Highway {
 
     std::vector<FlowGenerator> flowGenerators_;
-    std::shared_ptr<std::set<Car>[]> lanes_;
+    std::vector<std::set<Car>> lanes_;
     size_t nLanes_;
 
 

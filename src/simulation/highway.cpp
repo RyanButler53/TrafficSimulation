@@ -10,14 +10,17 @@
 
 
 CpuHighway::CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows):flowGenerators_{flows}, 
-    lanes_{std::make_shared<std::set<Car>[]>(numLanes)}, nLanes_{numLanes}{}
+    lanes_{std::vector<std::set<Car>>(4)}, nLanes_{numLanes}{}
 
 
 std::optional<std::string>CpuHighway::getAccelerationCache(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt){
-    accelerationCache.resize(nLanes_);
-    for (size_t i : std::views::iota(0UL, nLanes_)){
-        std::set<Car>& cars = lanes_[i];
-        std::unordered_map<double, double>& cache = accelerationCache[i];
+
+    for (std::set<Car>& cars : lanes_){
+        accelerationCache.push_back({});
+        std::unordered_map<double, double>& cache = accelerationCache.back();
+        if (cars.empty()){
+            continue;
+        }
 
         // Iterate over all cars in the lane, calculate acceleration and add to cache
         std::set<Car>::const_iterator current = cars.begin();
@@ -140,9 +143,9 @@ std::expected<void, std::string> CpuHighway::update(double dt){
 
     // Phase 6: Generate flow for each lane 
     for (size_t i : std::views::iota(0UL, nLanes_)){
-        auto c = flowGenerators_[i].generateFlow(dt);
-        lanes_[i].insert(*c);
-        // .transform([this, i](Car c){lanes_[i].insert(c);});
+       auto c = flowGenerators_[i].generateFlow(dt);
+        if (c){ lanes_[i].insert(*c); }
+
     }
     return {};
 }
