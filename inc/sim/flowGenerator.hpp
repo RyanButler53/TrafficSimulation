@@ -7,9 +7,13 @@
 #include "carFactory.hpp"
 #include "car.hpp"
 
-class FlowGenerator
+// Wrapper For Flow Generator objects. 
+
+template <FollowModel Model>
+class FlowGenerator:
 {
-private:
+
+    private:
 
     /// @brief Car Factory to make the cars
     std::shared_ptr<CarFactory> factory_;
@@ -36,8 +40,10 @@ public:
      */
     FlowGenerator();
 
+    using Flow::Flow;
+
     /**
-     * @brief Construct a new Flow Generator object with a specified Rate
+     * @brief Construct a new Flow Generator object with a constant specified rate
      * 
      * @param rate 
      * @param x0 
@@ -45,7 +51,8 @@ public:
      * @param vdes 
      * @param seed 
      */
-    FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory, uint64_t seed = 0);
+    FlowGenerator(double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory, uint64_t seed, double rate);
+    
     ~FlowGenerator() = default;
 
     /**
@@ -53,7 +60,7 @@ public:
      * @param dt timestep (seconds) to possibly generate a car. 
      * @return std::optional<Car> Optionally generates a car. 
      */
-    std::optional<Car> generateFlow(double dt);
+    std::optional<Car<Model>> generateFlow(double dt);
 
     /**
      * @brief Checks if the flow is nonzero. 

@@ -22,13 +22,13 @@ GippsCarFactory::GippsCarFactory(double a, double b, double bmax, double p,
     CarFactory(p , p_stdev), rng_{std::random_device{}()},
     a_dist{a, a_stdev}, b_dist{b, b_stdev}, bmax_dist{bmax, bmax_stdev} {}
 
-Car GippsCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
+Car<Gipps> GippsCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
     double a = a_dist(rng_);
     double b = b_dist(rng_);
     double bmax = bmax_dist(rng_);
     double p = std::clamp<double>(politeness_dist_(rng_),0, 1);
-    auto follow = std::make_shared<Gipps>(a, b, bmax, vdes);
-    return Car(carid_++, x0, v0, t0, p, follow);
+    Gipps follow(a, b, bmax, vdes);
+    return Car<Gipps>(carid_++, x0, v0, t0, p, follow);
 }
 
 IDMCarFactory::IDMCarFactory(double a, double b, double s0, double p,
@@ -36,7 +36,7 @@ IDMCarFactory::IDMCarFactory(double a, double b, double s0, double p,
     CarFactory(p, p_stdev), rng_{std::random_device{}()}, 
     a_dist{a, a_stdev}, b_dist{b, b_stdev}, s0_dist{s0, s0_stdev} {}
 
-Car IDMCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
+Car<Intelligent> IDMCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
     double a = a_dist(rng_);
     double b = b_dist(rng_);
     double s0 = s0_dist(rng_);
@@ -44,6 +44,6 @@ Car IDMCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
 
     Intelligent follow(a, b, s0, vdes);
     auto follow = std::make_shared<Intelligent>(a, b, s0, vdes);
-    return Car(carid_++, x0, v0, t0, p, follow);
+    return Car<Intelligent>(carid_++, x0, v0, t0, p, follow);
 }
     

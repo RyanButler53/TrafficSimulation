@@ -9,7 +9,7 @@
 #include "sim/highway.hpp"
 
 
-CpuHighway::CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows):flowGenerators_{flows}, 
+CpuHighway::CpuHighway(size_t numLanes, std::vector<std::shared_ptr<Flow> flows):FlowGenerators_{flows}, 
     lanes_{std::vector<std::set<Car>>(4)}, nLanes_{numLanes}{}
 
 
@@ -143,7 +143,7 @@ std::expected<void, std::string> CpuHighway::update(double dt){
 
     // Phase 6: Generate flow for each lane 
     for (size_t i : std::views::iota(0UL, nLanes_)){
-       auto c = flowGenerators_[i].generateFlow(dt);
+       auto c = FlowGenerators_[i].generateFlow(dt);
         if (c){ lanes_[i].insert(*c); }
 
     }

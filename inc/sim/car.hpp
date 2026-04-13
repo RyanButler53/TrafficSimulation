@@ -55,8 +55,7 @@ class Car {
     public: 
 
     // Constructors
-    Car(size_t id, double x0, double v0, double t0, double politeness,
-        FollowModel follow);
+    Car(size_t id, double x0, double v0, double t0, double politeness, Model_t follow);
 
     // Getters:
     double getPosition() const {return pos_;}

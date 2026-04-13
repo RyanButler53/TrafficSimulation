@@ -15,7 +15,7 @@
 #include <unordered_map>
 
 #include "car.hpp"
-#include "flowGenerator.hpp"
+#include "FlowGenerator.hpp"
 #include "logger.hpp"
 
 struct Highway {
@@ -40,10 +40,11 @@ struct Highway {
 
  // Each derived class of the highway owns the cars 
 
+template <FollowModel Model>
 class CpuHighway : public Highway {
 
-    std::vector<FlowGenerator> flowGenerators_;
-    std::vector<std::set<Car>> lanes_;
+    std::vector<FlowGenerator<Model>> FlowGenerators_;
+    std::vector<std::set<Car<Model>>> lanes_;
     size_t nLanes_;
 
 
@@ -57,7 +58,7 @@ class CpuHighway : public Highway {
 
     public: 
 
-    CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows);
+    CpuHighway(size_t numLanes, std::vector<FlowGenerator<Model>> flows);
     std::expected<void, std::string> update(double dt) override;
     std::vector<CarSnapshot> log(double t) override;
 };

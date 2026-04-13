@@ -23,9 +23,8 @@ protected:
 public:
     CarFactory(double politeness, double p_stdev);
     virtual ~CarFactory() = default;
-
-    virtual Car makeCar(double x0, double v0, double vdes, double t0 = 0) = 0;
 };
+
 
 class GippsCarFactory : public CarFactory {
     std::mt19937 rng_;
@@ -39,7 +38,7 @@ class GippsCarFactory : public CarFactory {
 
     ~GippsCarFactory() = default;
 
-    Car makeCar(double x0, double v0, double vdes, double t0) override;
+    Car<Gipps> makeCar(double x0, double v0, double vdes, double t0);
 };
 
 class IDMCarFactory : public CarFactory {
@@ -54,5 +53,5 @@ class IDMCarFactory : public CarFactory {
         double a_stdev , double b_stdev , double s0_stdev, double p_stdev);
     ~IDMCarFactory() = default;
 
-    Car makeCar(double x0, double v0, double vdes, double t0) override;
+    Car<Intelligent> makeCar(double x0, double v0, double vdes, double t0);
 };

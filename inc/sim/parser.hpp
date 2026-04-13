@@ -59,8 +59,7 @@ class Parser {
      * 
      * @param lane Lane to populate with cars
      */
-    template <FollowModel Model>
-    std::expected<CarFactory<Model>, std::string> parseHighway();
+    std::expected<CarFactory, std::string> parseHighway();
 
     template <typename T>
     static std::expected<T, std::string> ParseField(YAML::Node node, std::string key){
