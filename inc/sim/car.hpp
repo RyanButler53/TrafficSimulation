@@ -33,9 +33,6 @@ class Car {
     /// @brief Car Length. (meters)
     double len_;
 
-    /// @brief Gap between car and tail end of car in front of it. 
-    double gap_;
-
     /// @brief Politeness during lane changing. 
     double politeness_; 
 
@@ -50,19 +47,27 @@ class Car {
      * @param dt Timestep to incrememnt by 
      */
     void update(double dt);
+
+    /**
+     * @brief Constructs a car that represents a lead car in a free road environment
+     * 
+     * @return Car at "infinity"
+     */
+    Car infinity() const;
     
     public: 
 
     // Constructors
     Car(size_t id, double x0, double v0, double t0, double politeness,
-        std::shared_ptr<FollowStrategy> follow);
+        FollowModel follow);
 
     // Getters:
+    size_t getId() const {return id_;}
     double getPosition() const {return pos_;}
     double getVelocity() const {return vel_;}
     double getLength() const {return len_;}
     double politeness() const {return politeness_;}
-    double braking() const {return followStrategy_.braking();}
+    double braking() const {return followStrategy_.maxbraking;}
 
 
     /**

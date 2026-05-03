@@ -13,3 +13,5 @@ Api Integration Test: (Requires curl and json)
 Runs the API in Test mode
 Sends api requests and checks the status codes for code 200 
 Sends bad api requests and checks for appropriate error messages and code 400
+
+// Will need to run multiple different input files to make sure they don't error out. 

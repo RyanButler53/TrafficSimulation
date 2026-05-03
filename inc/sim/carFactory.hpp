@@ -35,7 +35,8 @@ class GippsCarFactory : public CarFactory {
 
     public: 
     GippsCarFactory(double a, double b, double bmax, double p,
-                    double a_stdev , double b_stdev , double bmax_stdev, double p_stdev);
+                    double a_stdev , double b_stdev , double bmax_stdev, double p_stdev,
+                    size_t seed);
 
     ~GippsCarFactory() = default;
 
@@ -51,7 +52,8 @@ class IDMCarFactory : public CarFactory {
 
     public: 
     IDMCarFactory(double a, double b, double s0, double p,
-        double a_stdev , double b_stdev , double s0_stdev, double p_stdev);
+        double a_stdev , double b_stdev , double s0_stdev, double p_stdev,
+        size_t  seed);
     ~IDMCarFactory() = default;
 
     Car makeCar(double x0, double v0, double vdes, double t0) override;

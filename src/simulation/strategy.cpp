@@ -13,48 +13,38 @@
 #include <algorithm>
 #include <cmath>
 #include <format>
+#include <iostream>
 
-// Gipps Driver Model
-
-FollowStrategy::operator FollowModel() const {
-    auto [a, b, c] = params();
-    auto updateFunc = [this](double v, double vlead, double gap, double dt){
-        return update(v, vlead, gap, dt);
+std::function<double(double, double, double, double)> makeGippsUpdateFunc(double a, double b, double bmax, double vdes){
+    auto function = [a, b, bmax, vdes](double v, double vlead, double gap, double dt){
+        double ratio = v/vdes;
+        double bt = b * dt;
+        
+        // free road velocity
+        double free_road = v + 2.5 * a * dt * (1 - ratio) * std::sqrt(0.025 +ratio);
+    
+        // Braking velocity
+        double breaking = bt + std::sqrt((bt * bt) - b *((2 * gap) - v*dt - (vlead * vlead / bmax)));
+        double result = std::min(free_road, breaking);
+        if (result < 0.0){
+            std::cout << "Negative velocity!" << std::endl;
+        }
+        return result;
     };
-    auto braking = [this](){return maxBraking();};
-    return FollowModel{updateFunc, braking, a, b, c};
+    return function;
 }
 
-Gipps::Gipps(double accel, double braking, double bMax, double vDes):
-    vDes_{vDes}, a_{accel}, b_{braking},bMax_{bMax} {}
+std::function<double(double, double, double, double)> makeIdmUpdateFunc(double a, double b, double s0, double vdes){
 
-double Gipps::update(double v, double vlead, double gap, double dt) const {
+    auto function = [a, b, s0, vdes](double v, double vlead, double gap, double dt){
+            // Convienence Variables
+        double dv = v - vlead;
+        double ratio = v/vdes;
 
-    // Prevent duplicate computations
-    double ratio = v/vDes_;
-    double bt = b_ * dt;
-    
-    // free road velocity
-    double free_road = v + 2.5 * a_ * dt * (1 - ratio) * std::sqrt(0.025 +ratio);
-
-    // Braking velocity
-    double breaking = bt + std::sqrt((bt * bt) - b_ *((2 * (gap)) - v*dt - (vlead * vlead / bMax_)));
-    return std::min(free_road, breaking);
-}
-
-// Intelligent Driver Model
-
-Intelligent::Intelligent(double accel, double braking, double s0, double vDes):
-    a_{accel}, b_{braking}, s0_{s0}, vDes_{vDes}{}
-
-double Intelligent::update(double v, double vlead, double gap, double dt) const {
-    
-    // Convienence Variables
-    double dv = v - vlead;
-    double ratio = v/vDes_;
-
-    // Compute Velocity
-    double sDes = s0_ + std::max(0.0, v*dt + (v*dv)/(2*std::sqrt(2*a_*b_)));
-    double final_accel = a_ * (1 - std::pow(ratio, 4) - std::pow(sDes/gap,2));
-    return v + final_accel * dt;
+        // Compute Velocity
+        double sDes = s0 + std::max(0.0, v*dt + (v*dv)/(2*std::sqrt(2*a*b)));
+        double final_accel = a* (1 - std::pow(ratio, 4) - std::pow(sDes/gap,2));
+        return v + final_accel * dt;
+    };
+    return function;
 }

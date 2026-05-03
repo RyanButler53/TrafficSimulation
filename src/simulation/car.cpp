@@ -15,16 +15,15 @@
 #include <format>
 
 
-Car::Car(size_t id, double x0, double v0, double t0, double p, std::shared_ptr<FollowStrategy> follow):
-        id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p}{
-        if (follow){ followStrategy_ = *follow;}
-    }
-
+Car::Car(size_t id, double x0, double v0, double t0, double p, FollowModel follow):
+        id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p},followStrategy_{follow}{}
+    
+Car Car::infinity() const{
+    return Car(0, pos_ + 500, vel_ + 50, 0, 0, {});
+}
 
 double Car::acceleration(double dt) const {
-    // With no lead car 
-    Car lead(0, 1000000, vel_, 0, 0, nullptr);
-    return acceleration(lead, dt).value();
+    return acceleration(infinity(), dt).value();
 }
 
 
@@ -42,8 +41,17 @@ std::expected<double, std::string> Car::acceleration(const Car& lead, double dt)
 
     // Find the new velocity
     double gap = xlead - leadLen - pos_;
+    if (gap < 0){
+        std::unexpected(std::format("Negative Gap: {}", gap));
+    }
     double vf = followStrategy_.update(vel_, vlead, gap, dt);
-
+    if (vf < 0){
+        std::cout << " Negative velocity!" << vf << std::endl;
+        return std::unexpected(std::format("Negative final velocity: {} between cars {} and {}", vf, id_, lead.getId()));
+    } else if (std::isnan(vf)){
+        std::cout << "Nan final velocity: " << vf << std::endl;
+        return std::unexpected(std::format("Nan final velocity: {}", vf));
+    }
     // a = dv/dt
     return (vf - vel_)/ dt;
 }

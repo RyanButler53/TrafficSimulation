@@ -23,6 +23,7 @@ Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
 
 
 std::expected<void, std::string> Simulator::mainLoop(){
+    auto start = std::chrono::steady_clock::now();
     double t = 0;
     std::expected <void, std::string> simStatus;
     while (t < totalTime_){
@@ -32,8 +33,12 @@ std::expected<void, std::string> Simulator::mainLoop(){
         if (!simStatus.has_value()){
             break;
         }
+        std::println("t = {}", t);
     }
     logger_->writeData();
+    auto end = std::chrono::steady_clock::now();
+    long ms = std::chrono::duration_cast<std::chrono::milliseconds>((end - start)).count();
+    std::cout << "Total Time: " << double(ms / 1000.0) << std::endl;
     return simStatus;
 }
 

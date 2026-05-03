@@ -45,19 +45,28 @@ class CpuHighway : public Highway {
     std::vector<FlowGenerator> flowGenerators_;
     std::vector<std::set<Car>> lanes_;
     size_t nLanes_;
-
+    double roadEnd_;
 
     // TODO make these all configurable
     const double changeThreshold_ = 0.1;
-    const double a_bias = 0.3;
+    const double a_bias = 0.2;
     
+    /**
+     * @brief Gets a cache of acceleration values to use for lookup during lane chance calculatons
+     * @details Uses each cars' update function to calculate acceleration if no lane change occurs. 
+     * Assumes that the map is empty (does not clear it)
+     * 
+     * @param accelerationCache Vector of maps to store cached values. 
+     * @param dt Timestep to calculate acceleration for 
+     * @return std::optional<std::string> String error message if there is an error, nullopt otherwise. 
+     */
     std::optional<std::string> getAccelerationCache(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt);
 
     void moveVehicles(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt);
 
     public: 
 
-    CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows);
+    CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows, double roadEnd);
     std::expected<void, std::string> update(double dt) override;
     std::vector<CarSnapshot> log(double t) override;
 };
