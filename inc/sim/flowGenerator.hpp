@@ -22,6 +22,12 @@ private:
     /// @brief Rate of vechicle inflow. Units of vehicles/hr
     double rate_; 
 
+    /// @brief Number of more flows to generate this hour
+    double flowsLeft_;
+
+    /// @brief seconds left in the hour
+    double secondsLeft_ = 3600.0;
+
     // Car Data
     double x0_;
     double v0_;
@@ -51,9 +57,10 @@ public:
     /**
      * @brief Probabalistically generates flow 
      * @param dt timestep (seconds) to possibly generate a car. 
+     * @param lastcar x value of the "back bumper" of the car in front. Will not generate if this is less than x0
      * @return std::optional<Car> Optionally generates a car. 
      */
-    std::optional<Car> generateFlow(double dt);
+    std::optional<Car> generateFlow(double dt, double lastcar);
 
     /**
      * @brief Checks if the flow is nonzero. 

@@ -181,7 +181,12 @@ std::expected<void, std::string> CpuHighway::update(double dt){
 
     // Phase 6: Generate flow for each lane 
     for (size_t i : std::views::iota(0UL, nLanes_)){
-       auto c = flowGenerators_[i].generateFlow(dt);
+        double lastcar = roadEnd_;
+        if (!lanes_[i].empty()){
+            auto car = lanes_[i].begin();
+            lastcar = car->getPosition() - car->getLength(); 
+        }
+        auto c = flowGenerators_[i].generateFlow(dt, lastcar);
         if (c){ lanes_[i].insert(*c); }
 
     }

@@ -33,7 +33,6 @@ std::expected<void, std::string> Simulator::mainLoop(){
         if (!simStatus.has_value()){
             break;
         }
-        std::println("t = {}", t);
     }
     logger_->writeData();
     auto end = std::chrono::steady_clock::now();
