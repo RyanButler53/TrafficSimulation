@@ -90,7 +90,7 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
         double end = ParseField<double>(node, "end").value_or(1000);
         size_t position = ParseField<double>(node, "position").value_or(0);
 
-        flows[position] = FlowGenerator(rate, start, v0, vdes, factory_, seed_);
+        flows[position] = FlowGenerator(rate, start, v0, vdes, factory_, dt_, seed_);
     }
 
     // Make correct highway depending on highway type

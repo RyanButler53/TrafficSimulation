@@ -34,15 +34,13 @@ std::optional<std::string>CpuHighway::getAccelerationCache(std::vector<std::unor
                 std::cout << "Error calculating acceleraton! "  << a.error() << std::endl;
                 return std::make_optional(a.error());
             } else {
-                if (a.value() < current->braking()){
-                    std::println("Calculated Acceleration less than max braking. If no lane change in next timestep, crash");
-                }
                 cache.insert({current->getPosition(), a.value()});
             }
             // Next pair
             ++current;
             ++next;
         }
+        // Lead car
         cache.insert({current->getPosition(), current->acceleration(dt)});
     }
     return std::nullopt;
@@ -51,7 +49,7 @@ std::optional<std::string>CpuHighway::getAccelerationCache(std::vector<std::unor
 void CpuHighway::moveVehicles(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt){
     for (size_t i : std::views::iota(0UL, nLanes_)){
         std::unordered_map<double, double>& cache = accelerationCache[i];
-        for (auto it = lanes_[i].begin(); it != lanes_[i].end();++it){
+        for (auto it = lanes_[i].rbegin(); it != lanes_[i].rend();++it){
             auto& car = *it;
             double a = cache[car.getPosition()];
             auto nh = lanes_[i].extract(car);
@@ -92,50 +90,55 @@ std::expected<void, std::string> CpuHighway::update(double dt){
         while (lead != cars.end()){
         
             // Utility value for left or right lane change
-            double left = std::numeric_limits<double>::min();
-            double right = std::numeric_limits<double>::min();
+            double left = -1000.0;
+            double right = -1000.0;
 
             // Calculate the lane change:
             auto calculateUtility = [&](int curLane, int newLane, double bias){
                 double a_alpha = accelerationCache[curLane].at(alpha->getPosition());
                 const Car& a = *alpha;
                 std::set<Car>::const_iterator l_hat = std::upper_bound(lanes_[newLane].begin(), lanes_[newLane].end(), a);
-                double a_alphaChange;
+                std::expected<double, std::string> a_alphaChange;
                 if (l_hat == lanes_[newLane].end()){ // No new lead car. Acceleration is free road acceleration
                     a_alphaChange = alpha->acceleration(dt);
                 } else {
-                    alpha->acceleration(*l_hat, dt).value_or(std::numeric_limits<double>::min());
+                    a_alphaChange = alpha->acceleration(*l_hat, dt);
                 }
                 // Current Follower Terms
                 double a_f = accelerationCache[curLane].at(follow->getPosition());
-                double a_fChange = follow->acceleration(*lead, dt).value_or(std::numeric_limits<double>::min()); // should never be -1000
+                std::expected<double, std::string> a_fChange = follow->acceleration(*lead, dt);
                 
                 // New Follower Terms
                 std::set<Car>::const_iterator f_hat = std::lower_bound(lanes_[newLane].begin(), lanes_[newLane].end(), *alpha);
-                if (f_hat != lanes_[newLane].begin()){ --f_hat;}
+                double a_fHat = 0;
+                std::expected<double, std::string> a_fHatChange = 0.0;
+                // If the new follower is non existent, can never gaurantee the safety criterion is satisfied
+                if (f_hat != lanes_[newLane].begin()) {
+                    --f_hat;
+                } else {
+                    return -1000.0;
+                }
 
                 // Ensure that the new follower is actually following alpha and that the new follower exists
-                double a_fHat = 0;
-                double a_fHatChange = 0;
                 if (f_hat != lanes_[newLane].end() && f_hat->getPosition() < a.getPosition()){
                     a_fHat = accelerationCache[newLane].at(f_hat->getPosition());
-                    a_fHatChange = f_hat->acceleration(*alpha, dt).value_or(std::numeric_limits<double>::min());
+                    a_fHatChange = f_hat->acceleration(*alpha, dt).value_or(-1000);
+                }
+
+                if (!a_alphaChange || ! a_fChange || !a_fHatChange){
+                    return -1000.0;
                 }
     
                 // Safety Criterion: If either acceleration is more negative than -bMax, return minimum
                 double estimatedMaxBraking = alpha -> braking(); // use same value for all 
-                std::array<double, 3> accelerations = {a_alphaChange, a_fChange, a_fHatChange};
+                std::array<double, 3> accelerations = {*a_alphaChange, *a_fChange, *a_fHatChange};
                 if (*std::ranges::min_element(accelerations) < estimatedMaxBraking){
-                    std::println("Min element: {:.3f}", *std::ranges::min_element(accelerations));
-                    return std::numeric_limits<double>::min();
-                } else {
-                    std::println("Min element: {:.3f}", *std::ranges::min_element(accelerations));
-
+                    return -1000.0;
                 }
 
                 // Safety criterion satisfied, apply incentive criterion. 
                 double p = alpha->politeness();
-                return (a_alphaChange - a_alpha) +  p * (a_fHatChange - a_fHat + a_fChange - a_f) + bias;
+                return (*a_alphaChange - a_alpha) +  p * (*a_fHatChange - a_fHat + *a_fChange - a_f) + bias;
             };
 
             // If in leftmost lane, don't do left lane change computation 
@@ -165,7 +168,6 @@ std::expected<void, std::string> CpuHighway::update(double dt){
     // Phase 3: Move the lane changed cars to their new lanes
     for (auto [carIter, oldlane, newlane] : laneChanges){
         auto nh = lanes_[oldlane].extract(carIter);
-        // std::cout << std::format("Lane Change: Car {}(x = {:.2f}) from lane {} to {}", carIter->getId(), carIter->getPosition(), oldlane, newlane)<< std::endl;
         lanes_[newlane].insert(std::move(nh));
     }
 
@@ -186,7 +188,7 @@ std::expected<void, std::string> CpuHighway::update(double dt){
             auto car = lanes_[i].begin();
             lastcar = car->getPosition() - car->getLength(); 
         }
-        auto c = flowGenerators_[i].generateFlow(dt, lastcar);
+        auto c = flowGenerators_[i].generateFlow(dt);
         if (c){ lanes_[i].insert(*c); }
 
     }
@@ -211,5 +213,3 @@ std::vector<CarSnapshot> CpuHighway::log(double t){
     }
     return data;
 }
-
-// How to track timestep 42, lane change for car 4. Lane change should be 

@@ -19,19 +19,26 @@ private:
 
     std::uniform_real_distribution<double> dist_;
 
+    /// @brief required time gap between 2 second generated car
+    double TIME_GAP = 3.0;
+
     /// @brief Rate of vechicle inflow. Units of vehicles/hr
+    /// @todo This will be a function of time
     double rate_; 
-
-    /// @brief Number of more flows to generate this hour
-    double flowsLeft_;
-
-    /// @brief seconds left in the hour
-    double secondsLeft_ = 3600.0;
 
     // Car Data
     double x0_;
     double v0_;
     double vdes_;
+
+    // Simulation Timestep
+    double dt_;
+    /// @brief Total timesteps in an hour. 
+    double totalTimesteps_;
+
+    /// @brief when the next flow generation can occur
+    double nextGeneration_{0};
+
 
     double time_{0};
 
@@ -51,7 +58,7 @@ public:
      * @param vdes 
      * @param seed 
      */
-    FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory, uint64_t seed = 0);
+    FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory,  double dt, uint64_t seed = 0);
     ~FlowGenerator() = default;
 
     /**
@@ -60,15 +67,7 @@ public:
      * @param lastcar x value of the "back bumper" of the car in front. Will not generate if this is less than x0
      * @return std::optional<Car> Optionally generates a car. 
      */
-    std::optional<Car> generateFlow(double dt, double lastcar);
-
-    /**
-     * @brief Checks if the flow is nonzero. 
-     * 
-     * @return true if there is nonzero flow. 
-     * @return false No flow
-     */
-    bool hasFlow() const {return rate_ != 0;}
+    std::optional<Car> generateFlow(double dt);
 
 };
 
