@@ -160,7 +160,7 @@ TEST_F(DBManagerTest, evaulateDB){
         EXPECT_EQ(single.model_.b_, all.model_.b_);
         EXPECT_EQ(single.model_.c_, all.model_.c_);
 
-        EXPECT_EQ(single.lead_, all.lead_);
+        EXPECT_EQ(single.politeness_, all.politeness_);
         EXPECT_EQ(single.model_.a_, all.model_.a_);
         EXPECT_EQ(single.model_.b_, all.model_.b_);
 

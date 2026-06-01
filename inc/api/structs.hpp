@@ -20,8 +20,8 @@ struct FollowModelParams {
 };
 
 struct CarMetadata {
-    std::string lead_;
     FollowModelParams model_;
+    float politeness_;
     int id_;
 };
 
@@ -29,6 +29,7 @@ struct RawData {
     std::vector<float> x_;
     std::vector<float> v_;
     std::vector<float> t_;
+    std::vector<float> l_;
     int id_;
 };
 

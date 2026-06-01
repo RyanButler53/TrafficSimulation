@@ -4,9 +4,7 @@ Car factory: Creates cars with different distributions of aggressiveness, brakin
 
 Roadmap:
 Piecewise Functions
-Multiple lanes
 Valuable Metrics (probably traffic flow at a specific X at a given time)
-Continuous Traffic Flow 
 Car Factory can be randomized
 
 
@@ -36,17 +34,17 @@ TrafficJobs:
 
 CarData:
 
-| carID (int) | jobID (int) | Follow Strategy A (float)  | Follow Strategy B (float) | Follow Strategy C (float) | Lead Strategy (text) |
+| carID (int) | jobID (int) | Follow Strategy A (float)  | Follow Strategy B (float) | Follow Strategy C (float) | Politeness (float) |
 | --- | --- | --- | --- | --- | --- |
-| Unique Car Id to its simulation | Job ID that the car belongs to | Acceleration parameter to Car Following Strategy | Braking coefficent for car following strategy | C coefficent. C is either max braking for Gipps Car Following model or Minimum allowable gap for Intelligent driver model | Car Lead strategy when in lead |
+| Unique Car Id to its simulation | Job ID that the car belongs to | Acceleration parameter to Car Following Strategy | Braking coefficent for car following strategy | C coefficent. C is either max braking for Gipps Car Following model or Minimum allowable gap for Intelligent driver model | Lane Changing Politeness (MOBIL Model) |
 
 JobID is a foreign key to the TrafficJobs table. The combination CarID and JobID are gauranteed to be unique. 
 
 Snapshot Data:
 
-| carID (int) | jobID (int) | x (float) | v (float) | t (float) |
-| --- | --- | --- | --- | --- |
-| Car Id for simulation | Job the car belongs to | position | velocity | timestamp |
+| carID (int) | jobID (int) | x (float) | v (float) | t (float) | Lane (int) |
+| --- | --- | --- | --- | --- | --- |
+| Car Id for simulation | Job the car belongs to | position | velocity | timestamp | current lane |
 
 
 CarID and JobID is a foreign key to CarData's CarID and JobID values. The triplet CarID, JobID and timestamp (t) are gauranteed to be unique. 

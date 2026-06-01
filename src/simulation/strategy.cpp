@@ -26,12 +26,12 @@ std::function<double(double, double, double, double)> makeGippsUpdateFunc(double
         // Braking velocity
         double breaking = bt + std::sqrt((bt * bt) - b *((2 * gap) - v*dt - (vlead * vlead / bmax)));
         if (std::isnan(breaking)){
-            std::cout << "NaN Braking" << std::endl;
+            // std::cout << "NaN Braking" << std::endl;
             return breaking;
         }
         double result = std::min(free_road, breaking);
         if (result < 0.0){
-            std::cout << "Negative velocity!" << std::endl;
+            // std::cout << "Negative velocity!" << std::endl;
         }
         return result;
     };

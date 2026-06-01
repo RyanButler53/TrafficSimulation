@@ -180,7 +180,7 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
 
             std::string logstr;
             for (CarSnapshot& log : car){
-                logstr = std::format("INSERT INTO snapshotData (jobid, carid, x, v, t)\nVALUES ({}, {}, {}, {}, {})", jobid_, log.id, log.x, log.v, log.t);
+                logstr = std::format("INSERT INTO snapshotData (jobid, carid, x, v, t, l)\nVALUES ({}, {}, {}, {}, {}, {})", jobid_, log.id, log.x, log.v, log.t, log.l);
                 car_transaction.exec(logstr);
             }
             car_transaction.commit();

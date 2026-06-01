@@ -152,10 +152,10 @@ std::expected<void, std::string> CpuHighway::update(double dt){
             }
             // Map the utility to old lane, new lane
             if (right > left and right > changeThreshold_){
-                std::println(" R Lane change: Car{} (x = {:.2f}, v = {:.2f}) from lane {} to {}. Utilities: R:{:.3f} L:{:.3f} Stay:{:.3f}", alpha->getId(), alpha->getPosition(), alpha->getVelocity(), ilane, ilane - 1, right, left, changeThreshold_);
+                // std::println(" R Lane change: Car{} (x = {:.2f}, v = {:.2f}) from lane {} to {}. Utilities: R:{:.3f} L:{:.3f} Stay:{:.3f}", alpha->getId(), alpha->getPosition(), alpha->getVelocity(), ilane, ilane - 1, right, left, changeThreshold_);
                 laneChanges.push_back({alpha ,ilane, ilane-1});
             } else if (left > right and left > changeThreshold_){
-                std::println(" L Lane change: Car{} (x = {:.2f}, v = {:.2f}) from lane {} to {}. Utilities: R:{:.3f} L:{:.3f} Stay:{:.3f}", alpha->getId(), alpha->getPosition(), alpha->getVelocity(),ilane, ilane + 1, right, left, changeThreshold_);
+                // std::println(" L Lane change: Car{} (x = {:.2f}, v = {:.2f}) from lane {} to {}. Utilities: R:{:.3f} L:{:.3f} Stay:{:.3f}", alpha->getId(), alpha->getPosition(), alpha->getVelocity(),ilane, ilane + 1, right, left, changeThreshold_);
                 laneChanges.push_back({alpha, ilane, ilane+1});
             }
 
