@@ -15,7 +15,7 @@ std::expected<void, std::string> initDB::initDB(bool useTestDB){
         
         tx.exec("CREATE TABLE IF NOT EXISTS trafficJobs ( jobID int GENERATED ALWAYS AS IDENTITY PRIMARY KEY, configfile text, jobname text, status varchar(7), error text, followModel varchar(5), numCars int)");
         tx.exec("CREATE TABLE IF NOT EXISTS carData (carID int, jobID int, follow_a float, follow_b float, follow_c float, politeness float, FOREIGN KEY (jobID) REFERENCES trafficjobs(jobID) , PRIMARY KEY (carID, jobID))");
-        tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, lane int PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
+        tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, lane int, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
         tx.commit();
         return {};
     }

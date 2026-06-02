@@ -37,10 +37,10 @@ private:
     double totalTimesteps_;
 
     /// @brief when the next flow generation can occur
-    double nextGeneration_{0};
+    double nextGeneration_{0.0};
 
 
-    double time_{0};
+    double time_{0.0};
 
 public:
     /**

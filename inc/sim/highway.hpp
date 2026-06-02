@@ -27,7 +27,7 @@ struct Highway {
      * @param dt Timestemp
      * @return std::expected<void, std::string> Nothing on success, string on error. 
      */
-    virtual std::expected<void, std::string> update(double dt) = 0;
+    virtual std::expected<std::vector<CarData>, std::string> update(double dt) = 0;
 
     /**
      * @brief Converts the state of the highway at the current timestep into car snapshots
@@ -67,7 +67,7 @@ class CpuHighway : public Highway {
     public: 
 
     CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows, double roadEnd);
-    std::expected<void, std::string> update(double dt) override;
+    std::expected<std::vector<CarData>, std::string> update(double dt) override;
     std::vector<CarSnapshot> log(double t) override;
 };
 

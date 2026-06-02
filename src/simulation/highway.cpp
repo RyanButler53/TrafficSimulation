@@ -63,7 +63,7 @@ void CpuHighway::moveVehicles(std::vector<std::unordered_map<double, double>>& a
     }
 }
 
-std::expected<void, std::string> CpuHighway::update(double dt){
+std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
     
     // Cache of accelerations of each car given that no lane changing occurs. x->a
     
@@ -182,6 +182,7 @@ std::expected<void, std::string> CpuHighway::update(double dt){
     moveVehicles(accelerationCache, dt);
 
     // Phase 6: Generate flow for each lane 
+    std::vector<CarData> newCars;
     for (size_t i : std::views::iota(0UL, nLanes_)){
         double lastcar = roadEnd_;
         if (!lanes_[i].empty()){
@@ -189,10 +190,13 @@ std::expected<void, std::string> CpuHighway::update(double dt){
             lastcar = car->getPosition() - car->getLength(); 
         }
         auto c = flowGenerators_[i].generateFlow(dt);
-        if (c){ lanes_[i].insert(*c); }
+        if (c){ 
+            lanes_[i].insert(*c);
+            newCars.push_back({c->data()});
+        }
 
     }
-    return {};
+    return newCars;
 }
 
 std::vector<CarSnapshot> CpuHighway::log(double t){

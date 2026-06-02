@@ -27,18 +27,24 @@ std::expected<void, std::string> Simulator::mainLoop(){
     double t = 0;
     std::expected <void, std::string> simStatus;
     while (t < totalTime_){
-        simStatus = highway_->update(dt_);
+        simStatus = highway_->update(dt_).transform([this](const auto& cdata){
+            for (const auto& car : cdata){ logger_->addCar(car); }
+        });
         t += dt_;
         logger_->fromHighway(highway_->log(t));
         if (!simStatus.has_value()){
             break;
         }
     }
-    logger_->writeData();
+    auto logStatus = logger_->writeData();
     auto end = std::chrono::steady_clock::now();
     long ms = std::chrono::duration_cast<std::chrono::milliseconds>((end - start)).count();
     std::cout << "Total Time: " << double(ms / 1000.0) << std::endl;
-    return simStatus;
+    if (!logStatus){
+        return logStatus;
+    } else {
+        return simStatus;
+    }
 }
 
 std::expected<void, std::string> Simulator::run(){

@@ -84,7 +84,7 @@ class CarLogger
      * @brief Adds information about a specific car. 
      * 
      */
-    virtual void addCar(size_t id, const std::tuple<double, double, double>& follow);
+    virtual void addCar(const CarData& carData);
 
 
     /**

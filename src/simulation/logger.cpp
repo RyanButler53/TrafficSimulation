@@ -34,8 +34,8 @@ void CarLogger::fromHighway(std::vector<CarSnapshot> data){
     cached = false;
 }
 
-void CarLogger::addCar(size_t id, const std::tuple<double, double, double>& follow){
-    cars_.push_back({std::get<0>(follow), std::get<1>(follow),std::get<2>(follow), id});
+void CarLogger::addCar(const CarData& cardata){
+    cars_.push_back(cardata);
 }
 
 std::vector<CarSnapshot> CarLogger::getCar(size_t id){
@@ -161,15 +161,19 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
 
     pqxx::connection connect(connectionStr_);
 
+    if (cars_.empty()){
+        return std::unexpected("No cars!");
+    }
+
     // Add rows for all the new cars seen. This breaks when splitting up writing into 2 or more steps
     try {
         pqxx::work tx(connect);
         for (CarData& cdata : cars_){
-            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c)\nVALUES ({}, {}, {}, {}, {})", cdata.id, jobid_, cdata.a, cdata.b, cdata.c));
+            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c, politeness)\nVALUES ({}, {}, {}, {}, {}, {})", cdata.id, jobid_, cdata.a, cdata.b, cdata.c, cdata.p));
         }
         tx.commit();
     } catch(const std::exception& e) {
-        return std::unexpected(std::format("Error inserting car info data into database", e.what()));
+        return std::unexpected(std::format("Error inserting car info data into database: {}", e.what()));
     }
     
     // Update the big data table
@@ -180,12 +184,12 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
 
             std::string logstr;
             for (CarSnapshot& log : car){
-                logstr = std::format("INSERT INTO snapshotData (jobid, carid, x, v, t, l)\nVALUES ({}, {}, {}, {}, {}, {})", jobid_, log.id, log.x, log.v, log.t, log.l);
+                logstr = std::format("INSERT INTO snapshotData (jobid, carid, x, v, t, lane)\nVALUES ({}, {}, {}, {}, {}, {})", jobid_, log.id, log.x, log.v, log.t, log.l);
                 car_transaction.exec(logstr);
             }
             car_transaction.commit();
         } catch(const std::exception& e) {
-            return std::unexpected(std::format("Error inserting car raw snapshot data into database", e.what()));
+            return std::unexpected(std::format("Error inserting car raw snapshot data into database: {}", e.what()));
         }
     }
 

@@ -33,5 +33,6 @@ struct CarData {
     double a; // acceleration
     double b; // braking
     double c; // max braking in Gipps, min gap in IDM
+    double p; // Lane changing politeness
     size_t id; // car id
 };

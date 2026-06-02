@@ -67,3 +67,7 @@ void Car::update(double acceleration, double dt){
 CarSnapshot Car::snapshot(double t, uint16_t lane) const {
     return {id_, pos_, vel_, t, lane};
 }
+
+CarData Car::data() const {
+    return {followStrategy_.a, followStrategy_.b, followStrategy_.c, politeness_, id_};
+}

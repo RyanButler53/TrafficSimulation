@@ -116,14 +116,15 @@ std::expected<std::vector<CarMetadata>, std::string> DBManager::queryCars(std::s
     auto connect = getConnection();
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
-    std::string querystr = std::format("SELECT carid, follow_a, follow_b, follow_c, politness FROM CarData INNER JOIN TrafficJobs ON TrafficJobs.JobID = CarData.JobID WHERE jobname = '{}'", jobname);
+    std::string querystr = std::format("SELECT carid, follow_a, follow_b, follow_c, politeness FROM CarData INNER JOIN TrafficJobs ON TrafficJobs.JobID = CarData.JobID WHERE jobname = '{}'", jobname);
 
     std::vector<CarMetadata> data;
     
     try {
         for (auto [carid, a, b, c, p] : tx.query<int, float, float, float, float>(querystr)){
             data.push_back({{a,b,c}, p, carid});
-        }    }
+        }
+    }
     catch(const std::exception& e){
         return std::unexpected(std::format("Error Querying all Cars from {}: {}", jobname, e.what()));
     }
@@ -137,7 +138,7 @@ std::expected<std::vector<CarMetadata>, std::string> DBManager::queryCars(std::s
 // RAW DATA 
 
 std::expected<RawData, std::string>  DBManager::queryData(std::string jobname, int carid){
-    std::string querystr = std::format("SELECT x, v, t FROM snapshotData INNER JOIN TrafficJobs ON TrafficJobs.JobID = snapshotData.jobid WHERE TrafficJobs.jobname = '{}' and snapshotData.carid = {} ORDER BY snapshotData.t ASC", jobname, carid);
+    std::string querystr = std::format("SELECT x, v, t, lane FROM snapshotData INNER JOIN TrafficJobs ON TrafficJobs.JobID = snapshotData.jobid WHERE TrafficJobs.jobname = '{}' and snapshotData.carid = {} ORDER BY snapshotData.t ASC", jobname, carid);
     auto connect = getConnection();
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
@@ -145,10 +146,11 @@ std::expected<RawData, std::string>  DBManager::queryData(std::string jobname, i
     RawData raw;
     raw.id_ = carid;
     try {
-        for (auto [x, v, t] : tx.query<float, float, float>(querystr)){
+        for (auto [x, v, t, l] : tx.query<float, float, float, int>(querystr)){
             raw.x_.push_back(x);
             raw.v_.push_back(v);
             raw.t_.push_back(t);
+            raw.l_.push_back(l);
         }
     } catch(const std::exception& e) {
         return std::unexpected(std::format("Error querying Raw Data from car {} in job {}: {}",jobname, carid, e.what()));
@@ -162,7 +164,7 @@ std::expected<RawData, std::string>  DBManager::queryData(std::string jobname, i
 
 std::expected<std::vector<RawData>, std::string> DBManager::queryData(std::string jobname){
 
-    std::string querystr = std::format("SELECT carid, x, v, t, l FROM snapshotData INNER JOIN TrafficJobs ON TrafficJobs.JobID = snapshotData.jobid WHERE TrafficJobs.jobname = '{}' ORDER BY snapshotData.carid ASC, snapshotData.t ASC", jobname);
+    std::string querystr = std::format("SELECT carid, x, v, t, lane FROM snapshotData INNER JOIN TrafficJobs ON TrafficJobs.JobID = snapshotData.jobid WHERE TrafficJobs.jobname = '{}' ORDER BY snapshotData.carid ASC, snapshotData.t ASC", jobname);
 
     auto connect = getConnection();
     if (!connect){return std::unexpected(connect.error());}

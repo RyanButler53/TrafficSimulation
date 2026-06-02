@@ -100,6 +100,8 @@ class Car {
 
     CarSnapshot snapshot(double t, uint16_t lane) const;
 
+    CarData data() const;
+
     bool operator<(const Car& other) const{
         return pos_ < other.pos_;
     }
