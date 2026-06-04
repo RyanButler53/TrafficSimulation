@@ -20,6 +20,7 @@
 #include <filesystem>
 
 #include <pqxx/pqxx>
+#include "testUtil.hpp"
 
 #ifdef WITH_OPEN_SSL
     #include <openssl/evp.h>
@@ -40,31 +41,53 @@ private:
         YAML::Node cfg;
         cfg["jobname"] = "test-file";
         cfg["type"] = "continuous";
-        cfg["time"] = 200;
+        cfg["time"] = 900; // 15 minutes
         cfg["timestep"] = 1;
         cfg["seed"] = 70;
 
+        // Driver params (From traffic flow book example)
         // Driver params (From traffic flow book example)
         cfg["driverType"] = "Gipps";
         cfg["driverParams"]["a"] = 1.981;
         cfg["driverParams"]["b"] = -2.8955;
         cfg["driverParams"]["bmax"] = -5.505;
-        cfg["driverParams"]["a_stdev"] = 0;
-        cfg["driverParams"]["b_stdev"] = 0;
-        cfg["driverParams"]["bmax_stdev"] = 0;
+        cfg["driverParams"]["p"] = 0.2;
 
-        cfg["flow"]["rate"] = 600;
-        cfg["flow"]["v0"] = 30;
-        cfg["flow"]["vdes"] = 35;
+        // Homogeneous traffic
+        cfg["driverParams"]["a_stdev"] = 0.0;
+        cfg["driverParams"]["b_stdev"] = 0.0;
+        cfg["driverParams"]["bmax_stdev"] = 0.0;
+        cfg["driverParams"]["p_stdev"] = 0.0;
 
-        cfg["leadCar"]["leadType"] = "function";
-        cfg["leadCar"]["function"]["sine"]["a"] = 5.0;
-        cfg["leadCar"]["function"]["sine"]["b"] = 0.04;
-        cfg["leadCar"]["function"]["sine"]["c"] = 40;
-        cfg["leadCar"]["v0"] = 40;
-        cfg["leadCar"]["vdes"] = 45;
+        // 3 lanes of traffic
+        cfg["lanes"];
+        YAML::Node lane1, lane2, lane3;
 
-        cfg["end"] = 1500;
+        lane1["flow"]["rate"] = 200;
+        lane1["flow"]["v0"] = 0;
+        lane1["flow"]["vdes"] = 30;
+        lane1["start"] = 0;
+        lane1["end"] = 2000;
+        lane1["position"]  = 0;
+
+        lane2["flow"]["rate"] = 400;
+        lane2["flow"]["v0"] = 30;
+        lane2["flow"]["vdes"] = 35;
+        lane2["start"] = 0;
+        lane2["end"] = 2000;
+        lane2["position"]  = 1;
+
+        lane3["flow"]["rate"] = 450;
+        lane3["flow"]["v0"] = 30;
+        lane3["flow"]["vdes"] = 38;
+        lane3["start"] = 0;
+        lane3["end"] = 2000;
+        lane3["position"]  = 2;
+
+        cfg["lanes"].push_back(lane1);
+        cfg["lanes"].push_back(lane2);
+        cfg["lanes"].push_back(lane3);
+
         return cfg;
     }
 
@@ -90,22 +113,16 @@ protected:
         dbCfg << dbout.c_str();
 
         // Clear out the Test DB:
-        pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
-        pqxx::work tx(connect);
-
-        tx.exec("DROP TABLE IF EXISTS trafficjobs CASCADE");
-        tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
-        tx.exec("DROP TABLE IF EXISTS snapshotData");
-        tx.commit();
+        TestUtil::clearDB();
     }
 
     // Note that these tests CANNOT be run in parallel 
     // since they are interacting with the SAME files. 
     void TearDown() override {
-        if (std::filesystem::exists("fileConfig.yaml")) std::filesystem::remove("fileConfig.yaml");
-        if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
+        // if (std::filesystem::exists("fileConfig.yaml")) std::filesystem::remove("fileConfig.yaml");
+        // if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
 
-        if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
+        // if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
     }
 
     void getXVTFromFIle(std::vector<XVT>& xvts, std::filesystem::path file){
@@ -218,8 +235,7 @@ TEST_F(RegressionTest, FileHashEquivalence){
         hashes += hash;
     }
     std::string hash = hashBytes(hashes.data(),hashes.size());
-    const std::string expectedHash("d3e4767ae4085484ecb21d35a1aa915e1e0ba8c5dce2f03cf74d607f2dbe41fc");
-
+    const std::string expectedHash("4174313eb6b4a8b59d1163c9b2e32e6cf2e525bb97a45ac8074d7a63977641cd");
     ASSERT_EQ(hash, expectedHash);
 }
 #endif
