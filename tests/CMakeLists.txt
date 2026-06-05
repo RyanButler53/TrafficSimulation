@@ -44,6 +44,13 @@ target_link_libraries(dbManagerTest PRIVATE simulation
                                       GTest::gtest_main 
                                       pqxx_wrapper)
 
+add_executable(algorithmTest algorithmTest.cpp)
+target_link_libraries(algorithmTest PUBLIC simulation 
+                                            testutil
+                                            dbmanager
+                                            GTest::gtest
+                                            GTest::gtest_main
+                                            )
 
 if (CURL_FOUND)
     # Bring in Json Dependency

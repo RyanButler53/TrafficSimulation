@@ -18,6 +18,10 @@ namespace TestUtil {
 // Gets 2 lane config node
 YAML::Node getConfigNode();
 
+// 3 lane config node
+YAML::Node getConfigNode_3Lane();
+
+
 // Clear out the testing database
 void clearDB();
 
