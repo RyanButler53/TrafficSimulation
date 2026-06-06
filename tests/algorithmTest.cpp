@@ -29,23 +29,33 @@ class AlgorithmTest : public ::testing::Test{
     void SetUp() override{
         YAML::Node cfg = TestUtil::getConfigNode_3Lane();
         cfg["logtype"] = "test";
-        cfg["jobname"] = "Algorithm Test";
+        cfg["jobname"] = "Algorithm";
+
+        // Homogeneous traffic
+        cfg["driverParams"]["a_stdev"] = 0.1;
+        cfg["driverParams"]["b_stdev"] = 0.2;
+        cfg["driverParams"]["bmax_stdev"] = 0.2;
+        cfg["driverParams"]["p_stdev"] = 0.02;
 
         YAML::Emitter cfgout;
         std::ofstream fileCfg("Algorithm.yaml");
         cfgout << cfg;
         fileCfg << cfgout.c_str();
+        fileCfg.close();
 
         TestUtil::clearDB();
 
+        auto simResult = Traffic::Simulate("Algorithm.yaml");
+        ASSERT_TRUE(simResult.has_value()) << "Simulator Failed: " << simResult.error();
         DBManager reader(true);
-        std::expected<std::vector<RawData>, std::string> raw = reader.queryData("Algorithm Test");
+        std::expected<std::vector<RawData>, std::string> raw = reader.queryData("Algorithm");
         ASSERT_TRUE(raw.has_value()) << raw.error();
         rawData_ = *raw;
     }
 
     void TearDown() override {
         TestUtil::clearDB();
+        if (std::filesystem::exists("Algorithm.yaml")) std::filesystem::remove("Algorithm.yaml");
     }
 };
 
