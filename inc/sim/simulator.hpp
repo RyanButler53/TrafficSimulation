@@ -27,7 +27,7 @@ private:
     std::expected<void, std::string> mainLoop();
 
     // For transforming and chaining error messages
-    static std::function<const std::string&(const std::string&)> errorFunc(std::string prefix);
+    static std::function<std::string(std::string)> errorFunc(std::string prefix);
 
 public:
     Simulator(SimulatorInputs input);

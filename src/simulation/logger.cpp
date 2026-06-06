@@ -145,13 +145,19 @@ DBLogger::DBLogger(std::string jobname, std::string config, bool test):
 
 std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string jobname, std::string config, std::string followType, bool test){
     DBLogger* logger = new DBLogger(jobname, config, test);
+    auto init = initDB::initDB(test);
+    if (!init){return std::unexpected("Error initializing database: " + init.error());}
     try {
-
-        initDB::initDB(test);
 
         pqxx::connection connect(logger->connectionStr_);
         pqxx::work tx(connect);
        
+        // Read in entire config file (1KB) into memory and store in database
+        std::ifstream cfgin(config);
+        size_t n = std::filesystem::file_size(config);
+        std::string input;
+        input.resize(n);
+        cfgin.read(input.data(), n);
 
         std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error, followModel, numCars)\nVALUES ('{}', '{}', 'QUEUED', '', '{}', 0) RETURNING jobID", config, jobname, followType);
         pqxx::result result = tx.exec(row);

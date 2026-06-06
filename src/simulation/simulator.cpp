@@ -21,7 +21,7 @@
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
     highway_{input.highway_}, totalTime_{input.totalTime_}, dt_{input.dt_}{}
 
-std::function<const std::string&(const std::string&)> Simulator::errorFunc(std::string prefix){
+std::function<std::string(std::string)> Simulator::errorFunc(std::string prefix){
     return [prefix](const std::string& e){return std::format("Error {}: {},", prefix, e);};
 }
 
@@ -39,7 +39,8 @@ std::expected<void, std::string> Simulator::mainLoop(){
             break;
         }
     }
-    simStatus = simStatus.transform_error(Simulator::errorFunc("during simulation"));
+
+    simStatus = simStatus.transform_error(Simulator::errorFunc("simulating error"));
     auto logStatus = logger_->writeData().transform_error(Simulator::errorFunc("writing data"));
     auto end = std::chrono::steady_clock::now();
     long ms = std::chrono::duration_cast<std::chrono::microseconds>((end - start)).count();
