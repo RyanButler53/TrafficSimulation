@@ -93,7 +93,8 @@ TEST_F(AlgorithmTest, LaneChanges){
 TEST_F(AlgorithmTest, InBounds){
     const float roadEnd = 2000.0;
     for (RawData& r  : AlgorithmTest::rawData_){
-        EXPECT_TRUE(r.x_.back() <= roadEnd);
+        EXPECT_GE(r.x_.front(), 0.0);
+        EXPECT_LE(r.x_.back(), roadEnd);
     }
 }
 
