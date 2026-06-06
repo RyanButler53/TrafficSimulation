@@ -17,29 +17,8 @@
 #include <ranges>
 #include <filesystem>
 #include <expected>
+#include "logStructs.hpp"
 
-/**
- * @brief Struct containing the minimum data about each car at a given timestep
- * 
- */
-struct CarSnapshot {
-    size_t id;
-    double x;
-    double v;
-    double t;
-};
-
-/**
- * @brief Struct containing data about a specific car
- * 
- */
-struct CarData {
-    std::string leadStrategy;
-    double a; // acceleration
-    double b; // braking
-    double c; // max braking in Gipps, min gap in IDM
-    size_t id;
-};
 
 class CarLogger 
 {
@@ -105,7 +84,7 @@ class CarLogger
      * @brief Adds information about a specific car. 
      * 
      */
-    virtual void addCar(size_t id, std::string lead, const std::tuple<double, double, double>& follow);
+    virtual void addCar(const CarData& carData);
 
 
     /**
@@ -121,7 +100,12 @@ class CarLogger
      */
     virtual std::expected<void, std::string> logFailure(std::string message) = 0;
 
-
+    /**
+     * @brief Adds all the data logs from the highway at a specific timestep to the internal logs
+     * 
+     * @param data 
+     */
+    void fromHighway(std::vector<CarSnapshot> data);
 };
 
 class FileLogger : public CarLogger {

@@ -15,30 +15,19 @@
 #include <format>
 
 
-Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, std::shared_ptr<FollowStrategy> follow):
-        id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, followStrategy_{follow}{
-        leadStrategy_ = std::make_shared<ConstantLead>(v0);
-        logger->addCar(id_, leadStrategy_->str(), followStrategy_->params());
-        logger->log(id_, x0, v0, t0);
-
-    }
-
-Car::Car(size_t id, double x0, double v0, double t0, std::shared_ptr<CarLogger> logger, 
-         std::shared_ptr<FollowStrategy> follow, std::shared_ptr<LeadStrategy> lead):
-        id_{id},pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, logger_{logger}, 
-        leadStrategy_{lead}, followStrategy_{follow}{
-            logger->addCar(id_, leadStrategy_->str(), followStrategy_->params());
-            logger->log(id_, x0, v0, t0);
-        }
-
-
-void Car::step(double dt){
-    vel_ = leadStrategy_->nextVelocity(dt);
-    update(dt);
+Car::Car(size_t id, double x0, double v0, double t0, double p, FollowModel follow):
+        id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p},followStrategy_{follow}{}
+    
+Car Car::infinity() const{
+    return Car(0, pos_ + 500, vel_ + 50, 0, 0, {});
 }
 
-std::optional<std::string> Car::step(const Car& lead, double dt){
+double Car::acceleration(double dt) const {
+    return acceleration(infinity(), dt).value();
+}
 
+
+std::expected<double, std::string> Car::acceleration(const Car& lead, double dt) const {
     // Get information about lead car
     double xlead = lead.getPosition();
     double vlead = lead.getVelocity();
@@ -47,36 +36,38 @@ std::optional<std::string> Car::step(const Car& lead, double dt){
     // Check for an accident
     if (xlead <= pos_){
         std::string msg = std::format("Accident at t = {}: Car {}: x = {:.2f} Leader: x = {:.2f}", timestep_, id_, pos_, xlead);
-        return std::make_optional(msg);
+        return std::unexpected(msg);
     }
 
     // Find the new velocity
     double gap = xlead - leadLen - pos_;
-    vel_ = followStrategy_->update(vel_, vlead, gap, dt);
-    
-    // Update Position and time
-    update(dt);
-    return std::nullopt;
+    if (gap < 0){
+        return std::unexpected(std::format("Negative Gap: {}", gap));
+    }
+    double vf = followStrategy_.update(vel_, vlead, gap, dt);
+    if (vf < 0){
+        return std::unexpected(std::format("Negative final velocity: {} between cars {} and {}", vf, id_, lead.getId()));
+    } else if (std::isnan(vf)){
+        return std::unexpected(std::format("Nan final velocity: {}", vf));
+    }
+    // a = dv/dt
+    return (vf - vel_)/ dt;
 }
 
 void Car::update(double dt){
     pos_ += vel_*dt;
     timestep_ += dt;
-    log();
 }
 
-
-// Logging Methods
-
-void Car::log() const {
-    logger_->log(id_, pos_, vel_, timestep_);
+void Car::update(double acceleration, double dt){
+    vel_ += acceleration * dt;
+    update(dt);
 }
 
-void Car::log(std::ostream& os) const {
-    os << pos_ << "," <<vel_ <<","<<timestep_;
+CarSnapshot Car::snapshot(double t, uint16_t lane) const {
+    return {id_, pos_, vel_, t, lane};
 }
 
-std::ostream& operator<<(std::ostream& os, const Car& c){
-    c.log(os);
-    return os;
+CarData Car::data() const {
+    return {followStrategy_.a, followStrategy_.b, followStrategy_.c, politeness_, id_};
 }

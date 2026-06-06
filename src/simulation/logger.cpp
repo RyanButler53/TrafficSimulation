@@ -16,6 +16,7 @@
 #include <chrono>
 #include <format>
 #include <iostream>
+#include <ranges>
 
 // Database
 #include <pqxx/pqxx>
@@ -26,9 +27,15 @@ namespace fs = std::filesystem;
 void CarLogger::log(size_t id, double x, double v, double t) {
     logs_.push_back({id, x, v, t});
     cached = false;
-}; 
-void CarLogger::addCar(size_t id, std::string lead, const std::tuple<double, double, double>& follow){
-    cars_.push_back({lead, std::get<0>(follow), std::get<1>(follow),std::get<2>(follow), id});
+};
+
+void CarLogger::fromHighway(std::vector<CarSnapshot> data){
+    logs_.append_range(data);
+    cached = false;
+}
+
+void CarLogger::addCar(const CarData& cardata){
+    cars_.push_back(cardata);
 }
 
 std::vector<CarSnapshot> CarLogger::getCar(size_t id){
@@ -98,12 +105,12 @@ std::expected<void, std::string> FileLogger::writeData(){
         fs::path fname = basepath_ / fs::path("car" + std::to_string(i) + ".csv");
         if (!fs::exists(fname)){
             std::ofstream out(fname);
-            out << "x,v,t\n";
+            out << "x,v,t,l\n";
         }
         
         std::ofstream logfile(fname, std::ios::app);
         for (CarSnapshot& c : byCar[i]){
-            logfile << c.x << "," << c.v << ","<< c.t<<"\n";
+            logfile << c.x << "," << c.v << ","<< c.t << "," << c.l<<"\n";
         }
     }
     clearLogs();
@@ -154,15 +161,19 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
 
     pqxx::connection connect(connectionStr_);
 
+    if (cars_.empty()){
+        return std::unexpected("No cars!");
+    }
+
     // Add rows for all the new cars seen. This breaks when splitting up writing into 2 or more steps
     try {
         pqxx::work tx(connect);
         for (CarData& cdata : cars_){
-            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c, lead)\nVALUES ({}, {}, {}, {}, {}, '{}')", cdata.id, jobid_, cdata.a, cdata.b, cdata.c, cdata.leadStrategy));
+            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c, politeness)\nVALUES ({}, {}, {}, {}, {}, {})", cdata.id, jobid_, cdata.a, cdata.b, cdata.c, cdata.p));
         }
         tx.commit();
     } catch(const std::exception& e) {
-        return std::unexpected(std::format("Error inserting car info data into database", e.what()));
+        return std::unexpected(std::format("Error inserting car info data into database: {}", e.what()));
     }
     
     // Update the big data table
@@ -173,12 +184,12 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
 
             std::string logstr;
             for (CarSnapshot& log : car){
-                logstr = std::format("INSERT INTO snapshotData (jobid, carid, x, v, t)\nVALUES ({}, {}, {}, {}, {})", jobid_, log.id, log.x, log.v, log.t);
+                logstr = std::format("INSERT INTO snapshotData (jobid, carid, x, v, t, lane)\nVALUES ({}, {}, {}, {}, {}, {})", jobid_, log.id, log.x, log.v, log.t, log.l);
                 car_transaction.exec(logstr);
             }
             car_transaction.commit();
         } catch(const std::exception& e) {
-            return std::unexpected(std::format("Error inserting car raw snapshot data into database", e.what()));
+            return std::unexpected(std::format("Error inserting car raw snapshot data into database: {}", e.what()));
         }
     }
 

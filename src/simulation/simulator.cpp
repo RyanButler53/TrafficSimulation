@@ -19,21 +19,32 @@
 #include <functional>
 
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
-    lane_{input.lane_}, totalTime_{input.totalTime_}, dt_{input.dt_}{}
+    highway_{input.highway_}, totalTime_{input.totalTime_}, dt_{input.dt_}{}
 
 
 std::expected<void, std::string> Simulator::mainLoop(){
+    auto start = std::chrono::steady_clock::now();
     double t = 0;
     std::expected <void, std::string> simStatus;
     while (t < totalTime_){
-        simStatus = lane_.updateLane(dt_);
+        simStatus = highway_->update(dt_).transform([this](const auto& cdata){
+            for (const auto& car : cdata){ logger_->addCar(car); }
+        });
         t += dt_;
-        if (!simStatus.has_value() || lane_.done()){
+        logger_->fromHighway(highway_->log(t));
+        if (!simStatus.has_value()){
             break;
         }
     }
-    logger_->writeData();
-    return simStatus;
+    auto logStatus = logger_->writeData();
+    auto end = std::chrono::steady_clock::now();
+    long ms = std::chrono::duration_cast<std::chrono::milliseconds>((end - start)).count();
+    std::cout << "Total Time: " << double(ms / 1000.0) << std::endl;
+    if (!logStatus){
+        return logStatus;
+    } else {
+        return simStatus;
+    }
 }
 
 std::expected<void, std::string> Simulator::run(){

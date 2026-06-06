@@ -37,8 +37,8 @@ class CarMetadataDTO : public oatpp::DTO {
     DTO_INIT(CarMetadataDTO, DTO);
   
     DTO_FIELD(Int64, carid);
-    DTO_FIELD(String, leadStrategy);
     DTO_FIELD(Object<FollowModelDTO>, followModel);
+    DTO_FIELD(Float32, politeness);
 
 };
 
@@ -68,6 +68,7 @@ class CarSnapshotDTO : public oatpp::DTO {
     DTO_FIELD(Vector<Float32>, x);
     DTO_FIELD(Vector<Float32>, v);
     DTO_FIELD(Vector<Float32>, t);
+    DTO_FIELD(Vector<Int32>, l);
 };
 
 #include OATPP_CODEGEN_END(DTO)

@@ -20,6 +20,7 @@
 #include <filesystem>
 
 #include <pqxx/pqxx>
+#include "testUtil.hpp"
 
 #ifdef WITH_OPEN_SSL
     #include <openssl/evp.h>
@@ -33,51 +34,20 @@ struct XVT{
 };
 
 class RegressionTest : public ::testing::Test {
-private:
-    /* data */
-    // Gets the config node except for the log dir/log type fields. 
-    YAML::Node getConfigNode() {
-        YAML::Node cfg;
-        cfg["jobname"] = "test-file";
-        cfg["type"] = "continuous";
-        cfg["time"] = 200;
-        cfg["timestep"] = 1;
-        cfg["seed"] = 70;
-
-        // Driver params (From traffic flow book example)
-        cfg["driverType"] = "Gipps";
-        cfg["driverParams"]["a"] = 1.981;
-        cfg["driverParams"]["b"] = -2.8955;
-        cfg["driverParams"]["bmax"] = -5.505;
-        cfg["driverParams"]["a_stdev"] = 0;
-        cfg["driverParams"]["b_stdev"] = 0;
-        cfg["driverParams"]["bmax_stdev"] = 0;
-
-        cfg["flow"]["rate"] = 600;
-        cfg["flow"]["v0"] = 30;
-        cfg["flow"]["vdes"] = 35;
-
-        cfg["leadCar"]["leadType"] = "function";
-        cfg["leadCar"]["function"]["sine"]["a"] = 5.0;
-        cfg["leadCar"]["function"]["sine"]["b"] = 0.04;
-        cfg["leadCar"]["function"]["sine"]["c"] = 40;
-        cfg["leadCar"]["v0"] = 40;
-        cfg["leadCar"]["vdes"] = 45;
-
-        cfg["end"] = 1500;
-        return cfg;
-    }
 
 protected:
 
     void SetUp() override {
         // Set up file case
-        YAML::Node fileLog = getConfigNode();
+        YAML::Node fileLog = TestUtil::getConfigNode_3Lane();
+        fileLog["jobname"] = "test-file";
         fileLog["logtype"] = "file";
         fileLog["logdir"] = "./file-test/logs";
 
-        YAML::Node dbLog = getConfigNode();
+        YAML::Node dbLog = TestUtil::getConfigNode_3Lane();
         dbLog["logtype"] = "test";
+        dbLog["jobname"] = "DB Test";
+
 
         YAML::Emitter fileout;
         std::ofstream fileCfg("fileConfig.yaml");
@@ -90,13 +60,7 @@ protected:
         dbCfg << dbout.c_str();
 
         // Clear out the Test DB:
-        pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
-        pqxx::work tx(connect);
-
-        tx.exec("DROP TABLE IF EXISTS trafficjobs CASCADE");
-        tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
-        tx.exec("DROP TABLE IF EXISTS snapshotData");
-        tx.commit();
+        TestUtil::clearDB();
     }
 
     // Note that these tests CANNOT be run in parallel 
@@ -218,8 +182,7 @@ TEST_F(RegressionTest, FileHashEquivalence){
         hashes += hash;
     }
     std::string hash = hashBytes(hashes.data(),hashes.size());
-    const std::string expectedHash("d3e4767ae4085484ecb21d35a1aa915e1e0ba8c5dce2f03cf74d607f2dbe41fc");
-
+    const std::string expectedHash("4174313eb6b4a8b59d1163c9b2e32e6cf2e525bb97a45ac8074d7a63977641cd");
     ASSERT_EQ(hash, expectedHash);
 }
 #endif

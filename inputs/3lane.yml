@@ -1,0 +1,57 @@
+---
+# General Information
+jobname: 3-lane
+type: "continuous" # differentiates between adding cars upfront or online
+time: 4000
+timestep: 0.5
+seed: 70
+logtype: "db"
+highway-type: "cpu" # "cpu", "kokkos" or "metal".
+road-end: 10000 # All lanes have a hard cutoff at x = 10000
+
+# Driver Model
+driverType: "Gipps" # driver type
+driverParams:
+  a: 1.981
+  b: -2.8955
+  bmax: -3.505
+  p: 0.2
+
+  # standard deviations to add heterogeneous traffic
+  a_stdev: 0.1
+  b_stdev: 0.1
+  bmax_stdev: 0.1
+  p_stdev: 0.04
+
+#Lane must have Flow, start, end and index (position)
+lanes:
+  -
+    flow:
+      rate: 200 # flow rate (veh/hr)
+      v0: 0 # 0 represents all cars are starting from a standstill (stoplight case)
+      vdes: 30 # all cars want to go 30 m/s
+
+    start: 0
+    end: 5000
+    position: 0 # left lane
+
+  - 
+    flow:
+      rate: 400 # flow rate (veh/hr)
+      v0: 30
+      vdes: 35 # all cars want to go 35 m/s
+
+    start: 0
+    end: 5000
+    position: 1 # middle lane 
+
+  -
+    flow:
+      rate: 500
+      v0: 33
+      vdes: 38
+    start: 0
+    end: 5000
+    position: 2 # left lane
+
+

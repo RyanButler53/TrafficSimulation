@@ -9,10 +9,6 @@ add_link_options($<$<CONFIG:Debug>:-fsanitize=address>)
 
 add_compile_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
 add_link_options($<$<CONFIG:Debug>:-fsanitize=undefined>)
-
-add_executable(parsing parsing.cpp)
-target_link_libraries(parsing PUBLIC yaml-cpp::yaml-cpp PRIVATE GTest::gtest)
-
 # Database Stuff
 find_package(libpqxx CONFIG REQUIRED)
 
@@ -20,23 +16,41 @@ find_package(libpqxx CONFIG REQUIRED)
 find_package(OpenSSL)
 find_package(CURL)
 
+add_library(testutil STATIC testUtil.cpp)
+target_link_libraries(testutil PUBLIC yaml-cpp::yaml-cpp PRIVATE pqxx_wrapper)
+
+add_executable(parsing parsing.cpp)
+target_link_libraries(parsing PUBLIC simulation 
+                                     yaml-cpp::yaml-cpp 
+                              PRIVATE GTest::gtest GTest::gtest_main)
+
+
 add_executable(regression regression.cpp)
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
-target_link_libraries(regression PUBLIC simulation 
+target_link_libraries(regression PRIVATE simulation 
                                         jobManager
+                                        testutil
                                         $<IF:$<BOOL:OpenSSL_FOUND>,OpenSSL::Crypto,""> 
                                         GTest::gtest 
                                         GTest::gtest_main
                                         pqxx_wrapper)
 
 add_executable(dbManagerTest dbManager.cpp)
-target_link_libraries(dbManagerTest PUBLIC simulation 
+target_link_libraries(dbManagerTest PRIVATE simulation 
+                                      testutil
                                       jobManager 
                                       dbmanager
                                       GTest::gtest 
                                       GTest::gtest_main 
                                       pqxx_wrapper)
 
+add_executable(algorithmTest algorithmTest.cpp)
+target_link_libraries(algorithmTest PUBLIC simulation 
+                                            testutil
+                                            dbmanager
+                                            GTest::gtest
+                                            GTest::gtest_main
+                                            )
 
 if (CURL_FOUND)
     # Bring in Json Dependency
@@ -48,7 +62,7 @@ if (CURL_FOUND)
     add_executable(apiTest apiTest.cpp)
     target_link_libraries(apiTest PUBLIC api
                                         nlohmann_json::nlohmann_json
-                                        yaml-cpp::yaml-cpp
+                                        testutil
                                         GTest::gtest
                                         GTest::gtest_main
                                 PRIVATE CURL::libcurl

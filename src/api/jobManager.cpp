@@ -5,6 +5,7 @@
 #include "sim/parserFactory.hpp"
 #include "sim/simulator.hpp"
 #include <iostream>
+#include <functional>
 
 JobManager::JobManager():jobid_{0},workerThread_{[this](){threadRoutine();}}{}
 

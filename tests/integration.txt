@@ -6,10 +6,18 @@ Compares the values from the Multiple Cars cases to the Single Car cases.
 
 Regression Test: 
 Submit one job that uses the file logger. Compare the hashes of the logs with the known hash
-Submit one job that uses the file logger. submit one that uses the Test db logger. 
+Submit one job that uses the file logger. Submit one that uses the Test db logger. 
 Compare those to see if they are the same via SHA 256 (Requires OpenSSL)
 
 Api Integration Test: (Requires curl and json)
 Runs the API in Test mode
 Sends api requests and checks the status codes for code 200 
 Sends bad api requests and checks for appropriate error messages and code 400
+
+Algorithm Test: 
+Runs a job with 3 lanes and outputs to the test database. 
+Checks 4 things:
+- All cars are moving forward and velocities are positive
+- All cars are in the bounds of the lane beginning to end
+- There is at least one lane change in both directions
+- At least 1 car is generated in all 3 lanes. 

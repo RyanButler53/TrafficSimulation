@@ -95,7 +95,7 @@ class Controller : public oatpp::web::server::api::ApiController {
     static CarMetadataDTO::Wrapper convertCar(const CarMetadata& cm){
         auto response = CarMetadataDTO::createShared();
         auto followModel = FollowModelDTO::createShared();
-        response->leadStrategy = cm.lead_;
+        response->politeness = cm.politeness_;
 
         followModel->a = cm.model_.a_;
         followModel->b = cm.model_.b_;
