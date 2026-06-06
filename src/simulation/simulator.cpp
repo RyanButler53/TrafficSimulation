@@ -21,6 +21,9 @@
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
     highway_{input.highway_}, totalTime_{input.totalTime_}, dt_{input.dt_}{}
 
+std::function<const std::string&(const std::string&)> Simulator::errorFunc(std::string prefix){
+    return [prefix](const std::string& e){return std::format("Error {}: {},", prefix, e);};
+}
 
 std::expected<void, std::string> Simulator::mainLoop(){
     auto start = std::chrono::steady_clock::now();
@@ -36,15 +39,16 @@ std::expected<void, std::string> Simulator::mainLoop(){
             break;
         }
     }
-    auto logStatus = logger_->writeData();
+    simStatus = simStatus.transform_error(Simulator::errorFunc("during simulation"));
+    auto logStatus = logger_->writeData().transform_error(Simulator::errorFunc("writing data"));
     auto end = std::chrono::steady_clock::now();
-    long ms = std::chrono::duration_cast<std::chrono::milliseconds>((end - start)).count();
-    std::cout << "Total Time: " << double(ms / 1000.0) << std::endl;
-    if (!logStatus){
-        return logStatus;
-    } else {
-        return simStatus;
-    }
+    long ms = std::chrono::duration_cast<std::chrono::microseconds>((end - start)).count();
+
+    SimulationStats stats{double(ms / 1000000.0)};
+    auto statsStatus = logger_->writeStats(stats).transform_error(Simulator::errorFunc("writing stats"));
+
+    std::string errmsg  = simStatus.error_or("") + logStatus.error_or("") + statsStatus.error_or("");
+    return (!errmsg.empty()) ? std::expected<void, std::string>{} : std::unexpected(errmsg);
 }
 
 std::expected<void, std::string> Simulator::run(){

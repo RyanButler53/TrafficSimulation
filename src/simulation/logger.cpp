@@ -124,6 +124,14 @@ std::expected<void, std::string> FileLogger::logFailure(std::string message) {
     return {};
 }
 
+std::expected<void, std::string> FileLogger::writeStats(SimulationStats s) {
+    std::ofstream statsOut(basepath_ / fs::path("stats.txt"));
+    statsOut << "Runtime: " << s.runtime_ << std::endl;
+    statsOut.close();
+    return {};
+}
+
+
 // DATABASE LOGGER
 
 DBLogger::DBLogger(std::string jobname, std::string config, bool test):
@@ -224,6 +232,20 @@ std::expected<void, std::string> DBLogger::updateStatus(std::string newStatus) {
     }
 }
 
+std::expected<void, std::string> DBLogger::writeStats(SimulationStats s) {
+    try {
+        pqxx::connection connect(connectionStr_);
+        pqxx::work finish_tx(connect);
+
+        std::string updateStats = std::format("UPDATE ONLY trafficJobs SET runtime = '{}' WHERE jobid = '{}'", s.runtime_, jobid_);
+        finish_tx.exec(updateStats); 
+        finish_tx.commit();
+        return {};
+    } catch(const std::exception& e) {
+        return std::unexpected(std::format("Error updating the simulator status: {} ", e.what()));
+    }
+}
+
 std::expected<void, std::string> DBLogger::logFailure(std::string message) {
 
     return updateStatus("ERROR").and_then([this, &message]() -> std::expected<void, std::string>{
@@ -236,7 +258,7 @@ std::expected<void, std::string> DBLogger::logFailure(std::string message) {
                 finish_tx.commit();
                 return {};
             } catch(const std::exception& e) {
-                return std::unexpected(std::format("Error updating the erroe message {} ", e.what()));
+                return std::unexpected(std::format("Error updating the error message {} ", e.what()));
             }
         });
    

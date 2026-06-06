@@ -36,3 +36,8 @@ struct CarData {
     double p; // Lane changing politeness
     size_t id; // car id
 };
+
+/// @brief Simple struct to hold simulator stats
+struct SimulationStats {
+    double runtime_;
+};
