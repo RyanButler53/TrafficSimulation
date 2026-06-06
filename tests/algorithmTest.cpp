@@ -23,10 +23,10 @@
 
 class AlgorithmTest : public ::testing::Test{
 
-    protected:
-    std::vector<RawData> rawData_;
+    public:
+    static std::vector<RawData> rawData_;
 
-    void SetUp() override{
+    static void SetUpTestSuite() {
         YAML::Node cfg = TestUtil::getConfigNode_3Lane();
         cfg["logtype"] = "test";
         cfg["jobname"] = "Algorithm";
@@ -53,22 +53,25 @@ class AlgorithmTest : public ::testing::Test{
         rawData_ = *raw;
     }
 
-    void TearDown() override {
+    static void TearDownTestSuite() {
         TestUtil::clearDB();
         if (std::filesystem::exists("Algorithm.yaml")) std::filesystem::remove("Algorithm.yaml");
     }
 };
 
-TEST_F(AlgorithmTest, CheckAlgorithm){
-    std::array<size_t, 3> laneStarted;
-    bool leftLaneChange;
-    bool rightLaneChange;
-    const float roadEnd = 2000.0;
-    for (RawData& r  : rawData_){
+std::vector<RawData> AlgorithmTest::rawData_;
+
+TEST_F(AlgorithmTest, ForwardMovement){
+    for (RawData& r  : AlgorithmTest::rawData_){
         EXPECT_TRUE(std::ranges::is_sorted(r.x_));
         EXPECT_TRUE(std::ranges::all_of(r.v_, [](float v){return v >= 0.0;}));
-        EXPECT_TRUE(r.x_.back() <= roadEnd);
+    }
+}
 
+TEST_F(AlgorithmTest, LaneChanges){
+    bool leftLaneChange;
+    bool rightLaneChange;
+    for (RawData& r  : AlgorithmTest::rawData_){
         // Check for both left and right lane changes
         for (size_t i : std::views::iota(0UL, r.l_.size() - 1)){
             int oldLane = r.l_[i];
@@ -82,15 +85,23 @@ TEST_F(AlgorithmTest, CheckAlgorithm){
             EXPECT_GE(oldLane, 0);
             EXPECT_LE(oldLane, 2);
         }
-
-        // Initial Lane check: 
-        ++laneStarted[r.l_.front()];
-        
     }
-
     EXPECT_TRUE(leftLaneChange) << "No left lane changes found";
     EXPECT_TRUE(rightLaneChange) << "No right lane changes found";
+}
 
+TEST_F(AlgorithmTest, InBounds){
+    const float roadEnd = 2000.0;
+    for (RawData& r  : AlgorithmTest::rawData_){
+        EXPECT_TRUE(r.x_.back() <= roadEnd);
+    }
+}
+
+TEST_F(AlgorithmTest, FlowGeneration){
+    std::array<size_t, 3> laneStarted{0,0,0};
+    for (RawData& r  : AlgorithmTest::rawData_){
+        ++laneStarted[r.l_.front()];
+    }
     for (auto i : std::views::iota(0, 3)){
         EXPECT_GT(laneStarted[i], 0) << "Lane " << i << " has no cars starting in it";
     }
