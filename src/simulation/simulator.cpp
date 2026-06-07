@@ -49,7 +49,7 @@ std::expected<void, std::string> Simulator::mainLoop(){
     auto statsStatus = logger_->writeStats(stats).transform_error(Simulator::errorFunc("writing stats"));
 
     std::string errmsg  = simStatus.error_or("") + logStatus.error_or("") + statsStatus.error_or("");
-    return (!errmsg.empty()) ? std::expected<void, std::string>{} : std::unexpected(errmsg);
+    return (errmsg.empty()) ? std::expected<void, std::string>{} : std::unexpected(errmsg);
 }
 
 std::expected<void, std::string> Simulator::run(){

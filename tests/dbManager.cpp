@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #include <algorithm>
-#include <fstream>
+#include <filesystem>
 
 #include "api/DBManager.hpp"
 #include "api/jobManager.hpp"
@@ -14,6 +14,15 @@
 class DBManagerTest : public ::testing::Test {
 
     protected:
+
+    std::string readFile(std::string fname){
+        std::ifstream in(fname);
+        std::string data;
+        size_t n = std::filesystem::file_size(fname);
+        data.resize(n);
+        in.read(data.data(), n);
+        return data;
+    }
 
     void SetUp() override {
 
@@ -83,15 +92,18 @@ TEST_F(DBManagerTest, evaulateDB){
 
     // Job General Data
     std::vector<JobData> jobsSingle;
+    std::vector<std::string> configs;
     for (size_t i = 0; i < 3; ++i){
         std::expected<JobData, std::string> data = reader.queryJobs(std::format("test-dbreader{}", i));
         ASSERT_TRUE(data.has_value()) << std::format("Error Querying Job {}: {}", i, data.error());
         jobsSingle.push_back(*data);
+        configs.push_back(std::format("dbConfig{}.yaml", i));
     }
     std::expected<std::vector<JobData>, std::string> jobsAll = reader.queryJobs();
     ASSERT_TRUE(jobsAll.has_value()) << std::format("Error Querying All Jobs: {}", jobsAll.error());
     EXPECT_EQ(jobsSingle.size(), jobsAll->size());
-    for (auto [single, all] : std::views::zip(jobsSingle, *jobsAll)){
+
+    for (auto [cfg, single, all] : std::views::zip(configs, jobsSingle, *jobsAll)){
         EXPECT_EQ(single.cfgPath_, all.cfgPath_);
         EXPECT_EQ(single.jobName_, all.jobName_);
         EXPECT_EQ(single.errorMsg_, all.errorMsg_);
@@ -103,6 +115,10 @@ TEST_F(DBManagerTest, evaulateDB){
         EXPECT_EQ(all.errorMsg_, "");
         EXPECT_EQ(all.status_, "DONE");
         EXPECT_GT(all.numCars_, 0);
+
+        // Check that the input file in the cfgPath matches the actual input file
+        std::string inputfile = readFile(cfg);
+        EXPECT_EQ(single.cfgPath_, inputfile);
     }
 
     std::vector<CarMetadata> singleMetadata;

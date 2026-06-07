@@ -155,11 +155,11 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
         // Read in entire config file (1KB) into memory and store in database
         std::ifstream cfgin(config);
         size_t n = std::filesystem::file_size(config);
-        std::string input;
-        input.resize(n);
-        cfgin.read(input.data(), n);
+        std::string inputfile;
+        inputfile.resize(n);
+        cfgin.read(inputfile.data(), n);
 
-        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error, followModel, numCars)\nVALUES ('{}', '{}', 'QUEUED', '', '{}', 0) RETURNING jobID", config, jobname, followType);
+        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error, followModel, numCars)\nVALUES ('{}', '{}', 'QUEUED', '', '{}', 0) RETURNING jobID", inputfile, jobname, followType);
         pqxx::result result = tx.exec(row);
         logger->jobid_ = result.one_field().as<int>();
         tx.commit();
