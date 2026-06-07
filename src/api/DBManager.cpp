@@ -71,14 +71,14 @@ std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
 }
 
 std::expected<std::vector<JobData>, std::string> DBManager::queryJobs(){
-    std::string querystr = std::format("SELECT jobname, configfile, status, error, followModel, numCars FROM TrafficJobs");
+    std::string querystr = std::format("SELECT jobname, configfile, status, error, followModel, numCars, runtime FROM TrafficJobs");
     auto connect = getConnection();
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
     std::vector<JobData> data;
     try {
-        for (auto [name, cfg, status, error, followModel, numCars] : tx.query<std::string, std::string, std::string, std::string, std::string, int>(querystr)){
-            data.push_back({name, cfg, error, status, followModel, numCars});
+        for (auto [name, cfg, status, error, followModel, numCars, runtime] : tx.query<std::string, std::string, std::string, std::string, std::string, int, float>(querystr)){
+            data.push_back({name, cfg, error, status, followModel, numCars, runtime});
         }    
     } catch(const std::exception& e) {
         return std::unexpected(std::format("Error in SELECT query from DB Reader: ", e.what()));
