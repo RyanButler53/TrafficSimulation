@@ -80,6 +80,8 @@ class CarLogger
      */
     virtual std::expected<void, std::string> writeData(){return {};}; 
 
+    virtual std::expected<void, std::string> writeStats(SimulationStats s){return {};};
+
     /**
      * @brief Adds information about a specific car. 
      * 
@@ -117,6 +119,8 @@ class FileLogger : public CarLogger {
 
     std::expected<void, std::string> writeData() override;
 
+    std::expected<void, std::string> writeStats(SimulationStats s) override;
+
     std::expected<void, std::string> logFailure(std::string message) override;
 };
 
@@ -151,6 +155,8 @@ class DBLogger : public CarLogger {
 
     // Commits to the database
     std::expected<void, std::string> writeData() override;
+
+    std::expected<void, std::string> writeStats(SimulationStats s) override;
 
     std::expected<void, std::string> updateStatus(std::string newStatus) override;
 

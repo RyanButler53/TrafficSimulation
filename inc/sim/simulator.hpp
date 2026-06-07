@@ -13,6 +13,7 @@
 #include "highway.hpp"
 #include "simInputs.hpp"
 #include <expected>
+#include <functional>
 
 class Simulator
 {
@@ -24,6 +25,10 @@ private:
     double dt_;
 
     std::expected<void, std::string> mainLoop();
+
+    // For transforming and chaining error messages
+    static std::function<std::string(std::string)> errorFunc(std::string prefix);
+
 public:
     Simulator(SimulatorInputs input);
     ~Simulator() =default;

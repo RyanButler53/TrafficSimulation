@@ -124,6 +124,14 @@ std::expected<void, std::string> FileLogger::logFailure(std::string message) {
     return {};
 }
 
+std::expected<void, std::string> FileLogger::writeStats(SimulationStats s) {
+    std::ofstream statsOut(basepath_ / fs::path("stats.txt"));
+    statsOut << "Runtime: " << s.runtime_ << std::endl;
+    statsOut.close();
+    return {};
+}
+
+
 // DATABASE LOGGER
 
 DBLogger::DBLogger(std::string jobname, std::string config, bool test):
@@ -137,15 +145,21 @@ DBLogger::DBLogger(std::string jobname, std::string config, bool test):
 
 std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string jobname, std::string config, std::string followType, bool test){
     DBLogger* logger = new DBLogger(jobname, config, test);
+    auto init = initDB::initDB(test);
+    if (!init){return std::unexpected("Error initializing database: " + init.error());}
     try {
-
-        initDB::initDB(test);
 
         pqxx::connection connect(logger->connectionStr_);
         pqxx::work tx(connect);
        
+        // Read in entire config file (1KB) into memory and store in database
+        std::ifstream cfgin(config);
+        size_t n = std::filesystem::file_size(config);
+        std::string inputfile;
+        inputfile.resize(n);
+        cfgin.read(inputfile.data(), n);
 
-        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error, followModel, numCars)\nVALUES ('{}', '{}', 'QUEUED', '', '{}', 0) RETURNING jobID", config, jobname, followType);
+        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error, followModel, numCars)\nVALUES ('{}', '{}', 'QUEUED', '', '{}', 0) RETURNING jobID", inputfile, jobname, followType);
         pqxx::result result = tx.exec(row);
         logger->jobid_ = result.one_field().as<int>();
         tx.commit();
@@ -224,6 +238,20 @@ std::expected<void, std::string> DBLogger::updateStatus(std::string newStatus) {
     }
 }
 
+std::expected<void, std::string> DBLogger::writeStats(SimulationStats s) {
+    try {
+        pqxx::connection connect(connectionStr_);
+        pqxx::work finish_tx(connect);
+
+        std::string updateStats = std::format("UPDATE ONLY trafficJobs SET runtime = '{}' WHERE jobid = '{}'", s.runtime_, jobid_);
+        finish_tx.exec(updateStats); 
+        finish_tx.commit();
+        return {};
+    } catch(const std::exception& e) {
+        return std::unexpected(std::format("Error updating the simulator status: {} ", e.what()));
+    }
+}
+
 std::expected<void, std::string> DBLogger::logFailure(std::string message) {
 
     return updateStatus("ERROR").and_then([this, &message]() -> std::expected<void, std::string>{
@@ -236,7 +264,7 @@ std::expected<void, std::string> DBLogger::logFailure(std::string message) {
                 finish_tx.commit();
                 return {};
             } catch(const std::exception& e) {
-                return std::unexpected(std::format("Error updating the erroe message {} ", e.what()));
+                return std::unexpected(std::format("Error updating the error message {} ", e.what()));
             }
         });
    
