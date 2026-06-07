@@ -24,7 +24,7 @@ class DBManagerTest : public ::testing::Test {
         return data;
     }
 
-    void SetUp() override {
+    static void SetUpTestSuite() {
 
         for (size_t i = 0; i < 3; ++i){
             YAML::Node dbLog = TestUtil::getConfigNode();
@@ -52,7 +52,7 @@ class DBManagerTest : public ::testing::Test {
         }
     }
 
-    void TearDown() override {
+    static void TearDownTestSuite() {
         for (size_t i = 0; i < 3; ++i){
             std::filesystem::path fname = std::format("dbConfig{}.yaml", i);
             if (std::filesystem::exists(fname)) std::filesystem::remove(fname);
@@ -87,10 +87,8 @@ class ErrorLogTest : public DBManagerTest {
 };
 
 
-TEST_F(DBManagerTest, evaulateDB){
+TEST_F(DBManagerTest, jobData){
     DBManager reader(true);
-
-    // Job General Data
     std::vector<JobData> jobsSingle;
     std::vector<std::string> configs;
     for (size_t i = 0; i < 3; ++i){
@@ -120,7 +118,10 @@ TEST_F(DBManagerTest, evaulateDB){
         std::string inputfile = readFile(cfg);
         EXPECT_EQ(single.cfgPath_, inputfile);
     }
+}
 
+TEST_F(DBManagerTest, carMetadata){
+    DBManager reader(true);
     std::vector<CarMetadata> singleMetadata;
     std::expected<std::vector<CarMetadata>, std::string> allCarMetadata = reader.queryCars("test-dbreader1");
     EXPECT_TRUE(allCarMetadata.has_value()) << std::format("Error querying all cars metadata: {}", allCarMetadata.error());
@@ -150,7 +151,11 @@ TEST_F(DBManagerTest, evaulateDB){
         EXPECT_FLOAT_EQ(all.politeness_, 0.2);
     }
 
-    // Due to the size of the raw data, just check if X is increasing 
+}
+
+TEST_F(DBManagerTest, rawData){
+    DBManager reader(true);
+    const size_t ncars = 22;
     std::vector<RawData> singleRawData;
     std::expected<std::vector<RawData>, std::string> allRawData = reader.queryData("test-dbreader1");
     EXPECT_TRUE(allRawData.has_value()) << std::format("Error querying all cars snapshots: {}", allRawData.error());
@@ -169,19 +174,24 @@ TEST_F(DBManagerTest, evaulateDB){
         EXPECT_EQ(single.t_, all.t_);
         EXPECT_EQ(single.l_, all.l_);
     }
+}
+
+// The tests may NOT be run in parallel due to this test modifying the database
+TEST_F(DBManagerTest, cleanupDB){
+    DBManager reader(true);
 
     // Clean up jobs: 
     for (size_t i = 0; i < 3; ++i){
         std::expected<void, std::string> result = reader.deleteJob(std::format("test-dbreader{}", i));
         EXPECT_TRUE(result.has_value()) << std::format("Error deleting job {}: {}", i, result.error());
     }
-    jobsAll = reader.queryJobs();
+    std::expected<std::vector<JobData>, std::string> jobsAll = reader.queryJobs();
     ASSERT_TRUE(jobsAll.has_value()) << std::format("Error Querying All Jobs: {}", jobsAll.error());
     EXPECT_TRUE(jobsAll.value().empty());
 }
 
+// Need to see if the error exists. 
 TEST_F(ErrorLogTest, DISABLED_errorLogging){
-    // Need to see if the error exists. 
 
     std::expected<void, std::string> result = Traffic::Simulate("dbConfig3.yaml");
     ASSERT_TRUE(result.has_value()) << std::format("Error Querying Job test-dbreader3: {}", result.error());
