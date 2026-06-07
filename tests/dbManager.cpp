@@ -113,6 +113,7 @@ TEST_F(DBManagerTest, jobData){
         EXPECT_EQ(all.errorMsg_, "");
         EXPECT_EQ(all.status_, "DONE");
         EXPECT_GT(all.numCars_, 0);
+        EXPECT_GT(all.runtime_, 0.0f);
 
         // Check that the input file in the cfgPath matches the actual input file
         std::string inputfile = readFile(cfg);
