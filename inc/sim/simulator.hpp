@@ -2,7 +2,7 @@
  * @file simulator.hpp 
  * @author Ryan Butler (rmbutler@outlook.com)
  * @brief Defines the Simulator Class (Interface?)
- * @version 0.2
+ * @version 0.3
  * @date 2025-07-01
  * 
  * @copyright Copyright (c) 2025
@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include "comms.hpp"
 #include "highway.hpp"
 #include "simInputs.hpp"
 #include <expected>
@@ -23,6 +24,17 @@ private:
     std::shared_ptr<Highway>highway_;
     double totalTime_;
     double dt_;
+
+    // 1 mb of max memory
+    const size_t maxMemory_ = 1024 * 1024;
+    CommunicationsManager comms_;
+
+    // Store for logs. 
+    std::vector<CarSnapshot> snapshots_;
+    std::vector<CarData> cars_;
+    size_t maxSnapshots_;
+    size_t maxCars_;
+
 
     std::expected<void, std::string> mainLoop();
 

@@ -194,26 +194,14 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
             lanes_[i].insert(*c);
             newCars.push_back({c->data()});
         }
-
     }
     return newCars;
 }
 
-std::vector<CarSnapshot> CpuHighway::log(double t){
-
-    // Calculate number of cars
-    size_t ncars = 0;
-    for (auto ilane : std::views::iota(0UL, nLanes_)){
-        ncars += lanes_[ilane].size();
-    }
-
-    // Allocate data memory up front and collect data. 
-    std::vector<CarSnapshot> data;
-    data.reserve(ncars);
+void CpuHighway::log(double t, std::vector<CarSnapshot>& snapshots){
     for (auto ilane : std::views::iota(0UL, nLanes_)){
         for (auto car : lanes_[ilane]){
-            data.push_back(car.snapshot(t, ilane));
+            snapshots.push_back(car.snapshot(t, ilane));
         }
     }
-    return data;
 }

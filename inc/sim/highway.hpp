@@ -16,7 +16,6 @@
 
 #include "car.hpp"
 #include "flowGenerator.hpp"
-#include "logger.hpp"
 
 struct Highway {
 
@@ -34,7 +33,7 @@ struct Highway {
      * @details Each derived class stores cars differently and has a different conversion algorithm. 
      * @return std::vector<CarSnapshot> 
      */
-    virtual std::vector<CarSnapshot> log(double t) = 0;
+    virtual void log(double t, std::vector<CarSnapshot>& data) = 0;
 
 };
 
@@ -68,7 +67,7 @@ class CpuHighway : public Highway {
 
     CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows, double roadEnd);
     std::expected<std::vector<CarData>, std::string> update(double dt) override;
-    std::vector<CarSnapshot> log(double t) override;
+    void log(double t, std::vector<CarSnapshot>& data) override;
 };
 
 // #ifdef TRAFFIC_WITH_KOKKOS

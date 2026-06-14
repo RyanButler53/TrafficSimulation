@@ -30,7 +30,7 @@ void JobManager::threadRoutine(){
         if (j){
             uint32_t id = j->id();
             statuses_[id] = JobStatus::RUNNING;
-            statuses_[id] = j->operator()();
+            statuses_[id] = (*j)();
         } else {
             std::unique_lock lk(queueMutex_);
             cv_.wait(lk, [this](){return !workQueue_.empty() || isDone_.load();});

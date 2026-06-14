@@ -16,46 +16,52 @@
 #include <iterator>
 #include <ranges>
 #include <filesystem>
+#include <unordered_map>
 #include <expected>
 #include "logStructs.hpp"
 
+// Comms for streaming based logging
+#include "comms.hpp"
 
+
+/**
+ * @brief Car Logger base class. Derived classes handle writing data to a sink (CSV file or sink)
+ * @details contains methods for partitioning cars by the car id to improve disk write speeds. 
+ * Contains many pure virtaul methods
+ * @pure writeSnapshots(snapshots): Write the car snapshots
+ * @pure writeCars(cars): Write Car metadata
+ * @pure logFailure(error): Writes a failure
+ * @pure writeStats(stats): Writes simulation stats
+ * 
+ */
 class CarLogger 
 {
 
-    /// @brief Uncommited logs. Unwritten to file or unwritten to database
-    std::vector<CarSnapshot> logs_;
+    /**
+     * @brief Writes the Car Snapshots to the file or database. Much slower as this hits 
+     * the file system. This is called by the call operator to support streaming. 
+     * 
+     */
+    virtual std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) = 0; 
 
-    /// @brief Uncommitted logs split up by car id. 
-    std::vector<std::vector<CarSnapshot>> partitions_;
+    /**
+     * @brief Writes Car Metadata to the file/database. 
+     * 
+     * @return std::expected<void, std::string> 
+     */
+    virtual std::expected<void, std::string> writeCars(std::vector<CarData> cardata) = 0;
 
     protected:
-
-    /// @brief Keeps track if partitions is current
-    bool cached = false;
-
-    /// @brief Uncommitted newly made cars (Added in car constructor)
-    std::vector<CarData> cars_;
-
-    void clearLogs();
-
-    /**
-     * @brief Utility for accessing the logs of a specific car. Is expensive unless partition() has been called
-     * 
-     * @param id Car ID to get logs from
-     * @return std::vector<CarLog> vector of logs
-     */
-    std::vector<CarSnapshot> getCar(size_t id);
-
     
     /**
-     * @brief Splits the logs up by which car id. To speed up getCar queries. 
+     * @brief Splits the logs up by which car id and sorted by timestamp. Used to arrange before calling WriteData;
      * 
-     * @param n Number of cars. If not present, then logger needs to compute this 
+     * @param [in] snapshots Car Snapshots sent to the logger 
+     * @param [out] partitions Mapping of car ids to all their timestampe
      */
-    void partition(size_t n = 0);
 
-    std::vector<std::vector<CarSnapshot>>& getPartition();
+
+    void partition(std::vector<CarSnapshot>&& snapshots, std::unordered_map<size_t, std::vector<CarSnapshot>>& partitions);
 
     public:
 
@@ -63,31 +69,12 @@ class CarLogger
     virtual ~CarLogger(){};
 
     /**
-     * @brief Fast Operation for logging a car object. Done at each timestep
+     * @brief Write the simulation stats to the database. Called by the simulation
      * 
-     * @param id Car ID
-     * @param x position
-     * @param v Velocity
-     * @param t timestep
+     * @param s 
+     * @return std::expected<void, std::string> 
      */
-    void log(size_t id, double x, double v, double t); 
-
-    /**
-     * @brief Much slower operation for logging. Called to "commit" the 
-     * logged results to a file or database. Can be left as a default 
-     * for logging that doesn't need to write to files at all
-     * 
-     */
-    virtual std::expected<void, std::string> writeData(){return {};}; 
-
-    virtual std::expected<void, std::string> writeStats(SimulationStats s){return {};};
-
-    /**
-     * @brief Adds information about a specific car. 
-     * 
-     */
-    virtual void addCar(const CarData& carData);
-
+    virtual std::expected<void, std::string> writeStats(SimulationStats s) = 0;
 
     /**
      * @brief Updates the simulation's status to a new status 
@@ -103,11 +90,12 @@ class CarLogger
     virtual std::expected<void, std::string> logFailure(std::string message) = 0;
 
     /**
-     * @brief Adds all the data logs from the highway at a specific timestep to the internal logs
+     * @brief Streaming run function.  Reads data from the comms manager 
+     * and gets it to the appropriate file sink
      * 
-     * @param data 
+     * @param comms Communications manager that has Data Packets coming off the queue. 
      */
-    void fromHighway(std::vector<CarSnapshot> data);
+    void run(CommunicationsManager& comms);
 };
 
 class FileLogger : public CarLogger {
@@ -117,7 +105,9 @@ class FileLogger : public CarLogger {
     FileLogger(std::string basepath);
     ~FileLogger() = default;
 
-    std::expected<void, std::string> writeData() override;
+    std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) override;
+
+    std::expected<void, std::string> writeCars(std::vector<CarData> data) override;
 
     std::expected<void, std::string> writeStats(SimulationStats s) override;
 
@@ -136,6 +126,8 @@ class DBLogger : public CarLogger {
     std::string jobname_;
     std::string connectionStr_;
     int jobid_;
+    /// @brief Number of unique cars in the simulation
+    size_t nCars_{0};
 
     DBLogger(std::string jobname, std::string config, bool test);
     
@@ -153,8 +145,11 @@ class DBLogger : public CarLogger {
     static std::expected<std::shared_ptr<DBLogger>, std::string> make(std::string jobname, std::string config, std::string followType, bool test);
     ~DBLogger(){};
 
-    // Commits to the database
-    std::expected<void, std::string> writeData() override;
+
+    // Overrides
+    std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) override;
+
+    std::expected<void, std::string> writeCars(std::vector<CarData> data) override;
 
     std::expected<void, std::string> writeStats(SimulationStats s) override;
 

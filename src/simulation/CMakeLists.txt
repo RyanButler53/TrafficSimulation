@@ -11,7 +11,6 @@ set (SHARED_SRC
     car.cpp
     flowGenerator.cpp
     highway.cpp
-    logger.cpp
     strategy.cpp)
 
 set (SETUP_SRC
@@ -21,6 +20,8 @@ set (SETUP_SRC
     )
 
 set (SIMULATION_SRC
+    logger.cpp
+    compression.cpp
     simulator.cpp)
 
 find_package(libpqxx CONFIG REQUIRED)
@@ -43,6 +44,5 @@ add_library(pqxx_wrapper INTERFACE)
 target_link_libraries(pqxx_wrapper INTERFACE pqxx_import)
 
 target_link_libraries(setup PUBLIC yaml-cpp::yaml-cpp)
-target_link_libraries(shared PRIVATE pqxx_wrapper)
-target_link_libraries(simulation PUBLIC setup shared initdb)
+target_link_libraries(simulation PUBLIC setup shared initdb pqxx_wrapper)
 
