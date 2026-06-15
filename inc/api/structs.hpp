@@ -11,7 +11,7 @@ struct JobData {
     std::string status_;
     std::string driverModel_;
     int numCars_;
-    double runtime_;
+    float runtime_;
 };
 
 struct FollowModelParams {
