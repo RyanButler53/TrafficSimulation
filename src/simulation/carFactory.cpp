@@ -10,7 +10,6 @@
  */
 #include "sim/carFactory.hpp"
 #include "sim/strategy.hpp"
-#include  "sim/logger.hpp"
 
 #include <memory>
 

@@ -24,66 +24,36 @@
 
 namespace fs = std::filesystem;
 
-void CarLogger::log(size_t id, double x, double v, double t) {
-    logs_.push_back({id, x, v, t});
-    cached = false;
-};
 
-void CarLogger::fromHighway(std::vector<CarSnapshot> data){
-    logs_.append_range(data);
-    cached = false;
-}
-
-void CarLogger::addCar(const CarData& cardata){
-    cars_.push_back(cardata);
-}
-
-std::vector<CarSnapshot> CarLogger::getCar(size_t id){
-    if (cached){
-        return partitions_[id];
-    } else {
-        std::vector<CarSnapshot> carSpecific;    
-        auto logs =  std::copy_if(logs_.begin(), logs_.end(), std::back_inserter(carSpecific), [id](CarSnapshot& c){return c.id == id;});
-        return carSpecific;
+void CarLogger::partition(std::vector<CarSnapshot>&& snapshots, std::unordered_map<size_t, std::vector<CarSnapshot>>& partitions){
+    for (CarSnapshot& snapshot : snapshots){
+        size_t id = snapshot.id;
+        if (!partitions.contains(id)){
+            partitions[id] = {};
+        }
+        partitions[id].push_back(std::move(snapshot));
+    }
+    for (auto& [_, logs] : partitions){
+        std::ranges::sort(logs, [](const CarSnapshot& c1, const CarSnapshot& c2){return c1.t < c2.t;});
     }
 }
 
-void CarLogger::clearLogs(){
-    partitions_.clear();
-    logs_.clear();
-    cached = false;
+// Main loop
+void CarLogger::run(CommunicationsManager& comms){
+    DataType messageType = DataType::NO_DATA;
+    while (messageType != DataType::END_OF_DATA){
+        DataPacket::ptr packet = comms.getPacket();
+        if (auto pkt = std::dynamic_pointer_cast<CarMetadataPacket>(packet)){
+            messageType = DataType::CAR_DATA;
+            writeCars(pkt->moveData());
+        } else if (auto pkt = std::dynamic_pointer_cast<CarSnapshotPacket>(packet)){
+            messageType = DataType::SNAPSHOT_DATA;
+            writeSnapshots(pkt->moveData());
+        } else if (auto pkt = std::dynamic_pointer_cast<EndOfData>(packet)){
+            messageType = DataType::END_OF_DATA;
+        }
+    }
 }
-
-std::vector<std::vector<CarSnapshot>>& CarLogger::getPartition(){
-    if (!cached){
-        partition();
-    }
-    return partitions_;
-}
-
-void CarLogger::partition(size_t n) {
-    if (n == 0){
-        auto max = std::ranges::max_element(logs_, [](const CarSnapshot& c1, const CarSnapshot& c2){return c1.id < c2.id;});
-        n = max->id;
-    }
-    // Resize and clear partitions
-    partitions_.resize(n+1);
-    for (auto& v : partitions_){
-        v.clear();
-    }
-
-    // Split all logs by the car.  
-    for (CarSnapshot& c : logs_){
-        partitions_[c.id].push_back(c);
-    }
-
-    // Sort by timestamp
-    for (std::vector<CarSnapshot>& log : partitions_){
-        std::ranges::sort(log, [](const CarSnapshot& c1, const CarSnapshot& c2){return c1.t < c2.t;});
-    }
-    cached = true;
-}
-
 
 // FILE LOGGER
 
@@ -95,12 +65,12 @@ FileLogger::FileLogger(std::string basepath):basepath_{basepath}{
     fs::create_directories(basepath_);
 }
 
-std::expected<void, std::string> FileLogger::writeData(){
+std::expected<void, std::string> FileLogger::writeSnapshots(std::vector<CarSnapshot> snapshots){
 
-    std::vector<std::vector<CarSnapshot>> byCar = getPartition();
+    std::unordered_map<size_t, std::vector<CarSnapshot>> byCar;
+    partition(std::move(snapshots), byCar);
     size_t n = byCar.size();
-
-    for (size_t i = 0; i < n; ++i){
+    for (const auto& [i, cars] : byCar){
         // If file doesn't exist, make it
         fs::path fname = basepath_ / fs::path("car" + std::to_string(i) + ".csv");
         if (!fs::exists(fname)){
@@ -109,11 +79,26 @@ std::expected<void, std::string> FileLogger::writeData(){
         }
         
         std::ofstream logfile(fname, std::ios::app);
-        for (CarSnapshot& c : byCar[i]){
+        for (const CarSnapshot& c : cars){
             logfile << c.x << "," << c.v << ","<< c.t << "," << c.l<<"\n";
         }
+        logfile.close();
     }
-    clearLogs();
+    return {};
+}
+
+std::expected<void, std::string> FileLogger::writeCars(std::vector<CarData> data){
+    fs::path fname = basepath_ / fs::path("car_stats.csv");
+    std::ranges::sort(data, [](const CarData& c1, const CarData& c2){return c1.id < c2.id;});
+    if(!fs::exists(fname)){
+        std::ofstream out(fname);
+        out << "id,a,b,c,p\n";
+    }
+
+    std::ofstream logfile(fname, std::ios::app);
+    for (const CarData& c : data){
+        logfile << c.id << "," << c.a << ","<< c.b << "," << c.c<< "," << c.p <<"\n";
+    }
     return {};
 }
 
@@ -169,30 +154,23 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
     return std::shared_ptr<DBLogger>(logger);
 }
 
- std::expected<void, std::string> DBLogger::writeData() {
+ std::expected<void, std::string> DBLogger::writeSnapshots(std::vector<CarSnapshot> snapshots) {
 
-    std::vector<std::vector<CarSnapshot>> byCar = getPartition();
-
-    pqxx::connection connect(connectionStr_);
-
-    if (cars_.empty()){
+    if (snapshots.empty()){
         return std::unexpected("No cars!");
     }
 
-    // Add rows for all the new cars seen. This breaks when splitting up writing into 2 or more steps
-    try {
-        pqxx::work tx(connect);
-        for (CarData& cdata : cars_){
-            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c, politeness)\nVALUES ({}, {}, {}, {}, {}, {})", cdata.id, jobid_, cdata.a, cdata.b, cdata.c, cdata.p));
-        }
-        tx.commit();
-    } catch(const std::exception& e) {
-        return std::unexpected(std::format("Error inserting car info data into database: {}", e.what()));
-    }
-    
+    std::unordered_map<size_t, std::vector<CarSnapshot>> byCar;
+    partition(std::move(snapshots), byCar);
+
+    pqxx::connection connect(connectionStr_);
+
     // Update the big data table
-    for (std::vector<CarSnapshot>& car : byCar){
+    for (auto& [id, car] : byCar){
         if (car.empty()) continue;
+        if (id != car[0].id){
+            return std::unexpected("Partition Mismatch: Car id does not match partition id");
+        }
         try {
             pqxx::work car_transaction(connect);
 
@@ -207,22 +185,38 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
         }
     }
 
+
+    return {};
+}
+
+std::expected<void, std::string> DBLogger::writeCars(std::vector<CarData> cars) {
+    pqxx::connection connect(connectionStr_);
+    // Add rows for all the new cars seen. This breaks when splitting up writing into 2 or more steps
+    try {
+        pqxx::work tx(connect);
+        for (CarData& cdata : cars){
+            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c, politeness)\nVALUES ({}, {}, {}, {}, {}, {})", cdata.id, jobid_, cdata.a, cdata.b, cdata.c, cdata.p));
+        }
+        tx.commit();
+    } catch(const std::exception& e) {
+        return std::unexpected(std::format("Error inserting car info data into database: {}", e.what()));
+    }
+
     // Update the number of cars.  This will break if writing to the DB is done in chunks. Number of Unique cars is the number of rows found in car metadata
+    nCars_ += cars.size();
     try {
         pqxx::connection connect(connectionStr_);
         pqxx::work finish_tx(connect);
 
-        std::string updateStatus = std::format("UPDATE ONLY trafficJobs SET numCars = {} WHERE jobid = '{}'", byCar.size(), jobid_);
+        std::string updateStatus = std::format("UPDATE ONLY trafficJobs SET numCars = {} WHERE jobid = '{}'", nCars_, jobid_);
         finish_tx.exec(updateStatus); 
         finish_tx.commit();
         return {};
     } catch(const std::exception& e) {
         return std::unexpected(std::format("Error updating the Number of Cars: {} ", e.what()));
     }
-
-    clearLogs();
-    return {};
 }
+
 
 std::expected<void, std::string> DBLogger::updateStatus(std::string newStatus) {
     try {

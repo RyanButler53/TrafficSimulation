@@ -19,6 +19,7 @@ Dependencies:
 - oatpp: C++ Api library
 - Googletest: C++ Testing library
 - openssl (optional): Hashing for regression testing. 
+- Curl: For making api requests for Api Testing
 
 Compiler must be compatible with C++23 with `std::views::zip` and `std::expected`
 

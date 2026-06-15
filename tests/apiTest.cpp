@@ -223,10 +223,8 @@ TEST_F(ApiTest, ValidRequests){
     EXPECT_EQ(response->jsonData["jobname"], "apiTest");
     EXPECT_EQ(response->jsonData["driverModel"], "Gipps");
     EXPECT_EQ(response->jsonData["status"], "DONE");
-    // EXPECT_EQ(response->jsonData["numCars"], 6);
-    std::cout << "Num Cars: " << response->jsonData["numCars"] << std::endl;
-    // std::println("Num Cars: {}", response->jsonData["numCars"]);
-    
+    EXPECT_EQ(response->jsonData["numCars"], 16);
+
 
     response = requester.queryJobs();
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying For Jobs: {}", response.error());
