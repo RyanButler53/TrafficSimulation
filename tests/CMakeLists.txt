@@ -19,38 +19,38 @@ find_package(CURL)
 add_library(testutil STATIC testUtil.cpp)
 target_link_libraries(testutil PUBLIC yaml-cpp::yaml-cpp PRIVATE pqxx_wrapper)
 
-add_executable(parsing parsing.cpp)
-target_link_libraries(parsing PUBLIC simulation 
-                                     yaml-cpp::yaml-cpp 
-                              PRIVATE GTest::gtest GTest::gtest_main)
+
+macro(TrafficTest testname srcs)
+    add_executable(${testname} ${srcs})
+    target_link_libraries(${testname} PRIVATE GTest::gtest GTest::gtest_main ${ARGN})
+    gtest_discover_tests(${testname} )
+endmacro()
+
+macro(SingleFixtureTest testname srcs)
+    add_executable(${testname} ${srcs})
+    target_link_libraries(${testname} PRIVATE GTest::gtest GTest::gtest_main ${ARGN})
+    add_test(NAME ${testname} COMMAND ${testname})
+endmacro()
+
+TrafficTest(parsing parsing.cpp simulation yaml-cpp::yaml-cpp)
 
 
-add_executable(regression regression.cpp)
+TrafficTest(regression regression.cpp simulation
+                                      jobManager
+                                      testutil
+                                      pqxx_wrapper
+                                      $<IF:$<BOOL:${OpenSSL_FOUND}>,OpenSSL::Crypto,""> )
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
-target_link_libraries(regression PRIVATE simulation 
-                                        jobManager
-                                        testutil
-                                        $<IF:$<BOOL:OpenSSL_FOUND>,OpenSSL::Crypto,""> 
-                                        GTest::gtest 
-                                        GTest::gtest_main
+
+SingleFixtureTest(dbManagerTest dbManager.cpp testutil
+                                        jobManager 
+                                        dbmanager
                                         pqxx_wrapper)
 
-add_executable(dbManagerTest dbManager.cpp)
-target_link_libraries(dbManagerTest PRIVATE simulation 
-                                      testutil
-                                      jobManager 
-                                      dbmanager
-                                      GTest::gtest 
-                                      GTest::gtest_main 
-                                      pqxx_wrapper)
 
-add_executable(algorithmTest algorithmTest.cpp)
-target_link_libraries(algorithmTest PUBLIC simulation 
+SingleFixtureTest(algorithmTest algorithmTest.cpp simulation 
                                             testutil
-                                            dbmanager
-                                            GTest::gtest
-                                            GTest::gtest_main
-                                            )
+                                            dbmanager)
 
 if (CURL_FOUND)
     # Bring in Json Dependency
@@ -59,12 +59,8 @@ if (CURL_FOUND)
     FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
     FetchContent_MakeAvailable(json)
 
-    add_executable(apiTest apiTest.cpp)
-    target_link_libraries(apiTest PUBLIC api
-                                        nlohmann_json::nlohmann_json
-                                        testutil
-                                        GTest::gtest
-                                        GTest::gtest_main
-                                PRIVATE CURL::libcurl
-)
+    SingleFixtureTest(apiTest apiTest.cpp api
+                                    nlohmann_json::nlohmann_json
+                                    testutil
+                                    CURL::libcurl)
 endif()
