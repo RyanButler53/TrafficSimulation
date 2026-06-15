@@ -1,6 +1,6 @@
 ---
 # General Information
-jobname: crash-70s
+jobname: 2-lane
 type: "continuous" # differentiates between adding cars upfront or online
 time: 1500
 timestep: 1

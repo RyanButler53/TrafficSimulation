@@ -7,6 +7,7 @@
 #include <iostream>
 #include <algorithm>
 #include <ranges>
+#include <charconv>
 #include "sim/simulator.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -21,16 +22,17 @@
 
 #include <pqxx/pqxx>
 #include "testUtil.hpp"
+#include <cstring>
 
 #ifdef WITH_OPEN_SSL
     #include <openssl/evp.h>
 #endif
 
-struct XVT{
+struct XVTL{
     double x;
     double v;
     double t;
-    
+    int l;
 };
 
 class RegressionTest : public ::testing::Test {
@@ -72,18 +74,29 @@ protected:
         if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
     }
 
-    void getXVTFromFIle(std::vector<XVT>& xvts, std::filesystem::path file){
+    void getXVTFromFIle(std::vector<XVTL>& xvts, std::filesystem::path file){
         std::string line;
         std::ifstream in(file);
+        if (!in.good()){
+            std::cout << "Error opening file: " << strerror(errno) << std::endl;
+            FAIL();
+        }
         std::getline(in, line); // eat the first header line
-        std::vector<XVT> snapshots;
         while (std::getline(in, line)){
-            size_t firstComma = std::find(line.begin(), line.end(), ',') - line.begin();
-            size_t secondComma = std::find(line.begin() + firstComma + 1, line.end(), ',') - line.begin();
-            double x = std::stod(line.substr(0, firstComma-1));
-            double v = std::stod(line.substr(firstComma+1, secondComma - firstComma - 1));
-            double t = std::stod(line.substr(secondComma+1));
-            xvts.push_back({x,v,t});
+            std::vector<double> values;
+            for (auto word : std::views::split(line, ',')) {
+                std::string_view token{word};
+                double r = -1;
+                std::from_chars(token.begin(), token.begin() + token.size(), r);
+                values.push_back(r);
+            }
+            if (values.size()  < 4){
+                std::cout << "Not enough values found in file: " << file << " " << values.size() << " Line: " << line << std::endl;
+                FAIL();
+            } else {
+                xvts.push_back({values[0], values[1], values[2], int(values[3])});
+
+            }
         }
     }
 
@@ -134,25 +147,25 @@ TEST_F(RegressionTest, FileDBEquivalence){
     ASSERT_TRUE(Traffic::Simulate("fileConfig.yaml").has_value());
     ASSERT_TRUE(Traffic::Simulate("dbConfig.yaml").has_value());
 
-    // Need to compare both of them, car by car at each timestamp. 
+    // Compare both file and DB, car by car at each timestamp. 
 
     size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
+    numCars -= 2; // Car Stats and Simulation stats files aren't counted. 
     // Read in each file, query the DB for each specific car id. Then check if they are ASSERT_EQ
     pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
     for (size_t carid = 0; carid < numCars; ++carid){
         pqxx::work transaction(connect);
         // Job Id is always 1 because the DB is cleared
-        std::string queryStr = std::format("SELECT x, v, t FROM snapshotData WHERE (carid = {} AND jobid = 1)", carid);
-        std::vector<XVT> dbValues, fileValues;
-        for (auto [x,v,t] : transaction.stream<float, float, float>(queryStr)){
-            dbValues.push_back({x,v,t});
+        std::string queryStr = std::format("SELECT x, v, t, lane FROM snapshotData WHERE (carid = {} AND jobid = 1)", carid);
+        std::vector<XVTL> dbValues, fileValues;
+        for (auto [x,v,t, l] : transaction.stream<float, float, float, int>(queryStr)){
+            dbValues.push_back({x,v,t, l});
         }
-        std::filesystem::path carFile = std::format("file-test/logs/car{}.log", carid);
         
         // File logging:
-        std::filesystem::path p = std::format("file=test/logs/car{}.csv", carid);
+        std::filesystem::path p = std::format("file-test/logs/car{}.csv", carid);
         getXVTFromFIle(fileValues, p);
-        auto compareFunc = [](const XVT& t1, const XVT& t2){return t1.t < t2.t;};
+        auto compareFunc = [](const XVTL& t1, const XVTL& t2){return t1.t < t2.t;};
         std::ranges::sort(dbValues, compareFunc);
         std::ranges::sort(fileValues, compareFunc);
 
@@ -160,6 +173,7 @@ TEST_F(RegressionTest, FileDBEquivalence){
             ASSERT_NEAR(db.x, file.x, 0.01);
             ASSERT_NEAR(db.x, file.x, 0.01);
             ASSERT_NEAR(db.t, file.t, 0.01);
+            ASSERT_EQ(db.l, file.l);
         }
     }
 }
@@ -174,7 +188,7 @@ TEST_F(RegressionTest, FileHashEquivalence){
     }
 
     // Get the hashes for each file and concatenate them
-    size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
+    size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{}) - 2;
     std::string hashes;
     for (size_t carid = 0; carid < numCars; ++carid){
         std::filesystem::path p = std::format("file-test/logs/car{}.csv", carid);

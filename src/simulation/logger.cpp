@@ -82,10 +82,7 @@ std::expected<void, std::string> FileLogger::writeSnapshots(std::vector<CarSnaps
         for (const CarSnapshot& c : cars){
             logfile << c.x << "," << c.v << ","<< c.t << "," << c.l<<"\n";
         }
-    }
-
-    for (size_t i = 0; i < n; ++i){
-        
+        logfile.close();
     }
     return {};
 }

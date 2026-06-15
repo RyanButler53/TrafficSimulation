@@ -29,7 +29,6 @@ Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
         snapshots_.reserve(snapshotMem);
         cars_.reserve(carMem);
         maxSnapshots_ = snapshotMem / sizeof(CarSnapshot);
-        maxCars_ = carMem / sizeof(CarData);
     }
 
 std::function<std::string(std::string)> Simulator::errorFunc(std::string prefix){
@@ -39,7 +38,7 @@ std::function<std::string(std::string)> Simulator::errorFunc(std::string prefix)
 std::expected<void, std::string> Simulator::mainLoop(){
 
     // Logger
-    std::thread loggingThread([this](){logger_->run(comms_);});
+    std::jthread loggingThread([this](){logger_->run(comms_);});
     auto start = std::chrono::steady_clock::now();
     double t = 0.0;
     std::expected <void, std::string> simStatus;
@@ -53,21 +52,16 @@ std::expected<void, std::string> Simulator::mainLoop(){
             break;
         }
 
-        // Send to the logger thread
-        if (snapshots_.size() > 0.9 * maxSnapshots_){ // Wait and send at 90%
-            comms_.send(std::move(snapshots_));
-        } else if (snapshots_.size() > 0.8 * maxSnapshots_){ // try to send at 80%
-            if (comms_.trySend(std::move(snapshots_))){
-                snapshots_.clear();
-            }
-        }
-        if (cars_.size() > 0.9 * maxCars_){
+        // At 90% memory capacity, send to the logging thread
+        if (snapshots_.size() > 0.9 * maxSnapshots_){
             comms_.send(std::move(cars_));
+            cars_.clear();
+            comms_.send(std::move(snapshots_));
+            snapshots_.clear();
         }
     }
-
-    comms_.send(std::move(snapshots_));
     comms_.send(std::move(cars_));
+    comms_.send(std::move(snapshots_));
     comms_.endOfData();
 
     simStatus = simStatus.transform_error(Simulator::errorFunc("simulating error"));
@@ -76,7 +70,6 @@ std::expected<void, std::string> Simulator::mainLoop(){
 
     SimulationStats stats{double(ms / 1000000.0)};
     auto statsStatus = logger_->writeStats(stats).transform_error(Simulator::errorFunc("writing stats"));
-
     std::string errmsg  = simStatus.error_or("") + statsStatus.error_or("");
     return (errmsg.empty()) ? std::expected<void, std::string>{} : std::unexpected(errmsg);
 }

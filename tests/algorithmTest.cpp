@@ -30,6 +30,7 @@ class AlgorithmTest : public ::testing::Test{
         YAML::Node cfg = TestUtil::getConfigNode_3Lane();
         cfg["logtype"] = "test";
         cfg["jobname"] = "Algorithm";
+        cfg["timestep"] = 0.1; // dt = 0.1 tests streaming
 
         // Homogeneous traffic
         cfg["driverParams"]["a_stdev"] = 0.1;
