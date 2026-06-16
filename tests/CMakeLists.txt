@@ -64,3 +64,6 @@ if (CURL_FOUND)
                                     testutil
                                     CURL::libcurl)
 endif()
+
+add_executable(timing timing.cpp)
+target_link_libraries(timing PRIVATE simulation jobManager dbmanager pqxx_wrapper testutil)
