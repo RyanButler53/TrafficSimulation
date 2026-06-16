@@ -15,11 +15,6 @@
 #include "sim/parserFactory.hpp"
 #include "sim/simulator.hpp"
 #include "api/jobManager.hpp"
-
-#include <iostream>
-#include <fstream>
-#include <filesystem>
-
 #include <pqxx/pqxx>
 #include "testUtil.hpp"
 #include <cstring>

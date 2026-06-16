@@ -9,6 +9,8 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(cmake_language CXX)
 
+enable_testing()
+
 include_directories(inc)
 add_subdirectory(src)
 add_subdirectory(tests)

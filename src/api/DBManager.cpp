@@ -37,7 +37,7 @@ std::expected<pqxx::connection, std::string> DBManager::getConnection(){
 // JOB DATA
 
 std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
-    std::string querystr = std::format("SELECT jobname, configfile, status, error, followModel, numCars  FROM TrafficJobs WHERE jobname = '{}'", jobname);
+    std::string querystr = std::format("SELECT jobname, configfile, status, error, followModel, numCars, runtime FROM TrafficJobs WHERE jobname = '{}'", jobname);
 
     auto connect = getConnection();
     if (!connect){return std::unexpected(connect.error());}
@@ -55,6 +55,7 @@ std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
     pqxx::row r = result[0];
     std::string name, cfgfile, error, status, followModel;
     int numCars;
+    float runtime;
     try {
         name = r["jobname"].as<std::string>();
         cfgfile = r["configfile"].as<std::string>();
@@ -62,12 +63,13 @@ std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
         status = r["status"].as<std::string>();
         followModel = r["followModel"].as<std::string>();
         numCars = r["numCars"].as<int>();
+        runtime = r["runtime"].as<float>();
 
     } catch(const std::exception& e) {
         return std::unexpected("Error converting name, cfgfile, error or status to a string");
     }
 
-    return JobData{name, cfgfile, error, status, followModel, numCars};
+    return JobData{name, cfgfile, error, status, followModel, numCars, runtime};
 }
 
 std::expected<std::vector<JobData>, std::string> DBManager::queryJobs(){

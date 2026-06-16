@@ -32,7 +32,7 @@ class AlgorithmTest : public ::testing::Test{
         cfg["jobname"] = "Algorithm";
         cfg["timestep"] = 0.1; // dt = 0.1 tests streaming
 
-        // Homogeneous traffic
+        // Heterogeneous traffic
         cfg["driverParams"]["a_stdev"] = 0.1;
         cfg["driverParams"]["b_stdev"] = 0.2;
         cfg["driverParams"]["bmax_stdev"] = 0.2;

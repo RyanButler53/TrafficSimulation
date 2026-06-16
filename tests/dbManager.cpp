@@ -107,6 +107,7 @@ TEST_F(DBManagerTest, jobData){
         EXPECT_EQ(single.errorMsg_, all.errorMsg_);
         EXPECT_EQ(single.driverModel_, all.driverModel_);
         EXPECT_EQ(single.numCars_, all.numCars_);
+        EXPECT_EQ(single.runtime_, all.runtime_);
 
         // Check individual values that should be the same throughout all the jobs
         EXPECT_EQ(all.driverModel_, "Gipps");
