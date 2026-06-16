@@ -29,6 +29,7 @@ std::shared_ptr<T> ThreadsafeQueue<T>::wait_and_pop(){
     empty_cond.wait(lk,[this]{return !data_queue.empty();});
     std::shared_ptr<T> res = data_queue.front();
     data_queue.pop();
+    full_cond.notify_one();
     return res;
 }
 
@@ -39,6 +40,7 @@ std::shared_ptr<T> ThreadsafeQueue<T>::try_pop(){
         return std::shared_ptr<T>();
     std::shared_ptr<T> res = data_queue.front();
     data_queue.pop();
+    full_cond.notify_one();
     return res;
 }   
 
