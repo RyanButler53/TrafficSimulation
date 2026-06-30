@@ -111,8 +111,13 @@ class Benchmark{
 
     ~Benchmark(){
         for (auto& p : paths_){
+            std::string fname = p.string();
+            std::string jobname = fname.erase(fname.size() - 5);
             if (std::filesystem::exists(p)){
                 std::filesystem::remove(p);
+            }
+            if (std::filesystem::is_directory(jobname)){
+                std::filesystem::remove_all(jobname);
             }
         }
         TestUtil::clearDB();
