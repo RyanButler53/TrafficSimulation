@@ -8,7 +8,6 @@
 
 #include <vector>
 #include <memory>
-#include <pqxx/pqxx>
 #include <expected>
 
 #include "structs.hpp"
@@ -27,8 +26,6 @@ using DBResponse = std::expected<void, std::string>;
 class DBManager {
 
     std::string connectionStr_;
-
-    std::expected<pqxx::connection, std::string> getConnection();
 
 public:
 
