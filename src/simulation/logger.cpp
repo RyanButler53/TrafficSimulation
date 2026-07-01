@@ -204,62 +204,37 @@ std::expected<void, std::string> DBLogger::writeCars(std::vector<CarData> cars) 
 
     // Update the number of cars.  This will break if writing to the DB is done in chunks. Number of Unique cars is the number of rows found in car metadata
     nCars_ += cars.size();
+    return updateField("numCars", nCars_, "Number of Cars");
+}
+
+template <typename T>
+std::expected<void, std::string> DBLogger::updateField(std::string key, T value, std::string errMsg){
     try {
         pqxx::connection connect(connectionStr_);
         pqxx::work finish_tx(connect);
 
-        std::string updateStatus = std::format("UPDATE ONLY trafficJobs SET numCars = {} WHERE jobid = '{}'", nCars_, jobid_);
+        std::string updateStatus = std::format("UPDATE ONLY trafficJobs SET {} = '{}' WHERE jobid = '{}'", key, value, jobid_);
         finish_tx.exec(updateStatus); 
         finish_tx.commit();
         return {};
     } catch(const std::exception& e) {
-        return std::unexpected(std::format("Error updating the Number of Cars: {} ", e.what()));
+        return std::unexpected(std::format("Error updating the {}: {} ", errMsg, e.what()));
     }
 }
 
-
 std::expected<void, std::string> DBLogger::updateStatus(std::string newStatus) {
-    try {
-        pqxx::connection connect(connectionStr_);
-        pqxx::work finish_tx(connect);
-
-        std::string updateStatus = std::format("UPDATE ONLY trafficJobs SET status = '{}' WHERE jobid = '{}'", newStatus, jobid_);
-        finish_tx.exec(updateStatus); 
-        finish_tx.commit();
-        return {};
-    } catch(const std::exception& e) {
-        return std::unexpected(std::format("Error updating the Job Status: {} ", e.what()));
-    }
+    return updateField<std::string>("status", newStatus, "Job Status");
 }
 
 std::expected<void, std::string> DBLogger::writeStats(SimulationStats s) {
-    try {
-        pqxx::connection connect(connectionStr_);
-        pqxx::work finish_tx(connect);
-
-        std::string updateStats = std::format("UPDATE ONLY trafficJobs SET runtime = '{}' WHERE jobid = '{}'", s.runtime_, jobid_);
-        finish_tx.exec(updateStats); 
-        finish_tx.commit();
-        return {};
-    } catch(const std::exception& e) {
-        return std::unexpected(std::format("Error updating the simulator status: {} ", e.what()));
-    }
+    return updateField("runtime", s.runtime_, "simulator stats");
 }
 
 std::expected<void, std::string> DBLogger::logFailure(std::string message) {
-
-    return updateStatus("ERROR").and_then([this, &message]() -> std::expected<void, std::string>{
-            try {
-                pqxx::connection connect(connectionStr_);
-                pqxx::work finish_tx(connect);
-        
-                std::string updateMsg = std::format("UPDATE ONLY trafficJobs SET error = '{}' WHERE jobid = '{}'", message, jobid_);
-                finish_tx.exec(updateMsg);
-                finish_tx.commit();
-                return {};
-            } catch(const std::exception& e) {
-                return std::unexpected(std::format("Error updating the error message {} ", e.what()));
-            }
-        });
-   
+    return updateStatus("ERROR").and_then([this, &message](){return updateField("error", message, "error message");});
 }
+
+// Template Instantiations
+template std::expected<void, std::string> DBLogger::updateField(std::string, size_t, std::string);
+template std::expected<void, std::string> DBLogger::updateField(std::string, std::string, std::string);
+template std::expected<void, std::string> DBLogger::updateField(std::string, double, std::string);

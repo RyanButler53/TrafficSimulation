@@ -34,6 +34,7 @@ public:
 
     void wait_and_push(T new_value); // Wait at 90% memory and always push it through
     
+    size_t size() const;
 };
 
 #include "threadsafeQueue-private.hpp"
