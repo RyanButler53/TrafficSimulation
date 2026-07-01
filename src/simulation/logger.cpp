@@ -231,24 +231,10 @@ std::expected<void, std::string> DBLogger::writeStats(SimulationStats s) {
 }
 
 std::expected<void, std::string> DBLogger::logFailure(std::string message) {
-
-    return updateStatus("ERROR").and_then([this, &message]() -> std::expected<void, std::string>{
-            try {
-                pqxx::connection connect(connectionStr_);
-                pqxx::work finish_tx(connect);
-        
-                std::string updateMsg = std::format("UPDATE ONLY trafficJobs SET error = '{}' WHERE jobid = '{}'", message, jobid_);
-                finish_tx.exec(updateMsg);
-                finish_tx.commit();
-                return {};
-            } catch(const std::exception& e) {
-                return std::unexpected(std::format("Error updating the error message {} ", e.what()));
-            }
-        });
+    return updateStatus("ERROR").and_then([this, &message](){return updateField("error", message, "error message");});
 }
 
 // Template Instantiations
 template std::expected<void, std::string> DBLogger::updateField(std::string, size_t, std::string);
 template std::expected<void, std::string> DBLogger::updateField(std::string, std::string, std::string);
 template std::expected<void, std::string> DBLogger::updateField(std::string, double, std::string);
-
