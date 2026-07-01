@@ -2,46 +2,83 @@
  * @file intervalTree.hpp
  * @author Ryan Butler (rbutler@g.hmc.edu)
  * @brief Implementation of non-balancing interval tree
- * @version 0.1
+ * @version 0.2
  * @date 2023-07-21
  * 
  * @copyright Copyright (c) 2023
  * 
  */
 
-#ifndef INTERVAL_TREE_HPP_INCLUDED
-#define INTERVAL_TREE_HPP_INCLUDED
+#pragma once
 
 #include <vector>
 #include <tuple>
 #include <unordered_set>
 #include <numeric>
+#include <concepts>
 
 
+template <typename IntervalType>
+concept Interval = requires(IntervalType &interval,
+                            IntervalType::value_type v) {
+
+    interval = IntervalType(v, v);
+    v = interval.low();
+    v = interval.high();
+};
+
+
+
+namespace ITree {
+/**
+ * @brief Simple implementation of the Interval concept. Used for holding ranges of numbers. 
+ * 
+ */
 template <typename T>
+class Interval
+{
+    // Data
+    T low_;
+    T high_;
+
+    public: 
+
+    using value_type = T;
+    // Constructors / Destructor
+    Interval(T low, T high);
+    Interval(const Interval &other) = default;
+    ~Interval() = default;
+
+    T low() const {return low_;};
+    T high() const {return high_;}
+
+    bool operator==(const Interval& other) const;
+};
+};
+
+
+template <Interval I>
 class IntervalTree {
-  public:
-      struct Interval;
 
-  private:
+    using T = I::value_type;
       // Interval Tree Node Struct
-      struct Node
-      {
-          std::vector<size_t> intervals_; // Vector indexes of stored intervals
-          Node *left_;
-          Node *right_;
-          T value_;
-          T min_;       // Minimum value in subtree
-          T max_;       // Maximum value in subtree
-          bool isLeaf_; // Accessing value_ in leaf nodes is underfined
+    struct Node
+    {
+        std::vector<size_t> intervals_; // Vector indexes of stored intervals
+        Node *left_;
+        Node *right_;
+        T value_;
+        T min_;       // Minimum value in subtree
+        T max_;       // Maximum value in subtree
+        bool isLeaf_; // Accessing value_ in leaf nodes is underfined
 
-          // Constructors
-          Node(T min, T max);
+        // Constructors
+        Node(T min, T max);
     };
 
     // Tree Data
     std::unordered_set<T> allEndpoints_; // Check if endpoint already exists
-    std::vector<Interval> allIntervals_; // Store all intervals here
+    std::vector<I> allIntervals_; // Store all intervals here
     Node *root_;
     size_t size_;
 
@@ -100,7 +137,7 @@ public:
      * 
      * @param i IntervalTree::Interval object to insert
      */
-    void insert(const Interval &i);
+    void insert(const I &i);
 
     /**
      * @brief Finds all intervals that overlap with a given query point
@@ -109,8 +146,7 @@ public:
      * @return std::vector<std::tuple<T, T>> Vector with low and high bounds
      * of all intervals that contain queryPoint param
      */
-    std::vector<std::pair<T, T>> findOverlaps(const T &queryPoint);
-
+    std::vector<I> findOverlaps(const T& queryPoint);
     /**
      * @brief Finds all intervals that fully contain the low and high bound
      * 
@@ -119,28 +155,9 @@ public:
      * @return std::vector<std::tuple<T, T>> Vector of all intervals that
      * fully contain the interval with lower bound low and upper bound high
      */
-    std::vector<std::pair<T, T>> findSupersets(const T &low, const T &high);
+    std::vector<I> findSupersets(const T &low, const T &high);
 
-    // Public Interval Struct
 
-    /**
-     * @brief Mostly for bookkeeping in implementation, but is public and can 
-     * be constructed and inserted into the interval tree
-     * 
-     */
-    struct Interval
-    {
-        // Data
-        T low_;
-        T high_;
-    
-        // Constructors / Destructor
-        Interval(T low, T high);
-        Interval(const Interval &other) = default;
-        ~Interval() = default;
-    };
 };
 
 #include "intervalTree-private.hpp"
-
-#endif // INTERVAL_TREE_HPP_INCLUDED

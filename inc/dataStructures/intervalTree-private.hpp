@@ -1,20 +1,19 @@
 #include "intervalTree.hpp"
-using namespace std;
 
-template <typename T>
-IntervalTree<T>::IntervalTree():
-root_{new Node(numeric_limits<T>::min(), numeric_limits<T>::max())}, size_{0}
+template <Interval I>
+IntervalTree<I>::IntervalTree():
+root_{new Node(std::numeric_limits<T>::min(), std::numeric_limits<T>::max())}, size_{0}
 {
 }
 
-template <typename T>
-IntervalTree<T>::~IntervalTree()
+template <Interval I>
+IntervalTree<I>::~IntervalTree()
 {
     destroyTree(root_);
 }
 
-template <typename T>
-void IntervalTree<T>::destroyTree(Node* n){
+template <Interval I>
+void IntervalTree<I>::destroyTree(Node* n){
     if (n){
         if (n->left_){
             destroyTree(n->left_);
@@ -26,9 +25,16 @@ void IntervalTree<T>::destroyTree(Node* n){
     }
 }
 
-template <typename T>
-void IntervalTree<T>::insert(const T &low, const T &high){
-    // First check if both endpoints are in the tree before adding them
+template <Interval I>
+void IntervalTree<I>::insert(const T &low, const T &high){
+    insert(I{low, high});
+}
+
+template <Interval I>
+void IntervalTree<I>::insert(const I& i){
+// First check if both endpoints are in the tree before adding them
+    const T& low = i.low();
+    const T& high = i.high();
     if (!allEndpoints_.contains(low)){
         insertNode(low, root_);
         allEndpoints_.insert(low);
@@ -37,21 +43,15 @@ void IntervalTree<T>::insert(const T &low, const T &high){
         insertNode(high, root_);
         allEndpoints_.insert(high);
     }
-    allIntervals_.push_back(Interval{low, high});
+    allIntervals_.push_back(i);
     // Insert the INDEX of the interval into each node
     insertInterval(size_, root_);
     ++size_;
     return;
 }
 
-template <typename T>
-void IntervalTree<T>::insert(const Interval& i){
-    insert(i.low_, i.high_);
-    return;
-}
-
-template <typename T>
-void IntervalTree<T>::insertNode(const T& value, Node*&node){
+template <Interval I>
+void IntervalTree<I>::insertNode(const T& value, Node*&node){
     if (node->isLeaf_){
         node->isLeaf_ = false;
         node->value_ = value;
@@ -64,11 +64,11 @@ void IntervalTree<T>::insertNode(const T& value, Node*&node){
     }
 }
 
-template <typename T>
-void IntervalTree<T>::insertInterval(size_t intervalInd, Node*&node){
-    const Interval &i = allIntervals_[intervalInd];
+template <Interval I>
+void IntervalTree<I>::insertInterval(size_t intervalInd, Node*&node){
+    const I &i = allIntervals_[intervalInd];
     // Case where the node's subtree is fully contained in the interval
-    if (node->min_ >= i.low_ and node->max_ <= i.high_)
+    if (node->min_ >= i.low() and node->max_ <= i.high())
     {
         node->intervals_.push_back(intervalInd);
     }
@@ -79,17 +79,17 @@ void IntervalTree<T>::insertInterval(size_t intervalInd, Node*&node){
         if (node->isLeaf_){
             throw std::logic_error("Node cannot be a leaf here");
         }
-        if (i.low_ < node->value_){
+        if (i.low() < node->value_){
             insertInterval(intervalInd, node->left_);
         } 
-        if (node->value_ < i.high_){
+        if (node->value_ < i.high()){
             insertInterval(intervalInd, node->right_);
         }
     }
 }
 
-template <typename T>
-void IntervalTree<T>::query(const T& queryPoint,unordered_set<size_t>& intervals, Node* n) const{
+template <Interval I>
+void IntervalTree<I>::query(const T& queryPoint,std::unordered_set<size_t>& intervals, Node* n) const{
     intervals.insert(n->intervals_.begin(), n->intervals_.end());
     if (n->isLeaf_) {
         return;
@@ -103,32 +103,30 @@ void IntervalTree<T>::query(const T& queryPoint,unordered_set<size_t>& intervals
     } 
 }
 
-template <typename T>
-vector<pair<T, T>> IntervalTree<T>::findOverlaps(const T& queryPoint){
-    unordered_set<size_t> overlapInds;
+template <Interval I>
+std::vector<I> IntervalTree<I>::findOverlaps(const T& queryPoint){
+    std::unordered_set<size_t> overlapInds;
     query(queryPoint, overlapInds,root_);
-    vector<pair<T, T>> overlapIntervals;
+    std::vector<I> overlapIntervals;
     for (size_t intervalInd : overlapInds)
     {
-        const Interval &i = allIntervals_[intervalInd];
-        overlapIntervals.push_back({i.low_, i.high_});
+        overlapIntervals.push_back(allIntervals_[intervalInd]);
     }
     return overlapIntervals;
 }
 
-template <typename T>
-vector<pair<T, T>> IntervalTree<T>::findSupersets(const T &low, const T &high){
-    unordered_set<size_t> overlapLow;
-    unordered_set<size_t> overlapHigh;
-    query(low, overlapLow,root_);
-    query(high, overlapHigh,root_);
-    vector<pair<T, T>> overlapIntervals;
+template <Interval I>
+std::vector<I> IntervalTree<I>::findSupersets(const T &low, const T &high){
+    std::unordered_set<size_t> overlapLow;
+    std::unordered_set<size_t> overlapHigh;
+    query(low, overlapLow, root_);
+    query(high, overlapHigh, root_);
+    std::vector<I> overlapIntervals;
     // Find Intersection of sets
     for (size_t intervalInd : overlapHigh){
         // Both contain this interval
         if (overlapLow.contains(intervalInd)){
-            const Interval &i = allIntervals_[intervalInd];
-            overlapIntervals.push_back({i.low_, i.high_});
+            overlapIntervals.push_back(allIntervals_[intervalInd]);
         }
     }
     return overlapIntervals;
@@ -137,13 +135,18 @@ vector<pair<T, T>> IntervalTree<T>::findSupersets(const T &low, const T &high){
 // Struct Functions
 
 template <typename T>
-IntervalTree<T>::Interval::Interval(T low, T high):
+ITree::Interval<T>::Interval(T low, T high):
     low_{low}, high_{high}{
         // Nothing here
 }
 
-template<typename T>
-IntervalTree<T>::Node::Node(T min, T max):
+template <typename T>
+bool ITree::Interval<T>::operator==(const Interval<T>& other) const {
+    return (low_ == other.low_) && (high_ == other.high_);
+}
+
+template <Interval I>
+IntervalTree<I>::Node::Node(T min, T max):
     left_{nullptr}, 
     right_{nullptr}, 
     min_{min},
