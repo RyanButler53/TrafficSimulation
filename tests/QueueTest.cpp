@@ -6,9 +6,8 @@
 #include <future>
 
 std::vector<int> pop(ThreadsafeQueue<int>& q){
-    std::this_thread::sleep_for(std::chrono::seconds(1));
     std::vector<int> values;
-    while (!q.empty()){
+    while (!q.empty() || values.size() < 10){
         auto integer = q.try_pop();
         if (integer){
             values.push_back(*integer);
@@ -29,6 +28,7 @@ TEST(QueueTest, FullQueue){
     }
 
     std::vector<int> values = f.get();
+    ASSERT_EQ(values.size(), 10);
     for (int i = 0; i < 10; ++i){
         EXPECT_EQ(i, values[i]);
     }

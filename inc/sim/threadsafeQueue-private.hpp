@@ -74,3 +74,9 @@ void ThreadsafeQueue<T>::wait_and_push(T new_value){
     data_queue.push(data);
     empty_cond.notify_one();
 }
+
+template <typename T>
+size_t ThreadsafeQueue<T>::size() const {
+    std::scoped_lock<std::mutex> lk(mut);
+    return data_queue.size();
+}

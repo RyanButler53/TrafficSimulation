@@ -131,6 +131,15 @@ class DBLogger : public CarLogger {
 
     DBLogger(std::string jobname, std::string config, bool test);
     
+    /**
+     * @brief Updates the specific field in the jobs table. 
+     * 
+     * @tparam T 
+     * @return std::expected<void, std::string> 
+     */
+    template <typename T>
+    std::expected<void, std::string> updateField(std::string field, T value, std::string errmsg);
+
     public: 
 
     /**
