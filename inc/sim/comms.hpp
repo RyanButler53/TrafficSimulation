@@ -9,7 +9,7 @@
  * 
  */
 #pragma once
-#include "threadsafeQueue.hpp"
+#include "dataStructures/threadsafeQueue.hpp"
 #include "dataPacket.hpp"
 #include "compression.hpp"
 
