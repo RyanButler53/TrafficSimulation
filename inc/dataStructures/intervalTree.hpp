@@ -29,13 +29,12 @@ concept Interval = requires(IntervalType &interval,
 
 
 
-namespace ITree {
 /**
  * @brief Simple implementation of the Interval concept. Used for holding ranges of numbers. 
  * 
  */
 template <typename T>
-class Interval
+class SimpleInterval
 {
     // Data
     T low_;
@@ -45,15 +44,14 @@ class Interval
 
     using value_type = T;
     // Constructors / Destructor
-    Interval(T low, T high);
-    Interval(const Interval &other) = default;
-    ~Interval() = default;
+    SimpleInterval(T low, T high);
+    SimpleInterval(const SimpleInterval &other) = default;
+    virtual ~SimpleInterval() = default;
 
     T low() const {return low_;};
     T high() const {return high_;}
 
-    bool operator==(const Interval& other) const;
-};
+    bool operator==(const SimpleInterval& other) const;
 };
 
 
@@ -61,7 +59,7 @@ template <Interval I>
 class IntervalTree {
 
     using T = I::value_type;
-      // Interval Tree Node Struct
+    // Interval Tree Node Struct
     struct Node
     {
         std::vector<size_t> intervals_; // Vector indexes of stored intervals
@@ -108,14 +106,13 @@ class IntervalTree {
     void insertInterval(size_t intervalInd, Node*& node);
 
     /**
-     * @brief Helper function for finding overlapping intervals
+     * @brief Recursive helper function for finding overlapping intervals
      * 
-     * @param queryPoint Point to find overlaps for
+     * @param interval Interval to find overlaps for
      * @param intervals Set of interval indexes. Modified over time
      * @param n Current node
      */
-    void query(const T &queryPoint, std::unordered_set<size_t>& intervals, Node* n) const;
-
+    void query(const I& interval, std::unordered_set<size_t>& intervals, Node* n) const;
 public:
 
     // Constructors
@@ -123,6 +120,12 @@ public:
     ~IntervalTree();
 
     // Interface Functions:
+
+    /**
+     * @brief Clears the interval tree
+     * 
+     */
+    void clear();
 
     /**
      * @brief Inserts an interval into the interval tree
@@ -147,6 +150,15 @@ public:
      * of all intervals that contain queryPoint param
      */
     std::vector<I> findOverlaps(const T& queryPoint);
+
+    /**
+     * @brief Range Query: Finds all intervals that overlap with the given interval. 
+     * 
+     * @param interval Interval to find intervals overlapping
+     * @return std::vector<I> Vector to return the overlapping intervals. Not gauranteed sorted in any order. 
+     */
+    std::vector<I> findOverlaps(const I& interval);
+
     /**
      * @brief Finds all intervals that fully contain the low and high bound
      * 
