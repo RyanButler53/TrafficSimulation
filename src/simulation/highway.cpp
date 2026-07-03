@@ -64,9 +64,7 @@ void CpuHighway::moveVehicles(std::vector<std::unordered_map<double, double>>& a
 }
 
 std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
-    
-    // Cache of accelerations of each car given that no lane changing occurs. x->a
-    
+        
     // Phase 1: Iterate over all cars in all lanes to fill acceleration cache
     std::vector<std::unordered_map<double, double>> accelerationCache;
     auto result = getAccelerationCache(accelerationCache, dt);

@@ -42,7 +42,8 @@ TrafficTest(regression regression.cpp simulation
                                       $<IF:$<BOOL:${OpenSSL_FOUND}>,OpenSSL::Crypto,""> )
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
 
-TrafficTest(queue QueueTest.cpp)
+TrafficTest(queueTest queueTest.cpp)
+TrafficTest(laneinfoTest laneInfoTest.cpp shared)
 
 SingleFixtureTest(dbManagerTest dbManager.cpp testutil
                                         jobManager 
