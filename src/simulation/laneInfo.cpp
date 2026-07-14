@@ -7,7 +7,7 @@
 
 bool LaneInfo::addSegment(double start, double end, size_t position){
 
-    std::vector<LaneBoundary> overlaps = iTree_.findOverlaps({start, end});
+    std::vector<LaneBoundary> overlaps = iTree_.findOverlaps(LaneBoundary{start, end});
     auto iter = std::ranges::find_if(overlaps, [position](const LaneBoundary& l){return l.position_ == position;});
     if (iter == overlaps.end()){
         iTree_.insert({start, end, position});

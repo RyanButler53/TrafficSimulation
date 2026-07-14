@@ -1,10 +1,12 @@
 #include "sim/parser.hpp"
 #include "sim/simInputs.hpp"
 #include "sim/highway.hpp"
+#include "sim/laneInfo.hpp"
 #include <iostream>
 #include <string>
 #include <cmath>
 #include <list>
+#include <memory>
 #include <ranges>
 #include <functional>
 #include <expected>
@@ -75,7 +77,7 @@ std::expected<SimulatorInputs, std::string> Parser::parse() {
 
 std::expected<void, std::string> ContinuousParser::parseHighway(){
     
-    // If the flow is specified in the lane, parse and use that. 
+    // If the flow is specified in the lane, parse and use that.
     YAML::Node laneNode = cfg_["lanes"];
     if (!laneNode){
         return std::unexpected("Must provide a list of lanes with Flow generation and x values.");
@@ -83,7 +85,9 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
     std::string hwyType = ParseField<std::string>(cfg_, "highway-type").value_or("cpu"); // cpu, kokkos, metal
     double roadEnd =ParseField<double>(cfg_, "road-end").value_or(1000); // All lanes end after 1000m
 
-    std::vector<FlowGenerator> flows(laneNode.size());
+    std::vector<std::pair<size_t, FlowGenerator>> flows;
+    std::unordered_set<size_t> lanePositions;
+    std::unique_ptr<LaneInfo> lanes = std::make_unique<LaneInfo>();
     for (const YAML::Node& node : laneNode) {
 
         double rate = ParseField<double>(node, "flow", "rate").value_or(100);
@@ -93,12 +97,15 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
         double end = ParseField<double>(node, "end").value_or(1000);
         size_t position = ParseField<double>(node, "position").value_or(0);
 
-        flows[position] = FlowGenerator(rate, start, v0, vdes, factory_, dt_, seed_);
+        // Store values for highway ctor 
+        flows.push_back({position, FlowGenerator(rate, start, v0, vdes, factory_, dt_, seed_)});
+        lanes->addSegment(start, end, position);
+        lanePositions.insert(position);
     }
 
     // Make correct highway depending on highway type
     if (hwyType == "cpu"){
-        highway_ = std::make_shared<CpuHighway>(flows.size(), flows, roadEnd);
+        highway_ = std::make_shared<CpuHighway>(lanePositions.size(), flows, std::move(lanes), roadEnd);
     } else {
         return std::unexpected("No other highway implementation implemented");
     }

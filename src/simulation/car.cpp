@@ -13,6 +13,7 @@
 #include <memory>
 #include <optional>
 #include <format>
+#include <cmath>
 
 
 Car::Car(size_t id, double x0, double v0, double t0, double p, FollowModel follow):

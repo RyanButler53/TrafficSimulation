@@ -13,9 +13,12 @@
 #include <expected>
 #include <set>
 #include <unordered_map>
+#include <utility>
+#include <memory>
 
 #include "car.hpp"
 #include "flowGenerator.hpp"
+#include "laneInfo.hpp"
 
 struct Highway {
 
@@ -41,8 +44,9 @@ struct Highway {
 
 class CpuHighway : public Highway {
 
-    std::vector<FlowGenerator> flowGenerators_;
+    std::vector<std::pair<size_t, FlowGenerator>> flowGenerators_;
     std::vector<std::set<Car>> lanes_;
+    std::unique_ptr<LaneInfo> laneInfo_;
     size_t nLanes_;
     double roadEnd_;
 
@@ -65,7 +69,7 @@ class CpuHighway : public Highway {
 
     public: 
 
-    CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows, double roadEnd);
+    CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenerator>> flows, std::unique_ptr<LaneInfo> lanes, double roadEnd);
     std::expected<std::vector<CarData>, std::string> update(double dt) override;
     void log(double t, std::vector<CarSnapshot>& data) override;
 };

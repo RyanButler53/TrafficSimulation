@@ -10,7 +10,8 @@
 #include "sim/highway.hpp"
 
 
-CpuHighway::CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows, double roadEnd):flowGenerators_{flows}, 
+CpuHighway::CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenerator>>flows,
+                       std::unique_ptr<LaneInfo> lanes, double roadEnd):flowGenerators_{flows}, 
     lanes_{std::vector<std::set<Car>>(numLanes)}, nLanes_{numLanes}, roadEnd_{roadEnd}{}
 
 
@@ -179,15 +180,10 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
 
     // Phase 6: Generate flow for each lane 
     std::vector<CarData> newCars;
-    for (size_t i : std::views::iota(0UL, nLanes_)){
-        double lastcar = roadEnd_;
-        if (!lanes_[i].empty()){
-            auto car = lanes_[i].begin();
-            lastcar = car->getPosition() - car->getLength(); 
-        }
-        auto c = flowGenerators_[i].generateFlow(dt);
-        if (c){ 
-            lanes_[i].insert(*c);
+    // std::vector<<std::pair<size_t, FlowGenerator>>
+    for (auto& [l, gen] : flowGenerators_){
+        if (std::optional<Car> c = gen.generateFlow(dt)){ 
+            lanes_[l].insert(*c);
             newCars.push_back({c->data()});
         }
     }
