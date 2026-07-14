@@ -1,4 +1,5 @@
 #include "intervalTree.hpp"
+#include <stdexcept>
 
 template <Interval I>
 IntervalTree<I>::IntervalTree():
@@ -37,6 +38,11 @@ void IntervalTree<I>::clear(){
 template <Interval I>
 void IntervalTree<I>::insert(const T &low, const T &high){
     insert(I{low, high});
+}
+
+template <Interval I>
+void IntervalTree<I>::insert(const std::pair<T,T>& i){
+    insert(I{i.first, i.second});
 }
 
 template <Interval I>
@@ -118,6 +124,7 @@ void IntervalTree<I>::query(const I& interval,std::unordered_set<size_t>& interv
         query(interval, intervals, n->right_);
     }
 }
+
 template <Interval I>
 std::vector<I> IntervalTree<I>::findOverlaps(const T& queryPoint){
     std::unordered_set<size_t> overlapInds;
@@ -132,9 +139,14 @@ std::vector<I> IntervalTree<I>::findOverlaps(const T& queryPoint){
 }
 
 template <Interval I>
-std::vector<I> IntervalTree<I>::findOverlaps(const I& queryPoint){
+std::vector<I> IntervalTree<I>::findOverlaps(const std::pair<T,T>& interval){
+    return findOverlaps(I(interval.first, interval.second));
+}
+
+template <Interval I>
+std::vector<I> IntervalTree<I>::findOverlaps(const I& interval){
     std::unordered_set<size_t> overlapInds;
-    query(queryPoint, overlapInds,root_);
+    query(interval, overlapInds,root_);
     std::vector<I> overlapIntervals;
     for (size_t intervalInd : overlapInds)
     {

@@ -136,6 +136,13 @@ public:
     void insert(const T &low, const T &high);
 
     /**
+     * @brief Overloaded of insert. 
+     *
+     * @param i Pair of low and high to insert
+     */
+    void insert(const std::pair<T, T>& i);
+
+    /**
      * @brief Overloaded insert function
      * 
      * @param i IntervalTree::Interval object to insert
@@ -157,6 +164,7 @@ public:
      * @param interval Interval to find intervals overlapping
      * @return std::vector<I> Vector to return the overlapping intervals. Not gauranteed sorted in any order. 
      */
+    std::vector<I> findOverlaps(const std::pair<T, T>& interval);
     std::vector<I> findOverlaps(const I& interval);
 
     /**
