@@ -19,6 +19,8 @@ find_package(CURL)
 add_library(testutil STATIC testUtil.cpp)
 target_link_libraries(testutil PUBLIC yaml-cpp::yaml-cpp PRIVATE pqxx_wrapper)
 
+add_library(testCases STATIC AlgTest.cpp)
+target_link_libraries(testCases PRIVATE yaml-cpp::yaml-cpp GTest::gtest)
 
 macro(TrafficTest testname srcs)
     add_executable(${testname} ${srcs})
@@ -52,6 +54,7 @@ SingleFixtureTest(dbManagerTest dbManager.cpp testutil
 
 
 SingleFixtureTest(algorithmTest algorithmTest.cpp simulation 
+                                            testCases
                                             testutil
                                             dbmanager)
 
