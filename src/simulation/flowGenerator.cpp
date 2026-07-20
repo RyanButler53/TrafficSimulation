@@ -12,15 +12,25 @@ FlowGenerator::FlowGenerator(double rate, double x0, double v0, double vdes, std
 
 }
 
+double FlowGenerator::position() const {return x0_;}
+
+// Generate flow when there is no car in front
 std::optional<Car> FlowGenerator::generateFlow(double dt){
+    return generateFlow(dt, std::numeric_limits<double>::max(), 500);
+}
+
+std::optional<Car> FlowGenerator::generateFlow(double dt, double rearPosition, double vlead){
 
     std::optional<Car> c = std::nullopt;
 
     double prob = rate_/(totalTimesteps_ - rate_ * (TIME_GAP - dt));
     
     // Only generate if the next flow can happen outside the 2s gap
-    if ((time_ >= nextGeneration_) && (dist_(rng_) < prob)){
-        c = std::make_optional<Car>(factory_->makeCar(x0_, v0_, vdes_, time_));
+    if ((time_ >= nextGeneration_) && (dist_(rng_) < prob) && rearPosition > x0_){
+        
+        // Lead car velocity dictates maximum incoming flow speed. 
+        double v0 = std::min(v0_, vlead);
+        c = std::make_optional<Car>(factory_->makeCar(x0_, v0, vdes_, time_));
         nextGeneration_ = time_ + TIME_GAP;
     }
 

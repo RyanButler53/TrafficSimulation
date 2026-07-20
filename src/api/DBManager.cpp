@@ -193,7 +193,7 @@ std::expected<std::vector<RawData>, std::string> DBManager::queryData(std::strin
         }
     }
     catch(const std::exception& e) {
-        return std::unexpected(std::format("Error reading raw data from all cars for job {}: {}", jobname, e.what()));
+        return std::unexpected(std::format("Error reading raw data from all cars for job {}: {}. Error on car {}", jobname, e.what(), alldata.back().id_));
     }
     return alldata;
 }

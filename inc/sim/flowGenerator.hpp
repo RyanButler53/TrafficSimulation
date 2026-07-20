@@ -43,6 +43,7 @@ private:
     double time_{0.0};
 
 public:
+
     /**
      * @brief Construct a new Flow Generator object with no flow
      * 
@@ -61,12 +62,15 @@ public:
     FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory,  double dt, uint64_t seed = 0);
     ~FlowGenerator() = default;
 
+    double position() const;
+
     /**
      * @brief Probabalistically generates flow 
      * @param dt timestep (seconds) to possibly generate a car. 
      * @param lastcar x value of the "back bumper" of the car in front. Will not generate if this is less than x0
      * @return std::optional<Car> Optionally generates a car. 
      */
+    std::optional<Car> generateFlow(double dt, double rearPosition, double vlead);
     std::optional<Car> generateFlow(double dt);
 
 };

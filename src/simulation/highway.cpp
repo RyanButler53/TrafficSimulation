@@ -111,17 +111,15 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
                 std::set<Car>::const_iterator f_hat = std::lower_bound(lanes_[newLane].begin(), lanes_[newLane].end(), *alpha);
                 double a_fHat = 0;
                 std::expected<double, std::string> a_fHatChange = 0.0;
+                bool firstCarInNewLane = false;
                 // If the new follower is non existent, can never gaurantee the safety criterion is satisfied
                 if (f_hat != lanes_[newLane].begin()) {
                     --f_hat;
-                } else {
-                    return -1000.0;
-                }
-
-                // Ensure that the new follower is actually following alpha and that the new follower exists
-                if (f_hat != lanes_[newLane].end() && f_hat->getPosition() < a.getPosition()){
-                    a_fHat = accelerationCache[newLane].at(f_hat->getPosition());
-                    a_fHatChange = f_hat->acceleration(*alpha, dt).value_or(-1000);
+                    // Ensure that the new follower is actually following alpha and that the new follower exists
+                    if (f_hat != lanes_[newLane].end() && f_hat->getPosition() < a.getPosition()){
+                        a_fHat = accelerationCache[newLane].at(f_hat->getPosition());
+                        a_fHatChange = f_hat->acceleration(*alpha, dt).value_or(-1000);
+                    }
                 }
 
                 if (!a_alphaChange || ! a_fChange || !a_fHatChange){
@@ -180,9 +178,16 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
 
     // Phase 6: Generate flow for each lane 
     std::vector<CarData> newCars;
-    // std::vector<<std::pair<size_t, FlowGenerator>>
     for (auto& [l, gen] : flowGenerators_){
-        if (std::optional<Car> c = gen.generateFlow(dt)){ 
+        std::set<Car>::iterator nextCar = lanes_[l].upper_bound(Car::compare(gen.position()));
+        std::optional<Car> c = std::nullopt;
+        if (nextCar == lanes_[l].end()){
+            c = gen.generateFlow(dt);
+        } else {
+            c = gen.generateFlow(dt, nextCar->getRearPosition(), nextCar->getVelocity());
+        }
+
+        if (c){ 
             lanes_[l].insert(*c);
             newCars.push_back({c->data()});
         }
