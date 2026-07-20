@@ -52,7 +52,8 @@ class AlgorithmTest : public testing::Test {
 
     static void TearDownTestSuite() {
         TestUtil::clearDB();
-        // if (std::filesystem::exists(filename())) std::filesystem::remove("Algorithm.yaml");
+        std::filesystem::path input = TestCase().filename();
+        if (std::filesystem::exists(input)) std::filesystem::remove(input);
     }
 
 };

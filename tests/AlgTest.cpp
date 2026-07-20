@@ -14,8 +14,8 @@ void AlgTest::forwardMovement(const std::vector<RawData>& raw){
 }
 
 void AlgTest::laneChanges(const std::vector<RawData>& raw){
-    bool leftLaneChange;
-    bool rightLaneChange;
+    bool leftLaneChange = false;
+    bool rightLaneChange = false;
     for (const RawData& r  : raw){
         // Check for both left and right lane changes
         for (size_t i : std::views::iota(0UL, r.l_.size() - 1)){
