@@ -129,8 +129,9 @@ std::expected<void, std::string> TimeSeriesLogger::writeSnapshots(std::vector<Ca
     std::vector<CarSnapshot>::iterator cur= snapshots.begin();
     while (cur != snapshots.end())
     {
-        auto equalTimes = [](const CarSnapshot& s1, const CarSnapshot& s2){
-            return s1.t == s2.t;
+        double t = cur->t;
+        auto equalTimes = [t](const CarSnapshot& s){
+            return s.t == t;
         };
         auto compareIds = [](const CarSnapshot& s1, const CarSnapshot& s2){
             return s1.id < s2.id;
@@ -144,8 +145,12 @@ std::expected<void, std::string> TimeSeriesLogger::writeSnapshots(std::vector<Ca
         logfile << "id,x,v,l\n";
         for (;cur != endOfSegment; ++cur){
             logfile << cur->id << "," << cur->x << ","<< cur->v << "," << cur->l<<"\n";
+            if (cur->t != t){
+                return std::unexpected(std::format("Logging time t = {}, got t = {}", t, cur->t));
+            }
         }
     }
+    return {};
 }
 
 
