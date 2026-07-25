@@ -101,11 +101,16 @@ class CarLogger
 class FileLogger : public CarLogger {
 
     std::filesystem::path basepath_;
+
+    protected:
+    std::filesystem::path basePath();
+
     public: 
     FileLogger(std::string basepath);
     ~FileLogger() = default;
 
-    std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) override;
+    // Snapshots are different for individual car logging vs time series logging
+    virtual std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) = 0;
 
     std::expected<void, std::string> writeCars(std::vector<CarData> data) override;
 
@@ -114,9 +119,32 @@ class FileLogger : public CarLogger {
     std::expected<void, std::string> logFailure(std::string message) override;
 };
 
+/**
+ * @brief Individual car logger. Stores the data for an individual car in a single file on disk. 
+ * @details This logging format is useful for viewing the state of a single car over time
+ * 
+ */
+struct IndividualCarLogger : public FileLogger {
+
+    using FileLogger::FileLogger;
+
+    std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) override;
+
+};
 
 /**
- * @class DBLogger
+ * @brief Time series logger. Stores data for an individual timestep in a single file
+ * @details This logging format is useful for viewing the state of the system at a given timestep
+ * Particular for visualizing the entire system. 
+ */
+struct TimeSeriesLogger : public FileLogger {
+    using FileLogger::FileLogger;
+
+    std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) override;
+
+};
+
+/**
  * @brief Database Logger. Used for both Test and Prod DBs. 
  * 
  */

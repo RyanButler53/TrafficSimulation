@@ -65,25 +65,21 @@ FileLogger::FileLogger(std::string basepath):basepath_{basepath}{
     fs::create_directories(basepath_);
 }
 
-std::expected<void, std::string> FileLogger::writeSnapshots(std::vector<CarSnapshot> snapshots){
+std::filesystem::path FileLogger::basePath(){
+    return basepath_;
+}
 
-    std::unordered_map<size_t, std::vector<CarSnapshot>> byCar;
-    partition(std::move(snapshots), byCar);
-    size_t n = byCar.size();
-    for (const auto& [i, cars] : byCar){
-        // If file doesn't exist, make it
-        fs::path fname = basepath_ / fs::path("car" + std::to_string(i) + ".csv");
-        if (!fs::exists(fname)){
-            std::ofstream out(fname);
-            out << "x,v,t,l\n";
-        }
-        
-        std::ofstream logfile(fname, std::ios::app);
-        for (const CarSnapshot& c : cars){
-            logfile << c.x << "," << c.v << ","<< c.t << "," << c.l<<"\n";
-        }
-        logfile.close();
-    }
+std::expected<void, std::string> FileLogger::logFailure(std::string message) {
+    std::ofstream errorOut(basepath_ / fs::path("error.txt"));
+    errorOut << "Job failed: " << message << std::endl;
+    errorOut.close();
+    return {};
+}
+
+std::expected<void, std::string> FileLogger::writeStats(SimulationStats s) {
+    std::ofstream statsOut(basepath_ / fs::path("stats.txt"));
+    statsOut << "Runtime: " << s.runtime_ << std::endl;
+    statsOut.close();
     return {};
 }
 
@@ -102,18 +98,54 @@ std::expected<void, std::string> FileLogger::writeCars(std::vector<CarData> data
     return {};
 }
 
-std::expected<void, std::string> FileLogger::logFailure(std::string message) {
-    std::ofstream errorOut(basepath_ / fs::path("error.txt"));
-    errorOut << "Job failed: " << message << std::endl;
-    errorOut.close();
+// INDIVIDUAL CAR BASED FILE LOGGER
+std::expected<void, std::string> IndividualCarLogger::writeSnapshots(std::vector<CarSnapshot> snapshots){
+
+    std::unordered_map<size_t, std::vector<CarSnapshot>> byCar;
+    partition(std::move(snapshots), byCar);
+    size_t n = byCar.size();
+    for (const auto& [i, cars] : byCar){
+        // If file doesn't exist, make it
+        fs::path fname = basePath() / fs::path("car" + std::to_string(i) + ".csv");
+        if (!fs::exists(fname)){
+            std::ofstream out(fname);
+            out << "x,v,t,l\n";
+        }
+        
+        std::ofstream logfile(fname, std::ios::app);
+        for (const CarSnapshot& c : cars){
+            logfile << c.x << "," << c.v << ","<< c.t << "," << c.l<<"\n";
+        }
+        logfile.close();
+    }
     return {};
 }
 
-std::expected<void, std::string> FileLogger::writeStats(SimulationStats s) {
-    std::ofstream statsOut(basepath_ / fs::path("stats.txt"));
-    statsOut << "Runtime: " << s.runtime_ << std::endl;
-    statsOut.close();
-    return {};
+// FILE TIME SERIES LOGGER
+std::expected<void, std::string> TimeSeriesLogger::writeSnapshots(std::vector<CarSnapshot> snapshots) {
+
+    // All snapshots coming from the comms library as a block with many timestamps together
+    // Split into segments and write to disk
+    std::vector<CarSnapshot>::iterator cur= snapshots.begin();
+    while (cur != snapshots.end())
+    {
+        auto equalTimes = [](const CarSnapshot& s1, const CarSnapshot& s2){
+            return s1.t == s2.t;
+        };
+        auto compareIds = [](const CarSnapshot& s1, const CarSnapshot& s2){
+            return s1.id < s2.id;
+        };
+        std::vector<CarSnapshot>::iterator endOfSegment = std::find_if_not(cur, snapshots.end(), equalTimes);
+        std::sort(cur, endOfSegment, compareIds);
+
+        // Write snapshots to disk in "segments"
+        fs::path fname = basePath() / fs::path("time_" + std::to_string(cur->t) + ".csv");
+        std::ofstream logfile(fname);
+        logfile << "id,x,v,l\n";
+        for (;cur != endOfSegment; ++cur){
+            logfile << cur->id << "," << cur->x << ","<< cur->v << "," << cur->l<<"\n";
+        }
+    }
 }
 
 
