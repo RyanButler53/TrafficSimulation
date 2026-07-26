@@ -1,11 +1,11 @@
 ---
 # General Information
-jobname: 2-lane
+jobname: 2-lane-file
 type: "continuous" # differentiates between adding cars upfront or online
 time: 1500
 timestep: 1
 seed: 70
-logtype: "file"
+logtype: "file" # "file", "time-series", "test" or "db"
 highway-type: "cpu" # "cpu", "kokkos" or "metal".
 road-end: 5000 # All lanes have a hard cutoff at 5000
 

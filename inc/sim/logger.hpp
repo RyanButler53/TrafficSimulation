@@ -28,7 +28,7 @@
  * @brief Car Logger base class. Derived classes handle writing data to a sink (CSV file or sink)
  * @details contains methods for partitioning cars by the car id to improve disk write speeds. 
  * Contains many pure virtaul methods
- * @pure writeSnapshots(snapshots): Write the car snapshots
+ * @pure writeSnapshots(snapshots): Write the car snapshots to the appropriate sink
  * @pure writeCars(cars): Write Car metadata
  * @pure logFailure(error): Writes a failure
  * @pure writeStats(stats): Writes simulation stats
@@ -101,12 +101,15 @@ class CarLogger
 class FileLogger : public CarLogger {
 
     std::filesystem::path basepath_;
+
+    protected:
+    std::filesystem::path basePath();
+
     public: 
     FileLogger(std::string basepath);
     ~FileLogger() = default;
 
-    std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) override;
-
+    // Snapshots are different for individual car logging vs time series logging
     std::expected<void, std::string> writeCars(std::vector<CarData> data) override;
 
     std::expected<void, std::string> writeStats(SimulationStats s) override;
@@ -114,9 +117,32 @@ class FileLogger : public CarLogger {
     std::expected<void, std::string> logFailure(std::string message) override;
 };
 
+/**
+ * @brief Individual car logger. Stores the data for an individual car in a single file on disk. 
+ * @details This logging format is useful for viewing the state of a single car over time
+ * 
+ */
+struct IndividualCarLogger : public FileLogger {
+
+    using FileLogger::FileLogger;
+
+    std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) override;
+
+};
 
 /**
- * @class DBLogger
+ * @brief Time series logger. Stores data for an individual timestep in a single file
+ * @details This logging format is useful for viewing the state of the system at a given timestep
+ * Particular for visualizing the entire system. 
+ */
+struct TimeSeriesLogger : public FileLogger {
+    using FileLogger::FileLogger;
+
+    std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) override;
+
+};
+
+/**
  * @brief Database Logger. Used for both Test and Prod DBs. 
  * 
  */

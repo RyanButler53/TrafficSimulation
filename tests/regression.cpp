@@ -42,19 +42,26 @@ protected:
         fileLog["logdir"] = "./file-test/logs";
 
         YAML::Node dbLog = TestUtil::getConfigNode_3Lane();
-        dbLog["logtype"] = "test";
         dbLog["jobname"] = "DB Test";
+        dbLog["logtype"] = "test";
 
+        YAML::Node tsLog = TestUtil::getConfigNode_3Lane();
+        tsLog["jobname"] = "test-time-series";
+        tsLog["logtype"] = "time-series";
+        tsLog["logdir"] = "./file-test/time-series";
 
-        YAML::Emitter fileout;
-        std::ofstream fileCfg("fileConfig.yaml");
-        fileout << fileLog;
-        fileCfg << fileout.c_str();
+        std::array<std::pair<YAML::Node, std::string>, 3> cases{
+            std::make_pair(fileLog, "fileConfig.yaml"),
+            std::make_pair(dbLog, "dbConfig.yaml"),
+            std::make_pair(tsLog, "timeSeriesConfig.yaml")
+        };
 
-        YAML::Emitter dbout;
-        std::ofstream dbCfg("dbConfig.yaml");
-        dbout << dbLog;
-        dbCfg << dbout.c_str();
+        for (auto [node, filename] : cases){
+            YAML::Emitter out;
+            std::ofstream outfile(filename);
+            out << node;
+            outfile << out.c_str();
+        }
 
         // Clear out the Test DB:
         TestUtil::clearDB();
@@ -65,16 +72,17 @@ protected:
     void TearDown() override {
         if (std::filesystem::exists("fileConfig.yaml")) std::filesystem::remove("fileConfig.yaml");
         if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
+        if (std::filesystem::exists("timeSeriesConfig.yaml")) std::filesystem::remove("timeSeriesConfig.yaml");
 
-        if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
+        // if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
+        if (std::filesystem::exists("file-test/time-series")) std::filesystem::remove_all("file-test/time-series");
     }
 
     void getXVTFromFIle(std::vector<XVTL>& xvts, std::filesystem::path file){
         std::string line;
         std::ifstream in(file);
         if (!in.good()){
-            std::cout << "Error opening file: " << strerror(errno) << std::endl;
-            FAIL();
+            FAIL() << "Error opening file: " << strerror(errno);
         }
         std::getline(in, line); // eat the first header line
         while (std::getline(in, line)){
@@ -85,15 +93,65 @@ protected:
                 std::from_chars(token.begin(), token.begin() + token.size(), r);
                 values.push_back(r);
             }
-            if (values.size()  < 4){
-                std::cout << "Not enough values found in file: " << file << " " << values.size() << " Line: " << line << std::endl;
-                FAIL();
+            if (values.size() < 4){
+                FAIL() << "Not enough values found in file: " << file << " " << values.size() << " Line: " << line;
             } else {
                 xvts.push_back({values[0], values[1], values[2], int(values[3])});
-
             }
         }
     }
+
+    /**
+     * @brief Converts a directory of time series data into a mapping of id -> XVTL. Stoers
+     * 
+     * @param directory 
+     * @return std::map<size_t, std::vector<XVTL>>  id -> snapshots
+     */
+    void fromTimeSeries(std::filesystem::path directory, std::map<size_t, std::vector<XVTL>>& snapshots){
+        snapshots.clear();
+        for (std::filesystem::directory_entry file : std::filesystem::directory_iterator(directory)){
+            std::string fname = file.path().filename().string();
+            double t;
+            try {
+                t = std::stod(fname.substr(5, fname.size() - 3));
+            }
+            catch(const std::exception& e)
+            {
+                // Exclude the stats and car metadata csvs
+                continue;
+            }
+            
+            std::ifstream in(file.path());
+            if (!in.good()){
+                FAIL() << "Error opening file: " << strerror(errno);
+            }
+
+            std::string line;
+            std::getline(in, line); // eat the first header line
+            while (std::getline(in, line)){
+                std::vector<double> values;
+                for (auto word : std::views::split(line, ',')) {
+                    std::string_view token{word};
+                    double r = -1;
+                    std::from_chars(token.begin(), token.begin() + token.size(), r);
+                    values.push_back(r);
+                }
+                if (values.size() < 4){
+                    FAIL() << "Not enough values found in file: " << file << " " << values.size() << " Line: " << line;
+                } else {
+                    size_t id(values[0]);
+                    if (!snapshots.contains(id)){
+                        snapshots.insert({id, {}});
+                    }
+                    snapshots[id].push_back({values[1], values[2], t, int(values[3])});
+                }
+            }
+        }
+    }
+
+    static bool sortByTime(const XVTL& t1, const XVTL& t2){
+        return t1.t < t2.t;
+    };
 
     #ifdef WITH_OPEN_SSL
     std::string hashFile(std::filesystem::path filename){
@@ -160,18 +218,50 @@ TEST_F(RegressionTest, FileDBEquivalence){
         // File logging:
         std::filesystem::path p = std::format("file-test/logs/car{}.csv", carid);
         getXVTFromFIle(fileValues, p);
-        auto compareFunc = [](const XVTL& t1, const XVTL& t2){return t1.t < t2.t;};
-        std::ranges::sort(dbValues, compareFunc);
-        std::ranges::sort(fileValues, compareFunc);
+        // auto compareFunc = [](const XVTL& t1, const XVTL& t2){return t1.t < t2.t;};
+        std::ranges::sort(dbValues, sortByTime);
+        std::ranges::sort(fileValues, sortByTime);
 
+        // Files are truncated to 4 places. 
         for (auto [db, file] : std::views::zip(dbValues, fileValues)){
             ASSERT_NEAR(db.x, file.x, 0.01);
             ASSERT_NEAR(db.x, file.x, 0.01);
-            ASSERT_NEAR(db.t, file.t, 0.01);
+            EXPECT_FLOAT_EQ(db.t, file.t);
             ASSERT_EQ(db.l, file.l);
         }
     }
 }
+
+TEST_F(RegressionTest, FileTimeSeriesEquivalence){
+    ASSERT_TRUE(Traffic::Simulate("fileConfig.yaml").has_value());
+    ASSERT_TRUE(Traffic::Simulate("timeSeriesConfig.yaml").has_value());
+
+    // GetXVT from file gets all timestamps of data from all cars. 
+    std::map<size_t, std::vector<XVTL>> timeSeries;
+    fromTimeSeries("file-test/time-series", timeSeries);
+
+    size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
+    numCars -= 2; // Car Stats and Simulation stats files aren't counted. 
+    ASSERT_EQ(timeSeries.size(), numCars);
+
+    for (size_t carid = 0; carid < numCars; ++carid){
+        std::filesystem::path p = std::format("file-test/logs/car{}.csv", carid);
+        std::vector<XVTL> fileValues;
+        getXVTFromFIle(fileValues, p);
+        std::vector<XVTL>& timeSeriesValues = timeSeries[carid];
+
+        std::ranges::sort(timeSeriesValues, sortByTime);
+        std::ranges::sort(fileValues, sortByTime);
+
+        for (auto [ts, file] : std::views::zip(timeSeriesValues, fileValues)){
+            EXPECT_FLOAT_EQ(ts.x, file.x);
+            EXPECT_FLOAT_EQ(ts.x, file.x);
+            EXPECT_FLOAT_EQ(ts.t, file.t);
+            ASSERT_EQ(ts.l, file.l);
+        }
+    }
+}
+
 #ifdef WITH_OPEN_SSL
 TEST_F(RegressionTest, FileHashEquivalence){
     JobManager j;

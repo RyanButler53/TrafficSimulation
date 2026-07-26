@@ -32,7 +32,7 @@ Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
     }
 
 std::function<std::string(std::string)> Simulator::errorFunc(std::string prefix){
-    return [prefix](const std::string& e){return std::format("Error {}: {},", prefix, e);};
+    return [prefix](const std::string& e){return std::format("Error {}: {}\n", prefix, e);};
 }
 
 std::expected<void, std::string> Simulator::mainLoop(){
