@@ -46,14 +46,14 @@ protected:
         dbLog["logtype"] = "test";
 
         YAML::Node tsLog = TestUtil::getConfigNode_3Lane();
-        tsLog["jobname"] = "test-time-series"
+        tsLog["jobname"] = "test-time-series";
         tsLog["logtype"] = "time-series";
         tsLog["logdir"] = "./file-test/time-series";
 
         std::array<std::pair<YAML::Node, std::string>, 3> cases{
-            {fileLog, "fileConfig.yaml"},
-            {dbLog, "dbConfig.yaml"},
-            {tsLog, "timeSeriesConfig.yaml"}
+            std::make_pair(fileLog, "fileConfig.yaml"),
+            std::make_pair(dbLog, "dbConfig.yaml"),
+            std::make_pair(tsLog, "timeSeriesConfig.yaml")
         };
 
         for (auto [node, filename] : cases){
@@ -74,7 +74,7 @@ protected:
         if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
         if (std::filesystem::exists("timeSeriesConfig.yaml")) std::filesystem::remove("timeSeriesConfig.yaml");
 
-        if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
+        // if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
         if (std::filesystem::exists("file-test/time-series")) std::filesystem::remove_all("file-test/time-series");
     }
 
@@ -82,7 +82,7 @@ protected:
         std::string line;
         std::ifstream in(file);
         if (!in.good()){
-            FAIL() << "Error opening file: " << strerror(errno)
+            FAIL() << "Error opening file: " << strerror(errno);
         }
         std::getline(in, line); // eat the first header line
         while (std::getline(in, line)){
@@ -110,19 +110,20 @@ protected:
     void fromTimeSeries(std::filesystem::path directory, std::map<size_t, std::vector<XVTL>>& snapshots){
         snapshots.clear();
         for (std::filesystem::directory_entry file : std::filesystem::directory_iterator(directory)){
-            std::string fname = file.path().string();
+            std::string fname = file.path().filename().string();
             double t;
             try {
-                t = std::stod(fname.substr(5, fname.size() - 3));            }
+                t = std::stod(fname.substr(5, fname.size() - 3));
+            }
             catch(const std::exception& e)
             {
                 // Exclude the stats and car metadata csvs
                 continue;
             }
             
-            std::ifstream in(file);
+            std::ifstream in(file.path());
             if (!in.good()){
-                FAIL() << "Error opening file: " << strerror(errno)
+                FAIL() << "Error opening file: " << strerror(errno);
             }
 
             std::string line;
@@ -140,7 +141,7 @@ protected:
                 } else {
                     size_t id(values[0]);
                     if (!snapshots.contains(id)){
-                        snapshots[id] = {}
+                        snapshots.insert({id, {}});
                     }
                     snapshots[id].push_back({values[1], values[2], t, int(values[3])});
                 }
@@ -148,7 +149,7 @@ protected:
         }
     }
 
-    static sortByTime(const XVTL& t1, const XVTL& t2){
+    static bool sortByTime(const XVTL& t1, const XVTL& t2){
         return t1.t < t2.t;
     };
 
@@ -221,10 +222,11 @@ TEST_F(RegressionTest, FileDBEquivalence){
         std::ranges::sort(dbValues, sortByTime);
         std::ranges::sort(fileValues, sortByTime);
 
+        // Files are truncated to 4 places. 
         for (auto [db, file] : std::views::zip(dbValues, fileValues)){
             ASSERT_NEAR(db.x, file.x, 0.01);
             ASSERT_NEAR(db.x, file.x, 0.01);
-            ASSERT_NEAR(db.t, file.t, 0.01);
+            EXPECT_FLOAT_EQ(db.t, file.t);
             ASSERT_EQ(db.l, file.l);
         }
     }
@@ -240,7 +242,7 @@ TEST_F(RegressionTest, FileTimeSeriesEquivalence){
 
     size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
     numCars -= 2; // Car Stats and Simulation stats files aren't counted. 
-    EXPECT_EQ(timeSeries.size(), numCars);
+    ASSERT_EQ(timeSeries.size(), numCars);
 
     for (size_t carid = 0; carid < numCars; ++carid){
         std::filesystem::path p = std::format("file-test/logs/car{}.csv", carid);
