@@ -28,7 +28,7 @@
  * @brief Car Logger base class. Derived classes handle writing data to a sink (CSV file or sink)
  * @details contains methods for partitioning cars by the car id to improve disk write speeds. 
  * Contains many pure virtaul methods
- * @pure writeSnapshots(snapshots): Write the car snapshots
+ * @pure writeSnapshots(snapshots): Write the car snapshots to the appropriate sink
  * @pure writeCars(cars): Write Car metadata
  * @pure logFailure(error): Writes a failure
  * @pure writeStats(stats): Writes simulation stats
@@ -110,8 +110,6 @@ class FileLogger : public CarLogger {
     ~FileLogger() = default;
 
     // Snapshots are different for individual car logging vs time series logging
-    virtual std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) = 0;
-
     std::expected<void, std::string> writeCars(std::vector<CarData> data) override;
 
     std::expected<void, std::string> writeStats(SimulationStats s) override;
