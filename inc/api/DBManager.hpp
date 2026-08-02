@@ -9,7 +9,7 @@
 #include <vector>
 #include <memory>
 #include <expected>
-
+#include <optional>
 #include "structs.hpp"
 
 using DBResponse = std::expected<void, std::string>;
@@ -42,6 +42,9 @@ public:
     std::expected<RawData, std::string> queryData(std::string jobname, int carid);
     std::expected <std::vector<RawData>,std::string> queryData(std::string jobname);
 
+    std::expected<TimeSeries, std::string> queryData(std::string jobname, 
+                                                     std::optional<double>x0, std::optional<double>x1,
+                                                     std::optional<double>t0, std::optional<double>t1);
 
     /**
      * @brief Gets the job id of a given job name. Can be used to check if a job already exists or not

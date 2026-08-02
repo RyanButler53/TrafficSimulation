@@ -38,11 +38,7 @@ class AlgorithmTest : public ::testing::Test{
         cfg["driverParams"]["bmax_stdev"] = 0.2;
         cfg["driverParams"]["p_stdev"] = 0.02;
 
-        YAML::Emitter cfgout;
-        std::ofstream fileCfg("Algorithm.yaml");
-        cfgout << cfg;
-        fileCfg << cfgout.c_str();
-        fileCfg.close();
+        TestUtil::configToFile(cfg, "Algorithm.yaml");
 
         TestUtil::clearDB();
 

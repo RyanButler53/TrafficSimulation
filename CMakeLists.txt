@@ -13,4 +13,5 @@ enable_testing()
 
 include_directories(inc)
 add_subdirectory(src)
+add_subdirectory(scripts)
 add_subdirectory(tests)

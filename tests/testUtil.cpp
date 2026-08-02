@@ -1,6 +1,7 @@
 
 #include "testUtil.hpp"
 #include <pqxx/pqxx>
+#include <fstream>
 
 namespace TestUtil{
 
@@ -99,6 +100,14 @@ YAML::Node getConfigNode_3Lane() {
     cfg["lanes"].push_back(lane3);
 
     return cfg;
+}
+
+void configToFile(YAML::Node cfg, std::string fname){
+    YAML::Emitter cfgyaml;
+    std::ofstream fileout(fname);
+    cfgyaml << cfg;
+    fileout << cfgyaml.c_str();
+    fileout.close();
 }
 
 

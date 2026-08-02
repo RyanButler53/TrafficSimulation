@@ -64,7 +64,17 @@ The API is hosted locally on port 8000 so the base url is `http://localhost:8000
 
 `GET "/data/{job-name}/raw/"` -> Returns raw snapshot data about all cars for a specific job. This is a _very_ large amount of data!
 
-`GET "/data/{job-name}/raw/{id}"` -> Returns raw snapshot data for a single car in the specified job. 
+`GET "/data/{job-name}/raw/{id}"` -> Returns raw snapshot data for a single car in the specified job.
+
+`GET "/data/{job-name}/spatial/"` -> Runs a "spatial" query that returns snapshots occuring between two `t0` and `t1` and bewteen `x0` and `x1` 
+Requires a query parameter to specify the boundaries:
+
+```
+{"t0": 10,
+ "t1": 50,
+ "x0": 100, 
+ "x1": 250}
+```
 
 `POST "/submit/{job-name}"` -> Submits a job with the specified job name. The Job name must be unique. Requires a query parameter `{"cfg" : "configfile.yaml"}` to specify the config file. 
 

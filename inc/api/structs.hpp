@@ -34,6 +34,18 @@ struct RawData {
     int id_;
 };
 
+struct Snapshot {
+    int id_;
+    float x_;
+    float v_;
+    int l_;
+};
+
+struct TimeSeries{
+    std::vector<float> timestamps_;
+    std::vector<std::vector<Snapshot>> snapshots_;
+};
+
 enum class JobStatus : uint8_t {
     INVALID = 0, // Jobs that can't parse
     QUEUED = 1,

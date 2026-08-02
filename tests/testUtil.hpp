@@ -25,4 +25,6 @@ YAML::Node getConfigNode_3Lane();
 // Clear out the testing database
 void clearDB();
 
+void configToFile(YAML::Node cfg, std::string fname);
+
 } // namespace test util

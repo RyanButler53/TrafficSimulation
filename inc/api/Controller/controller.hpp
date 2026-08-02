@@ -13,6 +13,7 @@
 #include <format>
 #include <functional>
 #include <unordered_map>
+#include <charconv>
 
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/core/macro/codegen.hpp"
@@ -76,19 +77,25 @@ class Controller : public oatpp::web::server::api::ApiController {
         return decoded;
     }
 
+    template <typename T, typename R>
+    static R simpleConvert(T value){
+        return R(value);
+    }
+
     static CarSnapshotDTO::Wrapper convertRaw(const RawData& raw){
         auto response = CarSnapshotDTO::createShared();
-        auto convert = [](float xvt){return Float32(xvt);};
         response->x = {};
         response->x->resize(raw.x_.size());
-        std::ranges::transform(raw.x_, response->x->begin(), convert);
+        std::ranges::transform(raw.x_, response->x->begin(), simpleConvert<float, Float32>);
         response->v = {};
         response->v->resize(raw.v_.size());
-        std::ranges::transform(raw.v_, response->v->begin(),convert);
+        std::ranges::transform(raw.v_, response->v->begin(),simpleConvert<float, Float32>);
         response->t = {};
         response->t->resize(raw.t_.size());
-        std::ranges::transform(raw.t_, response->t->begin(), convert);
-
+        std::ranges::transform(raw.t_, response->t->begin(), simpleConvert<float, Float32>);
+        response->l = {};
+        response->l->resize(raw.l_.size());
+        std::ranges::transform(raw.l_, response->l->begin(), simpleConvert<int, Int32>);
         return response;
     }
 
@@ -114,6 +121,25 @@ class Controller : public oatpp::web::server::api::ApiController {
         job->driverModel = j.driverModel_;
         job->numCars = j.numCars_;
         return job;
+    }
+
+    static TimeSeriesDTO::Wrapper convertTimeSeries(const TimeSeries& t){
+        auto response = TimeSeriesDTO::createShared();
+        response->snapshots = {};
+        response->timestamps = {};
+        std::ranges::transform(t.timestamps_, response->timestamps->begin(), simpleConvert<float, Float32>);
+        for (std::vector<Snapshot> timestamps : t.snapshots_){
+            response->snapshots->push_back({});
+            for (Snapshot s: timestamps){
+                SnapshotDTO::Wrapper snapshotDto = SnapshotDTO::createShared();
+                snapshotDto->id = s.id_;
+                snapshotDto->x = s.x_;
+                snapshotDto->v = s.v_;
+                snapshotDto->l = s.l_;
+                response->snapshots->back()->push_back(std::move(snapshotDto));
+            }
+        }
+        return response;
     }
 
 
@@ -190,7 +216,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         return getReturnDto(raw.transform(Controller::convertRaw).transform_error(Controller::translateError));
     }
 
-        // Getting raw data about ALL cars (this is a big call)
+    // Getting raw data about ALL cars (this is a big call)
     ENDPOINT("GET", "/data/{job-name}/raw/", getAllRawData, 
         PATH(String, job, "job-name")){
             OATPP_LOGI("Controller", "Getting raw data for all cars in job %s", job->c_str());
@@ -206,6 +232,42 @@ class Controller : public oatpp::web::server::api::ApiController {
 
         return getReturnDto(raw.transform(translate).transform_error(Controller::translateError));
     }
+
+    ENDPOINT("GET", "/data/{job-name}/spatial", spatialQuery,
+        PATH(String, job, "job-name"),
+        QUERIES(QueryParams, queryParams))
+    {
+        OATPP_LOGI("Spatial", "Running a spatial query!");
+        std::optional<double> x0, x1, t0, t1;
+        std::unordered_map<std::string, std::optional<double>> paramMap{
+            {"x0", x0},
+            {"x1", x1},
+            {"t0", t0},
+            {"t1", t1},
+        };
+        for(auto& param : queryParams.getAll()){
+            std::string paramName{(char*)(param.first.getData())};
+            std::string_view paramVal{(char*)(param.second.getData())};
+            double v = 0;
+            std::from_chars(paramVal.begin(), paramVal.begin() + paramVal.size(), v);
+            if (paramMap.contains(paramName)){
+                paramMap[paramName] = std::make_optional(v);
+                OATPP_LOGI("Spatial Param: ", "%s: %f", paramName.c_str(), v);
+            }
+
+        }
+        // for (auto& [param, var] : paramMap){
+        //     oatpp::String param_str = queryParams.get(oatpp::String(param));
+        //     var = std::make_optional<double>(std::stod(param_str));
+        // }
+
+        auto raw = dataManager_.queryData(job, x0, x1, t0, t1);
+
+
+        return getReturnDto(raw.transform(Controller::convertTimeSeries).transform_error(Controller::translateError));
+
+    }
+
     // Submitting a job. Must check if jobname is unique. 
     ENDPOINT("POST", "/submit/{job-name}", submitJob, 
         PATH(String, jobname, "job-name"),

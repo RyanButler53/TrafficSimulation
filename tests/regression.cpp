@@ -50,18 +50,9 @@ protected:
         tsLog["logtype"] = "time-series";
         tsLog["logdir"] = "./file-test/time-series";
 
-        std::array<std::pair<YAML::Node, std::string>, 3> cases{
-            std::make_pair(fileLog, "fileConfig.yaml"),
-            std::make_pair(dbLog, "dbConfig.yaml"),
-            std::make_pair(tsLog, "timeSeriesConfig.yaml")
-        };
-
-        for (auto [node, filename] : cases){
-            YAML::Emitter out;
-            std::ofstream outfile(filename);
-            out << node;
-            outfile << out.c_str();
-        }
+        TestUtil::configToFile(fileLog, "fileConfig.yaml");
+        TestUtil::configToFile(dbLog, "dbConfig.yaml");
+        TestUtil::configToFile(tsLog, "timeSeriesConfig.yaml");
 
         // Clear out the Test DB:
         TestUtil::clearDB();
