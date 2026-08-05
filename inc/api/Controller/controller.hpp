@@ -14,7 +14,6 @@
 #include <functional>
 #include <unordered_map>
 #include <charconv>
-#include <concepts>
 
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/core/macro/codegen.hpp"
