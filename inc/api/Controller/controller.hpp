@@ -49,9 +49,9 @@ class Controller : public oatpp::web::server::api::ApiController {
         return error;
     }
 
-
-    template <typename ReturnDTO>
-    auto getReturnDto(std::expected<ReturnDTO, ErrorResponse> apiResponse){
+    template <typename Data, typename F>
+    auto getReturnDto(std::expected<Data, std::string> data, F func){
+        auto apiResponse = data.transform(func).transform_error(Controller::translateError);
         if (apiResponse.has_value()){
             return createDtoResponse(Status::CODE_200, apiResponse.value());
         } else {
@@ -168,7 +168,7 @@ class Controller : public oatpp::web::server::api::ApiController {
 
         // Query Database for job
         auto data = dataManager_.queryJobs(jobname);
-        return getReturnDto(data.transform(Controller::convertJob).transform_error(Controller::translateError));
+        return getReturnDto(data, Controller::convertJob);
     }
 
     // Querying for whatever jobs are available
@@ -183,7 +183,7 @@ class Controller : public oatpp::web::server::api::ApiController {
             std::ranges::transform(jobs, response->jobs->begin(), Controller::convertJob);
             return response;
         };
-        return getReturnDto(jobs.transform(translateJobList).transform_error(Controller::translateError));
+        return getReturnDto(jobs, translateJobList);
     }
    
     //  Getting all information about a car
@@ -193,7 +193,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         OATPP_LOGI("Controller", "Getting job information for car %d in %s", int(id), std::string(job).c_str());
 
         std::expected<CarMetadata, std::string> cm = dataManager_.queryCars(job, id);
-        return getReturnDto(cm.transform(Controller::convertCar).transform_error(Controller::translateError));
+        return getReturnDto(cm, Controller::convertCar);
 
     }
 
@@ -211,7 +211,7 @@ class Controller : public oatpp::web::server::api::ApiController {
             std::ranges::transform(carlist, response->cars->begin(), Controller::convertCar);
             return response;
         };
-        return getReturnDto(cars.transform(translate).transform_error(Controller::translateError));
+        return getReturnDto(cars, translate);
     }
 
     // Getting raw data about one car
@@ -220,7 +220,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         OATPP_LOGI("Controller", "Getting raw data for car %d in %s", int(car), job->c_str());
 
         auto raw = dataManager_.queryData(job, car);
-        return getReturnDto(raw.transform(Controller::convertRaw).transform_error(Controller::translateError));
+        return getReturnDto(raw, Controller::convertRaw);
     }
 
     // Getting raw data about ALL cars (this is a big call)
@@ -236,8 +236,7 @@ class Controller : public oatpp::web::server::api::ApiController {
             std::ranges::transform(raw, response->data->begin(), Controller::convertRaw);
             return response;
         };
-
-        return getReturnDto(raw.transform(translate).transform_error(Controller::translateError));
+        return getReturnDto(raw, translate);
     }
 
     ENDPOINT("GET", "/data/{job-name}/spatial", spatialQuery,
@@ -262,8 +261,7 @@ class Controller : public oatpp::web::server::api::ApiController {
 
         }
         auto raw = dataManager_.queryData(job, paramMap["x0"], paramMap["x1"], paramMap["t0"], paramMap["t1"]);
-        return getReturnDto(raw.transform(Controller::convertTimeSeries).transform_error(Controller::translateError));
-
+        return getReturnDto(raw, Controller::convertTimeSeries);
     }
 
     // Submitting a job. Must check if jobname is unique. 
