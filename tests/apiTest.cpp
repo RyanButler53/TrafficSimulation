@@ -103,7 +103,7 @@ CurlResponse CurlWrapper::queryTimeSeries(std::string jobname, std::optional<dou
     if (!handle){
         return std::unexpected("Could not initalize curl handle");
     }
-    std::string url = std::format("/data/{}/spatial/?", jobname);
+    std::string url = std::format("/data/{}/spatial?", jobname);
     if (t0) {url += std::format("t0={}&", *t0);}
     if (t1) {url += std::format("t1={}&", *t1);}
     if (x0) {url += std::format("x0={}&", *x0);}

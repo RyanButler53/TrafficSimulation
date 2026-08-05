@@ -123,21 +123,32 @@ class Controller : public oatpp::web::server::api::ApiController {
         return job;
     }
 
+    static SnapshotDTO::Wrapper convertSnapshot(const Snapshot& s){
+        SnapshotDTO::Wrapper snapshotDto = SnapshotDTO::createShared();
+        snapshotDto->id = s.id_;
+        snapshotDto->x = s.x_;
+        snapshotDto->v = s.v_;
+        snapshotDto->l = s.l_;
+        return snapshotDto;
+    }
+
     static TimeSeriesDTO::Wrapper convertTimeSeries(const TimeSeries& t){
         auto response = TimeSeriesDTO::createShared();
         response->snapshots = {};
         response->timestamps = {};
+        response->timestamps->resize(t.timestamps_.size());
+        
         std::ranges::transform(t.timestamps_, response->timestamps->begin(), simpleConvert<float, Float32>);
         for (std::vector<Snapshot> timestamps : t.snapshots_){
-            response->snapshots->push_back({});
-            for (Snapshot s: timestamps){
-                SnapshotDTO::Wrapper snapshotDto = SnapshotDTO::createShared();
-                snapshotDto->id = s.id_;
-                snapshotDto->x = s.x_;
-                snapshotDto->v = s.v_;
-                snapshotDto->l = s.l_;
-                response->snapshots->back()->push_back(std::move(snapshotDto));
-            }
+            oatpp::Vector<oatpp::Object<SnapshotDTO>> snapshotVec;
+            snapshotVec = {};
+            snapshotVec->resize(timestamps.size());
+            std::ranges::transform(timestamps, snapshotVec->begin(), convertSnapshot);
+            response->snapshots->push_back(snapshotVec);
+        }
+
+        if (response->snapshots->size() != response->timestamps->size()){
+            std::println("Translation error! Snapshots: {}, Timestamps: {}", response->snapshots->size(), response->timestamps->size());
         }
         return response;
     }
@@ -238,12 +249,11 @@ class Controller : public oatpp::web::server::api::ApiController {
         QUERIES(QueryParams, queryParams))
     {
         OATPP_LOGI("Spatial", "Running a spatial query!");
-        std::optional<double> x0, x1, t0, t1;
         std::unordered_map<std::string, std::optional<double>> paramMap{
-            {"x0", x0},
-            {"x1", x1},
-            {"t0", t0},
-            {"t1", t1},
+            {"x0", std::nullopt},
+            {"x1", std::nullopt},
+            {"t0", std::nullopt},
+            {"t1", std::nullopt},
         };
         for(auto& param : queryParams.getAll()){
             std::string paramName{(char*)(param.first.getData())};
@@ -261,7 +271,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         //     var = std::make_optional<double>(std::stod(param_str));
         // }
 
-        auto raw = dataManager_.queryData(job, x0, x1, t0, t1);
+        auto raw = dataManager_.queryData(job, paramMap["x0"], paramMap["x1"], paramMap["t0"], paramMap["t1"]);
 
 
         return getReturnDto(raw.transform(Controller::convertTimeSeries).transform_error(Controller::translateError));

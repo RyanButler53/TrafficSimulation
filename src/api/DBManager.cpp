@@ -213,17 +213,13 @@ std::expected<TimeSeries, std::string> DBManager::queryData(std::string jobname,
     pqxx::work tx{*connect};
     TimeSeries data;
     data.snapshots_.push_back({});
-    // std::string querystr = std::format("SELECT carid, x, v, t, lane FROM snapshotData"
-    //                                     "INNER JOIN TrafficJobs ON TrafficJobs.JobID = snapshotData.jobid"
-    //                                     "WHERE TrafficJobs.jobname = '{}' and snapshotData.t BETWEEN {} AND {} and snapshotData.x BETWEEN {} AND {}"
-    //                                     "ORDER BY snapshotData.t ASC, snapshotData.carid ASC",
-    //                                      jobname, tmin, tmax, xmin, xmax);
     std::string querystr = std::format("SELECT carid, x, v, t, lane FROM snapshotData INNER JOIN TrafficJobs ON TrafficJobs.JobID = snapshotData.jobid WHERE TrafficJobs.jobname = '{}' and snapshotData.t BETWEEN {} AND {} and snapshotData.x BETWEEN {} AND {} ORDER BY snapshotData.t ASC, snapshotData.carid ASC",
                                          jobname, tmin, tmax, xmin, xmax);
     try {
         for (auto [id, x, v, t, l] : tx.query<int, float, float, float, int>(querystr)){
             if (data.timestamps_.empty() or data.timestamps_.back() != t){
                 data.timestamps_.push_back(t);
+                data.snapshots_.push_back({});
             }
             data.snapshots_.back().push_back({id, x, v, l});
         }
