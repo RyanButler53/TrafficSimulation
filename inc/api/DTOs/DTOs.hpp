@@ -1,6 +1,5 @@
 #pragma once
 #include "oatpp/core/data/mapping/type/Object.hpp"
-#include "oatpp/core/Types.hpp"
 #include "oatpp/core/macro/codegen.hpp"
 #include "oatpp/codegen/dto/enum_define.hpp"
 
@@ -163,6 +162,3 @@ class DeleteDTO : public oatpp::DTO {
 
 };
 #include OATPP_CODEGEN_END(DTO)
-
-
-

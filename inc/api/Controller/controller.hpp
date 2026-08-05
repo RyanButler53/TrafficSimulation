@@ -261,10 +261,7 @@ class Controller : public oatpp::web::server::api::ApiController {
             }
 
         }
-
         auto raw = dataManager_.queryData(job, paramMap["x0"], paramMap["x1"], paramMap["t0"], paramMap["t1"]);
-
-
         return getReturnDto(raw.transform(Controller::convertTimeSeries).transform_error(Controller::translateError));
 
     }

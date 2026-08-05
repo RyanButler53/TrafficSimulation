@@ -20,5 +20,4 @@ int main(){
     tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
     tx.exec("DROP TABLE IF EXISTS snapshotData");
     tx.commit();
-
 }
