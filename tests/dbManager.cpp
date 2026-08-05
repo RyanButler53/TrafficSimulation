@@ -32,10 +32,7 @@ class DBManagerTest : public ::testing::Test {
             dbLog["jobname"] = std::format("test-dbreader{}", i);
             dbLog["seed"] = 70 + i;
 
-            YAML::Emitter dbout;
-            std::ofstream dbCfg(std::format("dbConfig{}.yaml", i));
-            dbout << dbLog;
-            dbCfg << dbout.c_str();
+            TestUtil::configToFile(dbLog, std::format("dbConfig{}.yaml", i));
         }
 
         TestUtil::clearDB();

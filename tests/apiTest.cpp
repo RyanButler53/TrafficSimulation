@@ -7,7 +7,7 @@
 #include <expected>
 #include <sstream>
 #include <print>
-#include <source_location>
+#include <optional>
 
 #include <gtest/gtest.h>
 #include "api/api.hpp"  // Include API Running
@@ -23,6 +23,11 @@ using json = nlohmann::json;
 struct CurlData{
     json jsonData;
     long code;
+
+    // Return the error string. Only valid if the code is not 200. 
+    std::string error() {
+        return jsonData["errmsg"];
+    }
 };
 
 using CurlResponse = std::expected<CurlData, std::string>;
@@ -34,10 +39,16 @@ class CurlWrapper {
         data->append((char*) ptr, size * nmemb);
         return size * nmemb;
     }
+    
+    /**
+     * @brief Run a simple get query for the provided URL. 
+     * @details Adds the https://localhost:8000
+     * 
+     * @return CurlResponse with the Json Data or an error string 
+     */
     CurlResponse getQuery(std::string url);
 
     public: 
-
 
     CurlResponse queryJobs(){return getQuery("/jobs");}; // GET /jobs
     CurlResponse queryJob(std::string jobname) {return getQuery(std::format("/jobs/{}", jobname));} // get /jobs/{jobname}
@@ -45,7 +56,10 @@ class CurlWrapper {
     CurlResponse queryCarDatas(std::string jobname) {return getQuery(std::format("/data/{}/cars", jobname));} // GET /data/{jobname}
     CurlResponse queryRawData(std::string jobname, size_t id) {return getQuery(std::format("/data/{}/raw/{}", jobname, id));} // GET /data/{jobname}/cars/raw/id
     CurlResponse queryRawDatas(std::string jobname) {return getQuery(std::format("/data/{}/raw", jobname));}; // GET /data/{jobname}/cars/raw
-    
+    CurlResponse queryTimeSeries(std::string jobname, std::optional<double> t0 = std::nullopt,
+                                                      std::optional<double> t1 = std::nullopt,
+                                                      std::optional<double> x0 = std::nullopt, 
+                                                      std::optional<double> x1 = std::nullopt);
     // Post and delete
     CurlResponse postJob(std::string jobname, std::filesystem::path cfg);
     CurlResponse deleteJob(std::string jobname);
@@ -82,8 +96,26 @@ CurlResponse CurlWrapper::getQuery(std::string url){
     return CurlData{json::parse(response_string), code};
 }
 
+CurlResponse CurlWrapper::queryTimeSeries(std::string jobname, std::optional<double> t0, std::optional<double> t1,
+                                          std::optional<double> x0, std::optional<double> x1){
 
-CurlResponse CurlWrapper::postJob(std::string jobname, std::filesystem::path cfgpath){
+    CURL* handle = curl_easy_init();
+    if (!handle){
+        return std::unexpected("Could not initalize curl handle");
+    }
+    std::string url = std::format("/data/{}/spatial?", jobname);
+    if (t0) {url += std::format("t0={}&", *t0);}
+    if (t1) {url += std::format("t1={}&", *t1);}
+    if (x0) {url += std::format("x0={}&", *x0);}
+    if (x1) {url += std::format("x1={}&", *x1);}
+
+    if (url.back() == '&'){
+        url.pop_back();
+    }
+    return getQuery(url);
+}
+
+CurlResponse CurlWrapper::postJob(std::string jobname, std::filesystem::path cfgpath) {
     CURL* handle = curl_easy_init();
     if (!handle){
         return std::unexpected("Could not initalize curl handle");
@@ -110,8 +142,6 @@ CurlResponse CurlWrapper::postJob(std::string jobname, std::filesystem::path cfg
         return std::unexpected("Curl Error: " + std::to_string(errorCode));
     }
     return CurlData{json::parse(response_string), code};
-
-
 }
 
 CurlResponse CurlWrapper::deleteJob(std::string jobname){
@@ -153,10 +183,13 @@ class ApiTest : public ::testing::Test {
         cfg["jobname"] = "apiTest";
         cfg["seed"] = 105;
         cfg["logtype"]= "test";
-        YAML::Emitter cfgyaml;
-        std::ofstream fileout("apiConfig.yml");
-        cfgyaml << cfg;
-        fileout << cfgyaml.c_str();
+        TestUtil::configToFile(cfg, "apiConfig.yml");
+
+        YAML::Node cfg2 = TestUtil::getConfigNode_3Lane();
+        cfg2["jobname"] = "apiTestTimeSeries";
+        cfg2["seed"] = 140;
+        cfg2["logtype"]= "test";
+        TestUtil::configToFile(cfg2, "apiTestTimeSeries.yml");
     }
 
     protected:
@@ -181,6 +214,9 @@ class ApiTest : public ::testing::Test {
         if (std::filesystem::exists("apiConfig.yml")){
             std::filesystem::remove("apiConfig.yml");
         }
+        if (std::filesystem::exists("apiTestTimeSeries.yml")){
+            std::filesystem::remove("apiTestTimeSeries.yml");
+        }
         
         /* Destroy oatpp Environment */
         apiRunner_.closeServer();
@@ -198,7 +234,7 @@ TEST_F(ApiTest, ValidRequests){
     CurlWrapper requester;
     CurlResponse response = requester.queryJobs();
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying All Jobs: {}", response.error());
-    ASSERT_EQ(response->code, 200);
+    ASSERT_EQ(response->code, 200) << std::format("Error Querying All Jobs: {}", response->error());
     size_t initialNumJobs = response.value().jsonData["jobs"].size();
 
     // No check for return code here, 200 and 400 are both valid. Just clearing out the DB. 
@@ -216,8 +252,12 @@ TEST_F(ApiTest, ValidRequests){
     
 
     // Wait 1 second to let the job finish running. Would be cool to be able to check the status of the job from the api...
-    std::this_thread::sleep_for(std::chrono::seconds(1));
     response = requester.queryJob("apiTest");
+    while(response->jsonData["status"] != "DONE"){
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        response = requester.queryJob("apiTest");
+    }
+
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying for Job: {}", response.error());
     EXPECT_EQ(response->code, 200);
     EXPECT_EQ(response->jsonData["jobname"], "apiTest");
@@ -255,12 +295,58 @@ TEST_F(ApiTest, ValidRequests){
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying for apiTest job: {}", response.error());
 
     EXPECT_EQ(response->code, 400) << "Found data for a car that shouldn't exist!";
-    EXPECT_EQ(response->jsonData["errmsg"], "No car with id 1500 in job named apiTest");
+    EXPECT_EQ(response->error(), "No car with id 1500 in job named apiTest");
 
     response = requester.deleteJob("apiTest");
     ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
     
     EXPECT_EQ(response->jsonData["msg"], "Successfully deleted apiTest");
+}
+
+TEST_F(ApiTest, TimeSeriesRequests){
+
+    CurlWrapper requester;
+
+    // Don't check for return code since this is not gauranteed to be in the DB. 
+    CurlResponse response = requester.deleteJob("apiTestTimeSeries");
+    ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
+
+    response = requester.postJob("apiTestTimeSeries", std::filesystem::absolute("./apiTestTimeSeries.yml"));
+    ASSERT_EQ(response->code, 200) << std::format("Error posting job: {}", response->error());
+
+    response = requester.queryJob("apiTestTimeSeries");
+    while(response->jsonData["status"] != "DONE"){
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        response = requester.queryJob("apiTestTimeSeries");
+        EXPECT_EQ(response->code, 200) << std::format("Error querying job: {}", response->error());
+    }
+    ASSERT_EQ(response->code, 200) << std::format("Error posting job: {}", response->error());
+    
+    response = requester.queryTimeSeries("apiTestTimeSeries", 50, 100);
+    // The cars must be within 50 and 100 timestep
+    ASSERT_EQ(response->code, 200);
+    json data = response->jsonData;
+    std::vector<float> timestamps = data["timestamps"];
+    EXPECT_EQ(timestamps.size(), 51);
+    EXPECT_EQ(data["snapshots"].size(), 51);
+
+
+    response = requester.deleteJob("apiTestTimeSeries");
+    ASSERT_EQ(response->code, 200) << std::format("Error deleting job: {}", response->error());
+
+    response = requester.queryTimeSeries("apiTestTimeSeries", std::nullopt, std::nullopt, 750, 1000);
+    ASSERT_EQ(response->code, 200) << "Error in spatial query" << std::endl;
+
+    data = response->jsonData;
+    for (const json& perCar  : response->jsonData["snapshots"]){
+        EXPECT_GT(perCar["x"], 600.0f);
+        EXPECT_LT(perCar["x"], 750.0f);
+    }
+
+    // Clean up
+    response = requester.deleteJob("apiTestTimeSeries");
+    ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
+
 }
 
 TEST_F(ApiTest, ErrorRequests){
@@ -270,6 +356,11 @@ TEST_F(ApiTest, ErrorRequests){
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying All Jobs: {}", response.error());
     ASSERT_EQ(response.value().code, 200);
     size_t initialNumJobs = response.value().jsonData["jobs"].size();
+
+    response = requester.postJob("ApiConfig", "./apiConfig.yml");
+    ASSERT_TRUE(response.has_value()) << std::format("Error posting for invalid Job: {}", response.error());
+    ASSERT_EQ(response->code, 400) << "Submitted a job without an absolute path?";
+    EXPECT_EQ(response->error(), "./apiConfig.yml is not an absolute path. Must pass in an absolute path!");
 
     // No check for return code here, 200 and 400 are both valid. Just clearing out the DB. 
     response = requester.deleteJob("apiTest");
@@ -285,14 +376,14 @@ TEST_F(ApiTest, ErrorRequests){
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying for fake Job: {}", response.error());
 
     ASSERT_EQ(response.value().code, 400) << "Found a job that shouldn't exist!";
-    EXPECT_EQ(response->jsonData["errmsg"], "No job named wrongJobName");
+    EXPECT_EQ(response->error(), "No job named wrongJobName");
 
     // Car Metadata with incorrect job name
     response = requester.queryCarDatas("wrongJobName");
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying for fake Job: {}", response.error());
 
     ASSERT_EQ(response->code, 400) << "Found a job that shouldn't exist!";
-    EXPECT_EQ(response->jsonData["errmsg"], "No Data found. Check to see if the job exists");
+    EXPECT_EQ(response->error(), "No Data found. Check to see if the job exists");
 
 
 }

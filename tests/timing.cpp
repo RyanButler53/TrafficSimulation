@@ -32,20 +32,11 @@ class Benchmark{
             cfg["driverParams"]["bmax_stdev"] = 0.2;
             cfg["driverParams"]["p_stdev"] = 0.02;
         
-            YAML::Emitter cfgout;
-            std::ofstream fileCfg(std::format("{}.yaml", file_name));
-            cfgout << cfg;
-            fileCfg << cfgout.c_str();
-            fileCfg.close();
+            TestUtil::configToFile(cfg, std::format("{}.yaml", file_name));
     
-            YAML::Emitter dbout;
-            std::ofstream dbcfg(std::format("{}.yaml", db_name));
             cfg["logtype"] = "test";
             cfg["jobname"] = std::format("timing{}_db", i);
-
-            dbout << cfg;
-            dbcfg << dbout.c_str();
-            dbcfg.close();
+            TestUtil::configToFile(cfg, std::format("{}.yaml", db_name));
 
             // Save Paths
             paths_.push_back(std::format("{}.yaml", file_name));

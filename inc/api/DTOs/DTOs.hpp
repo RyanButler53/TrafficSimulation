@@ -1,6 +1,5 @@
 #pragma once
 #include "oatpp/core/data/mapping/type/Object.hpp"
-
 #include "oatpp/core/macro/codegen.hpp"
 #include "oatpp/codegen/dto/enum_define.hpp"
 
@@ -26,6 +25,20 @@ class FollowModelDTO : public oatpp::DTO {
   DTO_FIELD(Float32, c);
 };
 #include OATPP_CODEGEN_END(DTO)
+
+// Single snapshot without a timestamp
+#include OATPP_CODEGEN_BEGIN(DTO)
+class SnapshotDTO : public oatpp::DTO {
+  DTO_INIT(SnapshotDTO, DTO);
+
+  DTO_FIELD(Int32, id);
+  DTO_FIELD(Float32, x);
+  DTO_FIELD(Float32, v);
+  DTO_FIELD(Int32, l);
+
+};
+#include OATPP_CODEGEN_END(DTO)
+
 
 // CAR METADATA
 
@@ -120,6 +133,18 @@ class JobDataListDTO : public oatpp::DTO {
 };
 #include OATPP_CODEGEN_END(DTO)
 
+// Time series queries
+#include OATPP_CODEGEN_BEGIN(DTO)
+class TimeSeriesDTO : public oatpp::DTO {
+  DTO_INIT(TimeSeriesDTO, DTO);
+
+  DTO_FIELD(Vector<Float32>, timestamps);
+  DTO_FIELD(Vector<Vector<Object<SnapshotDTO>>>, snapshots);
+
+};
+#include OATPP_CODEGEN_END(DTO)
+
+
 // Error message
 #include OATPP_CODEGEN_BEGIN(DTO)
 class ErrorDTO : public oatpp::DTO {
@@ -137,4 +162,3 @@ class DeleteDTO : public oatpp::DTO {
 
 };
 #include OATPP_CODEGEN_END(DTO)
-
