@@ -307,6 +307,7 @@ TEST_F(ApiTest, TimeSeriesRequests){
 
     CurlWrapper requester;
 
+    // Don't check for return code since this is not gauranteed to be in the DB. 
     CurlResponse response = requester.deleteJob("apiTestTimeSeries");
     ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
 
@@ -322,17 +323,29 @@ TEST_F(ApiTest, TimeSeriesRequests){
     ASSERT_EQ(response->code, 200) << std::format("Error posting job: {}", response->error());
     
     response = requester.queryTimeSeries("apiTestTimeSeries", 50, 100);
-    // The cars must be within 50 and 100 timestep. 
+    // The cars must be within 50 and 100 timestep
     ASSERT_EQ(response->code, 200);
     json data = response->jsonData;
     std::vector<float> timestamps = data["timestamps"];
-    std::cout << timestamps.size() << std::endl;
     EXPECT_EQ(timestamps.size(), 51);
     EXPECT_EQ(data["snapshots"].size(), 51);
 
 
     response = requester.deleteJob("apiTestTimeSeries");
     ASSERT_EQ(response->code, 200) << std::format("Error deleting job: {}", response->error());
+
+    response = requester.queryTimeSeries("apiTestTimeSeries", std::nullopt, std::nullopt, 750, 1000);
+    ASSERT_EQ(response->code, 200) << "Error in spatial query" << std::endl;
+
+    data = response->jsonData;
+    for (const json& perCar  : response->jsonData["snapshots"]){
+        EXPECT_GT(perCar["x"], 600.0f);
+        EXPECT_LT(perCar["x"], 750.0f);
+    }
+
+    // Clean up
+    response = requester.deleteJob("apiTestTimeSeries");
+    ASSERT_TRUE(response.has_value()) << std::format("Error Deleting Job: {}", response.error());
 
 }
 

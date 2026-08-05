@@ -212,7 +212,6 @@ std::expected<TimeSeries, std::string> DBManager::queryData(std::string jobname,
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
     TimeSeries data;
-    data.snapshots_.push_back({});
     std::string querystr = std::format("SELECT carid, x, v, t, lane FROM snapshotData INNER JOIN TrafficJobs ON TrafficJobs.JobID = snapshotData.jobid WHERE TrafficJobs.jobname = '{}' and snapshotData.t BETWEEN {} AND {} and snapshotData.x BETWEEN {} AND {} ORDER BY snapshotData.t ASC, snapshotData.carid ASC",
                                          jobname, tmin, tmax, xmin, xmax);
     try {

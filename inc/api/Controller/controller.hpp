@@ -137,7 +137,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         response->snapshots = {};
         response->timestamps = {};
         response->timestamps->resize(t.timestamps_.size());
-        
+
         std::ranges::transform(t.timestamps_, response->timestamps->begin(), simpleConvert<float, Float32>);
         for (std::vector<Snapshot> timestamps : t.snapshots_){
             oatpp::Vector<oatpp::Object<SnapshotDTO>> snapshotVec;
@@ -145,10 +145,6 @@ class Controller : public oatpp::web::server::api::ApiController {
             snapshotVec->resize(timestamps.size());
             std::ranges::transform(timestamps, snapshotVec->begin(), convertSnapshot);
             response->snapshots->push_back(snapshotVec);
-        }
-
-        if (response->snapshots->size() != response->timestamps->size()){
-            std::println("Translation error! Snapshots: {}, Timestamps: {}", response->snapshots->size(), response->timestamps->size());
         }
         return response;
     }
@@ -248,7 +244,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         PATH(String, job, "job-name"),
         QUERIES(QueryParams, queryParams))
     {
-        OATPP_LOGI("Spatial", "Running a spatial query!");
+        OATPP_LOGI("Controller:", "Running a spatial query!");
         std::unordered_map<std::string, std::optional<double>> paramMap{
             {"x0", std::nullopt},
             {"x1", std::nullopt},
@@ -262,14 +258,9 @@ class Controller : public oatpp::web::server::api::ApiController {
             std::from_chars(paramVal.begin(), paramVal.begin() + paramVal.size(), v);
             if (paramMap.contains(paramName)){
                 paramMap[paramName] = std::make_optional(v);
-                OATPP_LOGI("Spatial Param: ", "%s: %f", paramName.c_str(), v);
             }
 
         }
-        // for (auto& [param, var] : paramMap){
-        //     oatpp::String param_str = queryParams.get(oatpp::String(param));
-        //     var = std::make_optional<double>(std::stod(param_str));
-        // }
 
         auto raw = dataManager_.queryData(job, paramMap["x0"], paramMap["x1"], paramMap["t0"], paramMap["t1"]);
 
