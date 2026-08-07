@@ -9,3 +9,6 @@ CMakeUserPresets.json
 trafficDB/
 trafficDBTest/
 logfile.log
+
+# movies
+*.mp4
