@@ -28,14 +28,14 @@ class Reader():
         return data
     
     def all_metadata(self):
-        response = requests.get(f"{self.base_url}//data/{self.jobname}/cars")
+        response = requests.get(f"{self.base_url}/data/{self.jobname}/cars")
         data = response.json()
         if response.status_code != 200:
             raise RuntimeError(f"Error with api request: {data["errmsg"]}")
         return data["cars"]
     
     def metadata(self, car_id):
-        response = requests.get(f"{self.base_url}//data/{self.jobname}/cars/{car_id}")
+        response = requests.get(f"{self.base_url}/data/{self.jobname}/cars/{car_id}")
         data = response.json()
         if response.status_code != 200:
             raise RuntimeError(f"Error with api request: {data["errmsg"]}")
@@ -133,3 +133,13 @@ class Reader():
     
         plt.scatter(param_vals, times)
         plt.show()
+
+    def  spatialQuery(self, x0 = None, x1 = None, t0 = None, t1 = None):
+        params = {}
+        if x0: params["x0"] = x0
+        if x1: params["x1"] = x1
+        if t0: params["t0"] = t0
+        if t1: params["t1"] = t1
+        response = requests.get(f"{self.base_url}/data/{self.jobname}/spatial", params = params)
+        return response
+

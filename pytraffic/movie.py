@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import subprocess
 import shutil
+import reader
 
 class Location:
     def __init__(self, x:float, v:float, l:int):
@@ -13,12 +14,16 @@ class Location:
         self.v = v
         self.l = l
 
-class DataReader(ABC):
+class MovieMaker(ABC):
 
     def __init__(self, x0, x1, t0, t1, nlanes):
         self.xlimits = (x0, x1)
         self.tlimits = (t0, t1)
         self.lanes = nlanes
+        self.temp_path = ".movie_tmp"
+        if os.path.exists(self.temp_path):
+            shutil.rmtree(self.temp_path)
+        os.makedirs(self.temp_path)
 
     def __repr__(self):
         pass
@@ -29,8 +34,8 @@ class DataReader(ABC):
             t = self.generateNextFrame()
         framerate = round(1/self.dt())
 
-        subprocess.run(f"ffmpeg -framerate {framerate} -i movie_tmp/frame%d.jpg -c:v libx264 -pix_fmt yuv420p {outputFilename}.mp4", shell=True)
-        shutil.rmtree("movie_tmp")
+        subprocess.run(f"ffmpeg -framerate {framerate} -i {self.temp_path}/frame%d.jpg -c:v libx264 -pix_fmt yuv420p {outputFilename}.mp4", shell=True)
+        shutil.rmtree(self.temp_path)
 
     @abstractmethod
     def dt()->float:
@@ -41,7 +46,7 @@ class DataReader(ABC):
         """Returns the timestamp t
         and a list of the cars (x, v, l) points"""
 
-class FileReader(DataReader):
+class TimeSeries(MovieMaker):
 
     def __init__(self, filepath:os.path,  x0, x1, t0, t1, nlanes):
         super().__init__(x0, x1, t0, t1, nlanes)
@@ -51,12 +56,8 @@ class FileReader(DataReader):
         self.files = self.files[2:]
         self.files.sort(key=lambda s: float(s[5:-4]))
         self.files = list(filter(lambda f:  (float(f[5:-4]) <= self.tlimits[1] and float(f[5:-4]) >= self.tlimits[0]), self.files))
-        print(self.files)
         self.index = 0
 
-        if os.path.exists("movie_tmp"):
-            shutil.rmtree("movie_tmp")
-        os.makedirs("movie_tmp")
 
     def __repr__(self):
         return f"File Reader for folder {self.filepath}. X limits: {self.xlimits}, T limits: {self.tlimits}"
@@ -69,7 +70,6 @@ class FileReader(DataReader):
     def generateNextFrame(self):
         file = self.files[self.index]
         t = float(file[5:-4])
-        print(f"File: {file}")
         df = pd.read_csv(os.path.join(self.filepath, file), index_col=False)
         validData = df[(df["x"] >= self.xlimits[0]) & (df["x"] <= self.xlimits[1])
                     & (t >= self.tlimits[0]) & (t <= self.tlimits[1])]
@@ -77,7 +77,44 @@ class FileReader(DataReader):
         plt.ylim(-0.2, self.lanes+0.2)
         plt.yticks(list(range(self.lanes+1)))
         plt.scatter(validData["x"], validData["l"], c=validData["v"])
-        plt.savefig(f"movie_tmp/frame{self.index}.jpg")
+        plt.savefig(f"{self.temp_path}/frame{self.index}.jpg")
+        plt.clf()
+        self.index += 1
+        return t
+
+class Database(MovieMaker):
+    def __init__(self, jobname,  x0, x1, t0, t1, nlanes):
+        super().__init__(x0, x1, t0, t1, nlanes)
+
+        self.reader = reader.Reader(jobname)
+        data = self.reader.spatialQuery(x0, x1, t0, t1)
+        if (data.status_code == 200):
+            jsondata = data.json()
+            self.times = jsondata["timestamps"]
+            self.snapshots = jsondata["snapshots"]
+        else:
+            raise RuntimeError(data.json()["errmsg"])
+        
+        self.index = 0
+
+    def dt(self):
+        return self.times[1] - self.times[0]
+
+    def generateNextFrame(self):
+        t = self.times[self.index]
+
+        data = self.snapshots[self.index]
+
+        # df = pd.read_csv(os.path.join(self.filepath, file), index_col=False)
+        xs = [snapshot["x"] for snapshot in data]
+        vs = [snapshot["v"] for snapshot in data]
+        lanes = [snapshot["l"] for snapshot in data]
+
+        plt.xlim(self.xlimits)
+        plt.ylim(-0.2, self.lanes+0.2)
+        plt.yticks(list(range(self.lanes+1)))
+        plt.scatter(xs, lanes, c=vs)
+        plt.savefig(f"{self.temp_path}/frame{self.index}.jpg")
         plt.clf()
         self.index += 1
         return t

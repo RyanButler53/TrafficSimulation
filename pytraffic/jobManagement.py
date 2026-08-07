@@ -25,7 +25,7 @@ def submit(jobname, config):
         return response.json()
     
 def delete(jobname):
-    response = requests.delete(f"{BASE_URL}/jobs/{jobname}")
+    response = requests.delete(f"{BASE_URL}/delete/{jobname}")
     if (response.status_code != 200):
         return response.json()["errmsg"]
     else:
