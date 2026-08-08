@@ -35,15 +35,6 @@ void AlgTest::laneChanges(const std::vector<RawData>& raw){
     EXPECT_TRUE(rightLaneChange) << "No right lane changes found";
 }
 
-void AlgTest::emitYaml(YAML::Node cfg){
-    YAML::Emitter cfgout;
-    // Reflection!
-    std::ofstream fileCfg(filename());
-    cfgout << cfg;
-    fileCfg << cfgout.c_str();
-    fileCfg.close();
-}
-
 void AlgTest::completeLaneBoundsCheck(const std::vector<RawData>& raw, float roadEnd){
     for (const RawData& r  : raw){
         EXPECT_GE(r.x_.front(), 0.0);
@@ -72,7 +63,7 @@ void Test3Lane::generateInput(){
     cfg["driverParams"]["bmax_stdev"] = 0.2;
     cfg["driverParams"]["p_stdev"] = 0.02;
 
-    emitYaml(cfg);
+    TestUtil::configToFile(cfg, filename());
 }
 
 void Test3Lane::inBounds(const std::vector<RawData>& raw){
@@ -106,7 +97,7 @@ void TestZeroFlow::generateInput(){
     cfg["logtype"] = "test";
     cfg["jobname"] = testName();
 
-    emitYaml(cfg);
+    TestUtil::configToFile(cfg, filename());
 }
 
 void TestZeroFlow::inBounds(const std::vector<RawData>& raw){

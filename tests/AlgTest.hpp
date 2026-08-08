@@ -36,7 +36,6 @@ concept AlgTestCase = requires(A test,
 class AlgTest {
 
     protected:
-    void emitYaml(YAML::Node cfg);
 
     void completeLaneBoundsCheck(const std::vector<RawData>& raw, float roadEnd);
 
