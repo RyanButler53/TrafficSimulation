@@ -1,18 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
-import requests
 import os
 import pandas as pd
 import subprocess
 import shutil
 import reader
-
-class Location:
-    def __init__(self, x:float, v:float, l:int):
-        self.x = x
-        self.v = v
-        self.l = l
+from pathlib import Path
+import argparse
+import sys
 
 class MovieMaker(ABC):
 
@@ -34,7 +30,7 @@ class MovieMaker(ABC):
             t = self.generateNextFrame()
         framerate = round(1/self.dt())
 
-        subprocess.run(f"ffmpeg -framerate {framerate} -i {self.temp_path}/frame%d.jpg -c:v libx264 -pix_fmt yuv420p {outputFilename}.mp4", shell=True)
+        subprocess.run(f"ffmpeg -r {framerate} -i {self.temp_path}/frame%d.jpg -loglevel 16 -c:v libx264 -pix_fmt yuv420p {outputFilename}.mp4", shell=True)
         shutil.rmtree(self.temp_path)
 
     @abstractmethod
@@ -77,6 +73,9 @@ class TimeSeries(MovieMaker):
         plt.ylim(-0.2, self.lanes+0.2)
         plt.yticks(list(range(self.lanes+1)))
         plt.scatter(validData["x"], validData["l"], c=validData["v"])
+        for row in validData.iterrows():
+            snapshot = row[1]
+            plt.annotate(f"{int(snapshot["id"])}", xy=(snapshot["x"], snapshot["l"]), xytext = (5,5), textcoords="offset points")
         plt.savefig(f"{self.temp_path}/frame{self.index}.jpg")
         plt.clf()
         self.index += 1
@@ -87,7 +86,8 @@ class Database(MovieMaker):
         super().__init__(x0, x1, t0, t1, nlanes)
 
         self.reader = reader.Reader(jobname)
-        data = self.reader.spatialQuery(x0, x1, t0, t1)
+        # +1 to prevent floating point
+        data = self.reader.spatialQuery(x0, x1, t0, t1+1)
         if (data.status_code == 200):
             jsondata = data.json()
             self.times = jsondata["timestamps"]
@@ -105,16 +105,57 @@ class Database(MovieMaker):
 
         data = self.snapshots[self.index]
 
-        # df = pd.read_csv(os.path.join(self.filepath, file), index_col=False)
         xs = [snapshot["x"] for snapshot in data]
         vs = [snapshot["v"] for snapshot in data]
         lanes = [snapshot["l"] for snapshot in data]
-
+        plt.title(f't = {t:.2f}s')
         plt.xlim(self.xlimits)
         plt.ylim(-0.2, self.lanes+0.2)
         plt.yticks(list(range(self.lanes+1)))
         plt.scatter(xs, lanes, c=vs)
+        for snapshot in data:
+            plt.annotate(f"{snapshot["id"]}", xy=(snapshot["x"], snapshot["l"]), xytext = (5,5), textcoords="offset points")
         plt.savefig(f"{self.temp_path}/frame{self.index}.jpg")
         plt.clf()
         self.index += 1
         return t
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Parse arguments for custom ffmpeg movie script."
+    )
+
+    parser.add_argument('-t', required=True, help="Minimum and maximum time bounds Given as -t t0,tf")
+    parser.add_argument('-x', required=True, help="Min and max x values. Given as -x x0,xf")
+    parser.add_argument('-s', required=True, help="Source. Filepath or DB job name")
+    parser.add_argument('-o', required=True, help="Output filename")
+    parser.add_argument('-l', required=True, help="Number of lanes")
+
+    args = parser.parse_args()
+
+    try:
+        t0, tf = args.t.split(',')
+        x0, xf = args.x.split(',')
+        t0 = float(t0)
+        tf = float(tf)
+        x0 = float(x0)
+        xf = float(xf)
+        l = int(args.l)
+
+    except ValueError:
+        print("Error: -t and -x must be comma-separated pair fo numbers.", file=sys.stderr)
+        sys.exit(1)
+
+    filepath = args.s
+    
+    if (Path(filepath).exists()):
+        movie_maker = TimeSeries(filepath, x0, xf, t0, tf,l )
+        # confirmed to be a filepath not a a db job
+    else:
+        movie_maker = Database(filepath,  x0, xf, t0, tf,l)
+
+    movie_maker.run(args.o)
+
+
+   
