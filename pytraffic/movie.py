@@ -9,6 +9,7 @@ import reader
 from pathlib import Path
 import argparse
 import sys
+import jobManagement
 
 class MovieMaker(ABC):
 
@@ -150,11 +151,18 @@ if __name__ == "__main__":
     filepath = args.s
     
     if (Path(filepath).exists()):
-        movie_maker = TimeSeries(filepath, x0, xf, t0, tf,l )
-        # confirmed to be a filepath not a a db job
+        if len(list(Path(filepath).glob("*time_*.csv"))):
+            movie_maker = TimeSeries(filepath, x0, xf, t0, tf,l )
+        else:
+            print(f"File {filepath} is not a directory holding time series data")
+            sys.exit(1)
     else:
-        movie_maker = Database(filepath,  x0, xf, t0, tf,l)
-
+        allJobs = jobManagement.jobs()
+        if (allJobs.count(filepath)== 1):
+            movie_maker = Database(filepath,  x0, xf, t0, tf,l)
+        else:
+            print(f"\'{filepath}\' is not a valid job name in the database")
+            sys.exit(1)
     movie_maker.run(args.o)
 
 
