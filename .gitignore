@@ -9,3 +9,12 @@ CMakeUserPresets.json
 trafficDB/
 trafficDBTest/
 logfile.log
+
+# python
+__pycache__
+
+# movies
+*.mp4
+
+# profiling results
+profiling/
