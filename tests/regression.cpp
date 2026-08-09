@@ -272,7 +272,12 @@ TEST_F(RegressionTest, FileHashEquivalence){
         hashes += hash;
     }
     std::string hash = hashBytes(hashes.data(),hashes.size());
-    const std::string expectedHash("098e23a9f21bb1dbf6285eda6b093fa7ac54042a36dfab90533cf46919b0b6d0");
+   
+    // The expected hash of the simulation is in "hash.txt"
+    std::fstream in(std::string(HASH_FILE) + "/hash.txt");
+    std::string expectedHash;
+    std::getline(in, expectedHash);
+
     ASSERT_EQ(hash, expectedHash);
 }
 #endif
