@@ -48,7 +48,6 @@ class CpuHighway : public Highway {
     std::vector<std::set<Car>> lanes_;
     std::unique_ptr<LaneInfo> laneInfo_;
     size_t nLanes_;
-    double roadEnd_;
 
     // TODO make these all configurable
     const double changeThreshold_ = 0.1;
@@ -69,7 +68,7 @@ class CpuHighway : public Highway {
 
     public: 
 
-    CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenerator>> flows, std::unique_ptr<LaneInfo> lanes, double roadEnd);
+    CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenerator>> flows, std::unique_ptr<LaneInfo> lanes);
     std::expected<std::vector<CarData>, std::string> update(double dt) override;
     void log(double t, std::vector<CarSnapshot>& data) override;
 };

@@ -11,8 +11,8 @@
 
 
 CpuHighway::CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenerator>>flows,
-                       std::unique_ptr<LaneInfo> lanes, double roadEnd):flowGenerators_{flows}, 
-    lanes_{std::vector<std::set<Car>>(numLanes)}, nLanes_{numLanes}, roadEnd_{roadEnd}{}
+                       std::unique_ptr<LaneInfo> lanes):flowGenerators_{flows}, 
+    lanes_{std::vector<std::set<Car>>(numLanes)},laneInfo_{std::move(lanes)}, nLanes_{numLanes}{}
 
 
 std::optional<std::string>CpuHighway::getAccelerationCache(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt){
@@ -57,10 +57,9 @@ void CpuHighway::moveVehicles(std::vector<std::unordered_map<double, double>>& a
             nh.value().update(a, dt);
             lanes_[i].insert(std::move(nh));
         }
-        // Remove all cars past roadEnd_
-        Car end{0, roadEnd_, 0, 0, 0, {}};
-        auto it = lanes_[i].upper_bound(end);
-        lanes_[i].erase(it, lanes_[i].end());
+        std::erase_if(lanes_[i], [this, i](const Car& c) {
+            return !laneInfo_->laneValid(c.getPosition(), i);
+        });
     }
 }
 
