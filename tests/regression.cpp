@@ -65,7 +65,7 @@ protected:
         if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
         if (std::filesystem::exists("timeSeriesConfig.yaml")) std::filesystem::remove("timeSeriesConfig.yaml");
 
-        // if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
+        if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
         if (std::filesystem::exists("file-test/time-series")) std::filesystem::remove_all("file-test/time-series");
     }
 

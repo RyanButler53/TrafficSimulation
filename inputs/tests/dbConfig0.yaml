@@ -1,9 +1,7 @@
 type: continuous
-time: 55
-timestep: 0.2
-logtype: time-series
+time: 150
+timestep: 1
 driverType: Gipps
-jobname: ZeroFlowAlgorithm
 driverParams:
   a: 1.981
   b: -2.8955
@@ -18,12 +16,15 @@ lanes:
       v0: 20
       vdes: 35
     start: 0
-    end: 500
+    end: 2000
     position: 0
   - flow:
-      rate: 0
+      rate: 400
       v0: 0
       vdes: 38
     start: 0
-    end: 500
-    posiiton: 1
+    end: 2000
+    position: 1
+logtype: test
+jobname: test-dbreader0
+seed: 70

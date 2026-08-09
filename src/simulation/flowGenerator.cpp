@@ -28,13 +28,13 @@ std::optional<Car> FlowGenerator::generateFlow(double dt, double rearPosition, d
     
     // Only generate if the next flow can happen outside the 2s gap
     if ((dist_(rng_) < prob) && rearPosition > x0_){
-        
+        --flowsLeft_;
         // Lead car velocity dictates maximum incoming flow speed. 
         double v0 = std::min(v0_, vlead);
         c = std::make_optional<Car>(factory_->makeCar(x0_, v0, vdes_, time_));
         flowsLeft_ = std::clamp<double>(flowsLeft_, 0.0, rate_);
     }
-    timestepsLeft_ -= dt;
+    timestepsLeft_ -= 1;
 
     // Reset at the beginning of each hour. 
     if (timestepsLeft_ <= 0){

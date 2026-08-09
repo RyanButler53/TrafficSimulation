@@ -263,7 +263,7 @@ TEST_F(ApiTest, ValidRequests){
     EXPECT_EQ(response->jsonData["jobname"], "apiTest");
     EXPECT_EQ(response->jsonData["driverModel"], "Gipps");
     EXPECT_EQ(response->jsonData["status"], "DONE");
-    EXPECT_EQ(response->jsonData["numCars"], 16);
+    EXPECT_EQ(response->jsonData["numCars"], 46) << "Case is known to have 46 cars"; // Expect roughly 50 cars. 
 
 
     response = requester.queryJobs();

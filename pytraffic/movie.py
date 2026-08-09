@@ -70,6 +70,7 @@ class TimeSeries(MovieMaker):
         df = pd.read_csv(os.path.join(self.filepath, file), index_col=False)
         validData = df[(df["x"] >= self.xlimits[0]) & (df["x"] <= self.xlimits[1])
                     & (t >= self.tlimits[0]) & (t <= self.tlimits[1])]
+        plt.title(f't = {t:.2f}s')
         plt.xlim(self.xlimits)
         plt.ylim(-0.2, self.lanes+0.2)
         plt.yticks(list(range(self.lanes+1)))
