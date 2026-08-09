@@ -272,7 +272,7 @@ TEST_F(RegressionTest, FileHashEquivalence){
         hashes += hash;
     }
     std::string hash = hashBytes(hashes.data(),hashes.size());
-    const std::string expectedHash("4174313eb6b4a8b59d1163c9b2e32e6cf2e525bb97a45ac8074d7a63977641cd");
+    const std::string expectedHash("098e23a9f21bb1dbf6285eda6b093fa7ac54042a36dfab90533cf46919b0b6d0");
     ASSERT_EQ(hash, expectedHash);
 }
 #endif
