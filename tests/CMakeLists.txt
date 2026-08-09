@@ -43,6 +43,7 @@ TrafficTest(regression regression.cpp simulation
                                       pqxx_wrapper
                                       $<IF:$<BOOL:${OpenSSL_FOUND}>,OpenSSL::Crypto,""> )
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
+target_compile_definitions(regression PUBLIC HASH_FILE="${CMAKE_CURRENT_SOURCE_DIR}")
 
 TrafficTest(queueTest queueTest.cpp)
 TrafficTest(laneinfoTest laneInfoTest.cpp shared)

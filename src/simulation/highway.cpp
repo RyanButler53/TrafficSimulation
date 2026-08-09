@@ -15,7 +15,7 @@ CpuHighway::CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenera
     lanes_{std::vector<std::set<Car>>(numLanes)},laneInfo_{std::move(lanes)}, nLanes_{numLanes}{}
 
 
-std::optional<std::string>CpuHighway::getAccelerationCache(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt){
+std::optional<std::string> CpuHighway::getAccelerationCache(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt){
 
     for (std::set<Car>& cars : lanes_){
         accelerationCache.push_back({});
@@ -27,24 +27,47 @@ std::optional<std::string>CpuHighway::getAccelerationCache(std::vector<std::unor
         // Iterate over all cars in the lane, calculate acceleration and add to cache
         std::set<Car>::const_iterator current = cars.begin();
         std::set<Car>::const_iterator next = ++cars.begin();
+        // Store the end of the current segment to check if the lead car is in another road segment
+        double endOfCurrentSegment = laneInfo_->endOfSegment(current->getPosition(), accelerationCache.size() -1).value();
         while (next != cars.end()){
-            const Car& lead = *next;
-            std::expected<double, std::string> a = current->acceleration(lead, dt);
-            // TODO Clean up with monads? 
-            if (!a.has_value()) {
-                std::cout << "Error calculating acceleraton! "  << a.error() << std::endl;
-                return std::make_optional(a.error());
-            } else {
-                cache.insert({current->getPosition(), a.value()});
+            Car lead = *next;
+            // Set lead car to still car at end of segment and update the end of current segment to 
+            if (lead.getPosition() > endOfCurrentSegment){
+                lead = Car::stoppedCar(endOfCurrentSegment);
+                endOfCurrentSegment = laneInfo_->endOfSegment(next->getPosition(), accelerationCache.size() - 1).value();
+            }
+            std::expected<void, std::string> insert = current->acceleration(lead, dt).transform([&cache, current](double accel){
+                cache.insert({current->getPosition(), accel});
+            });
+            if (!insert.has_value()) {
+                return std::make_optional(insert.error());
             }
             // Next pair
             ++current;
             ++next;
         }
         // Lead car
-        cache.insert({current->getPosition(), current->acceleration(dt)});
+        std::expected<double, std::string> a = leadCarAcceleration(*current, endOfCurrentSegment, accelerationCache.size() -1, dt);
+        if (!a){
+            return std::make_optional(a.error());
+        }
+
+        cache.insert({current->getPosition(), a.value()});
     }
     return std::nullopt;
+}
+
+std::expected<double, std::string> CpuHighway::leadCarAcceleration(const Car& c, double endOfCurrentSegment, size_t ilane, double dt) {
+    std::expected<double, std::string> laneEnd = laneInfo_->endOfLane(ilane);
+    if (!laneEnd){
+        return laneEnd;
+    }
+    // True free road acceleration only occurs if the car is in the last segment that ends at the end of the road
+    if (endOfCurrentSegment == *laneEnd && endOfCurrentSegment == laneInfo_->endOfRoad()){
+        return c.acceleration(dt);
+    } else { // Otherwise a stopped car is in front. 
+        return c.acceleration(Car::stoppedCar(endOfCurrentSegment), dt);
+    }
 }
 
 void CpuHighway::moveVehicles(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt){
@@ -85,11 +108,20 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
         std::set<Car>::const_iterator alpha = ++cars.begin();
         std::set<Car>::const_iterator lead = ++(++cars.begin());
 
+        // End of segment Alpha is in. 
+        double endOfCurrentSegment = laneInfo_->endOfSegment(alpha->getPosition(),ilane).value();
+
         while (lead != cars.end()){
         
             // Utility value for left or right lane change
             double left = -1000.0;
             double right = -1000.0;
+
+            Car leadCar = *lead;
+            if (lead->getPosition() > endOfCurrentSegment){
+                leadCar = Car::stoppedCar(endOfCurrentSegment);
+                endOfCurrentSegment = laneInfo_->endOfSegment(lead->getPosition(), ilane).value();
+            }
 
             // Calculate the lane change:
             auto calculateUtility = [&](int curLane, int newLane, double bias){
@@ -97,21 +129,22 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
                 const Car& a = *alpha;
                 std::set<Car>::const_iterator l_hat = std::upper_bound(lanes_[newLane].begin(), lanes_[newLane].end(), a);
                 std::expected<double, std::string> a_alphaChange;
-                if (l_hat == lanes_[newLane].end()){ // No new lead car. Acceleration is free road acceleration
-                    a_alphaChange = alpha->acceleration(dt);
+
+                if (l_hat == lanes_[newLane].end()){ // No new lead car. Acceleration is "free road" acceleration
+                    a_alphaChange = leadCarAcceleration(*alpha, endOfCurrentSegment, ilane, dt);
                 } else {
                     a_alphaChange = alpha->acceleration(*l_hat, dt);
                 }
                 // Current Follower Terms
                 double a_f = accelerationCache[curLane].at(follow->getPosition());
-                std::expected<double, std::string> a_fChange = follow->acceleration(*lead, dt);
+                // Acceleration for the follower if the lane change happens. Uses the lead car (stopped car or real car)
+                std::expected<double, std::string> a_fChange = follow->acceleration(leadCar, dt);
                 
                 // New Follower Terms
                 std::set<Car>::const_iterator f_hat = std::lower_bound(lanes_[newLane].begin(), lanes_[newLane].end(), *alpha);
                 double a_fHat = 0;
                 std::expected<double, std::string> a_fHatChange = 0.0;
-                bool firstCarInNewLane = false;
-                // If the new follower is non existent, can never gaurantee the safety criterion is satisfied
+
                 if (f_hat != lanes_[newLane].begin()) {
                     --f_hat;
                     // Ensure that the new follower is actually following alpha and that the new follower exists

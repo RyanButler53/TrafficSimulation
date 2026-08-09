@@ -11,6 +11,19 @@ bool LaneInfo::addSegment(double start, double end, size_t position){
     auto iter = std::ranges::find_if(overlaps, [position](const LaneBoundary& l){return l.position_ == position;});
     if (iter == overlaps.end()){
         iTree_.insert({start, end, position});
+
+        // Insert into the laneEnds lookup table
+        if (laneEnds_.size() < position+1){
+            laneEnds_.resize(position + 1);
+        }
+
+        // Update end of road and corresponding lane end. 
+        endOfRoad_ = std::max(end, endOfRoad_);
+
+        laneEnds_[position] = laneEnds_[position].transform([end](double cur)
+                                                            { return std::max(cur, end); })
+                                                .or_else([end]()
+                                                            { return std::make_optional(end); });
     }
     return iter == overlaps.end();
 }
@@ -39,4 +52,16 @@ std::expected<double, std::string> LaneInfo::endOfSegment(double x, size_t ilane
     } else {
         return std::unexpected(std::format("Lane {} is not present at x = {}", ilane, x));
     }
+}
+
+std::expected<double, std::string> LaneInfo::endOfLane(size_t ilane){
+    if (ilane < laneEnds_.size() && laneEnds_[ilane]){
+        return laneEnds_[ilane].value();
+    } else {
+        return std::unexpected(std::format("Lane {} has no segments and the end of the lane is undefined!", ilane));
+    }
+}
+
+double LaneInfo::endOfRoad() const{
+    return endOfRoad_;
 }

@@ -29,6 +29,10 @@ Car Car::compare(double x){
     return Car(x);
 }
 
+Car Car::stoppedCar(double x){
+    return Car(0, x, 0, 0, 0, {});
+}
+
 double Car::acceleration(double dt) const {
     return acceleration(infinity(), dt).value();
 }

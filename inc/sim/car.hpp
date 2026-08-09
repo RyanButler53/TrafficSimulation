@@ -113,6 +113,14 @@ class Car {
      */
     static Car compare(double x);
 
+    /**
+     * @brief Creates a stopped car at a position x. This car can be be used for acceleration calculations
+     * 
+     * @param x X value to compare at. 
+     * @return Car at specified x value
+     */
+    static Car stoppedCar(double x);
+
 
     bool operator<(const Car& other) const{
         return pos_ < other.pos_;

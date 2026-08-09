@@ -52,3 +52,16 @@ TEST_F(LaneInfoTest, endOfSegment){
     ASSERT_TRUE(result.value());
     EXPECT_EQ(result.value(), 100);
 }
+
+TEST_F(LaneInfoTest, endOfLane){
+    EXPECT_EQ(info_.endOfRoad(), 100);
+
+    EXPECT_EQ(info_.endOfLane(0), 80);
+    EXPECT_EQ(info_.endOfLane(1), 100);
+    EXPECT_EQ(info_.endOfLane(2), 100);
+
+    info_.addSegment(95, 115, 0);
+
+    EXPECT_EQ(info_.endOfRoad(), 115);
+    EXPECT_EQ(info_.endOfLane(0), 115);
+}

@@ -33,7 +33,9 @@ struct LaneBoundary : public SimpleInterval<double>{
 class LaneInfo {
 
     IntervalTree<LaneBoundary> iTree_;
-    
+    std::vector<std::optional<double>> laneEnds_;
+    double endOfRoad_ = 0;
+
     std::optional<LaneBoundary> getLane(double x, size_t ilane);
 
 
@@ -58,5 +60,14 @@ class LaneInfo {
      * @return Returns an error string if the lane is not present at the x value. 
      */
     std::expected<double, std::string> endOfSegment(double x, size_t lane);
+
+    /**
+     * @brief Returns the end of the lane. 
+     * @details Used to determine if a car can use true free road acceleration or a stopped car
+     * 
+     */
+    std::expected<double, std::string> endOfLane(size_t ilane);
+
+    double endOfRoad() const;
 };
 

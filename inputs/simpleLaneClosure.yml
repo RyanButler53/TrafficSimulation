@@ -1,0 +1,53 @@
+# General Information
+jobname: lane-closure
+type: "continuous" # differentiates between adding cars upfront or online
+time: 8000
+timestep: 0.2
+seed: 70
+logtype: "time-series"
+highway-type: "cpu" # "cpu", "kokkos" or "metal".
+road-end: 10000 # All lanes have a hard cutoff at x = 10000
+
+# Driver Model
+driverType: "Gipps" # driver type
+driverParams:
+  a: 1.981
+  b: -2.8955
+  bmax: -3.505
+  p: 0.2
+
+  # standard deviations to add heterogeneous traffic
+  a_stdev: 0.1
+  b_stdev: 0.1
+  bmax_stdev: 0.1
+  p_stdev: 0.04
+
+lanes:
+
+  -
+    flow:
+      rate: 200
+      v0: 0
+      vdes: 30
+
+    start: 0
+    end: 1000
+    position: 0 # right lane
+  - 
+    flow:
+      rate: 400
+      v0: 30
+      vdes: 35
+
+    start: 2000
+    end: 3000
+    position: 0 # middle lane 
+  -
+    flow:
+      rate: 200 # flow rate (veh/hr)
+      v0: 0
+      vdes: 30
+
+    start: 0
+    end: 3000
+    position: 1 # left lane

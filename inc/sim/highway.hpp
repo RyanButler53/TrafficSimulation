@@ -66,6 +66,17 @@ class CpuHighway : public Highway {
 
     void moveVehicles(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt);
 
+    /**
+     * @brief Computes the "free" road acceleration. 
+     * @details Encapsulates the logic to handle the case when there is no  offical car in front of c, but is a end of a lane segment
+     * 
+     * @param c Car to calculate acceleration for
+     * @param endOfCurrentSegment End of car's current segment (cached to avoid inteval tree queries)
+     * @param ilane Lane the car is in
+     * @return std::expected<double, std::string> Acceleration of the car or error message. 
+     */
+    std::expected<double, std::string> leadCarAcceleration(const Car& c, double endOfCurrentSegment, size_t ilane, double dt);
+
     public: 
 
     CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenerator>> flows, std::unique_ptr<LaneInfo> lanes);
