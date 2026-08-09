@@ -19,8 +19,11 @@ private:
 
     std::uniform_real_distribution<double> dist_;
 
-    /// @brief required time gap between 2 second generated car
-    double TIME_GAP = 3.0;
+    /// @brief Flows left in the hour
+    double flowsLeft_;
+
+    /// @brief Timesteps left in the hour
+    double timestepsLeft_;
 
     /// @brief Rate of vechicle inflow. Units of vehicles/hr
     /// @todo This will be a function of time
@@ -33,11 +36,6 @@ private:
 
     // Simulation Timestep
     double dt_;
-    /// @brief Total timesteps in an hour. 
-    double totalTimesteps_;
-
-    /// @brief when the next flow generation can occur
-    double nextGeneration_{0.0};
 
 
     double time_{0.0};

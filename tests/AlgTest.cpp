@@ -92,7 +92,7 @@ std::filesystem::path TestZeroFlow::filename(){
 
 void TestZeroFlow::generateInput(){
     YAML::Node cfg = TestUtil::getConfigNode();
-    cfg["lanes"][1]["flow"]["rate"] = 0;
+    cfg["lanes"][0]["flow"]["rate"] = 0;
     cfg["time"] = 1000;
     cfg["logtype"] = "test";
     cfg["jobname"] = testName();
@@ -109,7 +109,7 @@ void TestZeroFlow::flowGeneration(const std::vector<RawData>& raw){
     for (const RawData& r  : raw){
         ++laneStarted[r.l_.front()];
     }
-    EXPECT_GT(laneStarted[0], 0) << "No Cars started in lane 0";
-    EXPECT_EQ(laneStarted[1], 0) << "A car started in lane 1";
+    EXPECT_EQ(laneStarted[0], 0) << "A car started in lane 0";
+    EXPECT_GT(laneStarted[1], 0) << "No Cars started in lane 1";
 
 }
