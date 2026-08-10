@@ -49,25 +49,24 @@ class TimeSeries(MovieMaker):
         super().__init__(x0, x1, t0, t1, nlanes)
         self.filepath = filepath
 
-        self.files = sorted(os.listdir(filepath))
-        self.files = self.files[2:]
-        self.files.sort(key=lambda s: float(s[5:-4]))
-        self.files = list(filter(lambda f:  (float(f[5:-4]) <= self.tlimits[1] and float(f[5:-4]) >= self.tlimits[0]), self.files))
-        self.index = 0
 
+        self.files = list(Path(self.filepath).glob("time_*.csv"))
+        self.files.sort(key=lambda s: float(s.name[5:-4]))
+        self.files = list(filter(lambda f:  (float(f.name[5:-4]) <= self.tlimits[1] and float(f.name[5:-4]) >= self.tlimits[0]), self.files))
+        self.index = 0
 
     def __repr__(self):
         return f"File Reader for folder {self.filepath}. X limits: {self.xlimits}, T limits: {self.tlimits}"
 
     def dt(self):
-        t0 = float(self.files[0][5:-4])
-        t1 = float(self.files[1][5:-4])
+        t0 = float(self.files[0].name[5:-4])
+        t1 = float(self.files[1].name[5:-4])
         return t1 - t0
 
     def generateNextFrame(self):
         file = self.files[self.index]
-        t = float(file[5:-4])
-        df = pd.read_csv(os.path.join(self.filepath, file), index_col=False)
+        t = float(file.name[5:-4])
+        df = pd.read_csv(os.path.join(file), index_col=False)
         validData = df[(df["x"] >= self.xlimits[0]) & (df["x"] <= self.xlimits[1])
                     & (t >= self.tlimits[0]) & (t <= self.tlimits[1])]
         plt.title(f't = {t:.2f}s')

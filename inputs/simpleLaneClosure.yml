@@ -1,12 +1,11 @@
 # General Information
-jobname: lane-closure
+jobname: lane-closure2
 type: "continuous" # differentiates between adding cars upfront or online
-time: 8000
-timestep: 0.2
+time: 180 # 15 minutes
+timestep: 0.5
 seed: 70
 logtype: "time-series"
 highway-type: "cpu" # "cpu", "kokkos" or "metal".
-road-end: 10000 # All lanes have a hard cutoff at x = 10000
 
 # Driver Model
 driverType: "Gipps" # driver type
@@ -35,7 +34,7 @@ lanes:
     position: 0 # right lane
   - 
     flow:
-      rate: 400
+      rate: 0
       v0: 30
       vdes: 35
 

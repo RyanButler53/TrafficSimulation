@@ -75,7 +75,7 @@ class CpuHighway : public Highway {
      * @param ilane Lane the car is in
      * @return std::expected<double, std::string> Acceleration of the car or error message. 
      */
-    std::expected<double, std::string> leadCarAcceleration(const Car& c, double endOfCurrentSegment, size_t ilane, double dt);
+    std::expected<double, std::string> leadCarAcceleration(const Car& c, size_t ilane, double dt);
 
     public: 
 
