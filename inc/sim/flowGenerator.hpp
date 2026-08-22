@@ -15,7 +15,7 @@ private:
     std::shared_ptr<CarFactory> factory_;
 
     /// @brief Randomness generator
-    std::mt19937 rng_;
+    std::shared_ptr<std::mt19937> rng_;
 
     std::uniform_real_distribution<double> dist_;
 
@@ -57,7 +57,7 @@ public:
      * @param vdes 
      * @param seed 
      */
-    FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory,  double dt, uint64_t seed = 0);
+    FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory,  double dt, std::shared_ptr<std::mt19937> rng);
     ~FlowGenerator() = default;
 
     double position() const;

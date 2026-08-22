@@ -8,6 +8,7 @@
 #include <list>
 #include <memory>
 #include <ranges>
+#include <random>
 #include <functional>
 #include <expected>
 #include <algorithm>
@@ -86,7 +87,14 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
 
     std::vector<std::pair<size_t, FlowGenerator>> flows;
     std::unordered_set<size_t> lanePositions;
-    std::unique_ptr<LaneInfo> lanes = std::make_unique<LaneInfo>();
+    
+    double bias = ParseField<double>(cfg_, "bias").value_or(0.2);
+    double changePressure = ParseField<double>(cfg_, "changePressure").value_or(0.2);
+    double switchThreshold = ParseField<double>(cfg_, "switchThreshold").value_or(0.2);
+
+
+    std::unique_ptr<LaneInfo> lanes = std::make_unique<LaneInfo>(bias, changePressure, switchThreshold);
+    auto rng = std::make_shared<std::mt19937>(seed_);
     for (const YAML::Node& node : laneNode) {
 
         double rate = ParseField<double>(node, "flow", "rate").value_or(100);
@@ -97,7 +105,7 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
         size_t position = ParseField<double>(node, "position").value_or(0);
 
         // Store values for highway ctor 
-        flows.push_back({position, FlowGenerator(rate, start, v0, vdes, factory_, dt_, seed_)});
+        flows.push_back({position, FlowGenerator(rate, start, v0, vdes, factory_, dt_, rng)});
         lanes->addSegment(start, end, position);
         lanePositions.insert(position);
     }

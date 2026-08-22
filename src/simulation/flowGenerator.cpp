@@ -4,11 +4,9 @@
 
 FlowGenerator::FlowGenerator():rate_{0}{}
 
-FlowGenerator::FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory, double dt, uint64_t seed):
-    rate_{rate}, x0_{x0}, v0_{v0}, vdes_{vdes}, factory_{factory}, dt_{dt}, flowsLeft_{rate}, timestepsLeft_{3600.0/dt}
+FlowGenerator::FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory, double dt, std::shared_ptr<std::mt19937> rng):
+    rate_{rate}, rng_{rng},x0_{x0}, v0_{v0}, vdes_{vdes}, factory_{factory}, dt_{dt}, flowsLeft_{rate}, timestepsLeft_{3600.0/dt}
 {
-    if (!seed) seed = time(nullptr);
-    rng_ = std::mt19937(seed);
     dist_ = std::uniform_real_distribution<double>(0,1);
 
 }
@@ -27,7 +25,7 @@ std::optional<Car> FlowGenerator::generateFlow(double dt, double rearPosition, d
     double prob = flowsLeft_/timestepsLeft_;
     
     // Only generate if the next flow can happen outside the 2s gap
-    if ((dist_(rng_) < prob) && rearPosition > x0_){
+    if ((dist_(*rng_) < prob) && rearPosition > x0_){
         --flowsLeft_;
         // Lead car velocity dictates maximum incoming flow speed. 
         double v0 = std::min(v0_, vlead);

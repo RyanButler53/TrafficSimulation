@@ -3,7 +3,12 @@
 #include <algorithm>
 #include <format>
 #include <ranges>
+#include <functional>
 #include <iterator>
+
+LaneInfo::LaneInfo(double bias, double changePressure, double switchThreshold):
+    bias_{bias}, changePressure_{changePressure}, switchThreshold_{switchThreshold}{}
+
 
 bool LaneInfo::addSegment(double start, double end, size_t position){
 
@@ -62,6 +67,39 @@ std::expected<double, std::string> LaneInfo::endOfLane(size_t ilane){
     }
 }
 
-double LaneInfo::endOfRoad() const{
+double LaneInfo::endOfRoad() const {
     return endOfRoad_;
+}
+
+bool LaneInfo::lastSegment(double x, size_t ilane) {
+    std::expected<double, std::string> segEnd = endOfSegment(x, ilane);
+    return segEnd.has_value() && segEnd.value() == endOfRoad_;
+}
+
+double LaneInfo::calculateBias(double x, size_t ilane, Direction dir){
+    // If there is no lane end of lane 
+    size_t newLane = (dir == Direction::LEFT) ? ilane + 1 : ilane - 1;
+    double endOfCurSegment = endOfSegment(x, ilane).value();
+    double endOfNewSegment = endOfSegment(x, newLane).value();
+
+    bool curLaneEnds = !lastSegment(x, ilane) && (endOfCurSegment < x + switchThreshold_);
+    bool newLaneEnds = !lastSegment(x, newLane) && (endOfNewSegment < x + switchThreshold_);
+
+    // If neither lane ends within switchThreshold meters
+    std::function<double()> bias = [this, dir](){return -1 * double(dir) * bias_;};
+    if (!curLaneEnds && !newLaneEnds){
+        // -1 to flip left to negative bias 
+        return bias();
+    }
+
+    double xCrit = std::min(endOfNewSegment, endOfCurSegment) - switchThreshold_;
+    if (curLaneEnds && !newLaneEnds) {
+        // Increase bias to encourage a lane change to the new lane
+        return bias() + ((changePressure_/switchThreshold_) * (x - xCrit));
+    } else if (!curLaneEnds && newLaneEnds){
+        return bias() - ((changePressure_/switchThreshold_) * (x - xCrit));
+    } else { // both lanes end. Return positive bias to move towards finding an open lane. 
+        return bias_;
+    }
+
 }

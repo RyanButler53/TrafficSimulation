@@ -51,7 +51,6 @@ class CpuHighway : public Highway {
 
     // TODO make these all configurable
     const double changeThreshold_ = 0.1;
-    const double a_bias = 0.2;
     
     /**
      * @brief Gets a cache of acceleration values to use for lookup during lane chance calculatons

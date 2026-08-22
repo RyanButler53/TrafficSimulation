@@ -11,6 +11,9 @@ import argparse
 import sys
 import jobManagement
 
+VELOCITY_MIN = 0
+VELOCITY_MAX = 30
+
 class MovieMaker(ABC):
 
     def __init__(self, x0, x1, t0, t1, nlanes):
@@ -21,6 +24,7 @@ class MovieMaker(ABC):
         if os.path.exists(self.temp_path):
             shutil.rmtree(self.temp_path)
         os.makedirs(self.temp_path)
+        plt.figure(figsize=(12, 6))
 
     def __repr__(self):
         pass
@@ -73,10 +77,12 @@ class TimeSeries(MovieMaker):
         plt.xlim(self.xlimits)
         plt.ylim(-0.2, self.lanes+0.2)
         plt.yticks(list(range(self.lanes+1)))
-        plt.scatter(validData["x"], validData["l"], c=validData["v"])
+        plt.scatter(validData["x"], validData["l"], c=validData["v"], vmin=VELOCITY_MIN, vmax=VELOCITY_MAX)
+        plt.colorbar()
         for row in validData.iterrows():
             snapshot = row[1]
             plt.annotate(f"{int(snapshot["id"])}", xy=(snapshot["x"], snapshot["l"]), xytext = (5,5), textcoords="offset points")
+        plt.tight_layout()
         plt.savefig(f"{self.temp_path}/frame{self.index}.jpg")
         plt.clf()
         self.index += 1

@@ -155,6 +155,9 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
                     if (l_hat->getPosition() > newEndOfSegment ){
                         a_alphaChange = alpha->acceleration(Car::stoppedCar(newEndOfSegment), dt);
                     } else {
+                        if (alpha->getId() == 5){
+                            // std::println("breakpoint");
+                        }
                         a_alphaChange = alpha->acceleration(*l_hat, dt);
                     }
                 }
@@ -178,6 +181,9 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
                 }
 
                 if (!a_alphaChange || ! a_fChange || !a_fHatChange){
+                    if (alpha->getId() == 16){
+                        std::println("Something is not defined: {}, {}, {}",!a_alphaChange, ! a_fChange, !a_fHatChange);
+                    }
                     return -1000.0;
                 }
     
@@ -185,6 +191,9 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
                 double estimatedMaxBraking = alpha -> braking(); // use same value for all 
                 std::array<double, 3> accelerations = {*a_alphaChange, *a_fChange, *a_fHatChange};
                 if (*std::ranges::min_element(accelerations) < estimatedMaxBraking){
+                    if (alpha->getId() == 16){
+                        std::println("Safety criterion not passed: {}, {}, {} at x = ",*a_alphaChange, *a_fChange, *a_fHatChange, alpha->getPosition());
+                    }
                     return -1000.0;
                 }
 
@@ -195,15 +204,21 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
 
             // If in leftmost lane, don't do left lane change computation 
             if (laneInfo_->laneValid(alpha->getPosition(), ilane - 1)){
-                right = calculateUtility(ilane, ilane - 1, a_bias);
+                right = calculateUtility(ilane, ilane - 1, laneInfo_->calculateBias(alpha->getPosition(), ilane, Direction::RIGHT ));
             } 
             if (laneInfo_->laneValid(alpha->getPosition(), ilane + 1)) { // rightmost lane, only change left
-                left = calculateUtility(ilane, ilane + 1, -1 * a_bias);
+                left = calculateUtility(ilane, ilane + 1,  laneInfo_->calculateBias(alpha->getPosition(), ilane, Direction::LEFT));
+                if (alpha->getId() == 16){
+                    std::println("Utility to go left: {}", left);
+                }
             }
             // Map the utility to old lane, new lane
             if (right > left and right > changeThreshold_){
                 laneChanges.push_back({alpha ,ilane, ilane-1});
             } else if (left > right and left > changeThreshold_){
+                if (alpha->getId() == 16){
+                    std::println("Going left!");
+                }
                 laneChanges.push_back({alpha, ilane, ilane+1});
             }
 

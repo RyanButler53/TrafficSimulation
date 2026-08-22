@@ -1,5 +1,6 @@
 #include "sim/laneInfo.hpp"
 #include <gtest/gtest.h>
+#include <ranges>
 
 class LaneInfoTest : public ::testing::Test {
     protected:
@@ -65,3 +66,85 @@ TEST_F(LaneInfoTest, endOfLane){
     EXPECT_EQ(info_.endOfRoad(), 115);
     EXPECT_EQ(info_.endOfLane(0), 115);
 }
+
+TEST_F(LaneInfoTest, lastSegment){
+    // ASSERT_TRUE(info_.addSegment(0, 20, 0));
+    // ASSERT_TRUE(info_.addSegment(50, 80, 0));
+    // ASSERT_TRUE(info_.addSegment(0, 55, 1));
+    // ASSERT_TRUE(info_.addSegment(75, 100, 1));
+    // ASSERT_TRUE(info_.addSegment(0, 55, 2));
+    // ASSERT_TRUE(info_.addSegment(80, 100, 2));
+    EXPECT_FALSE(info_.lastSegment(55, 0));
+    EXPECT_FALSE(info_.lastSegment(18, 0));
+    EXPECT_FALSE(info_.lastSegment(25, 0)); // x = 25 doesn't exist. 
+
+    EXPECT_FALSE(info_.lastSegment(50, 1));
+    EXPECT_TRUE(info_.lastSegment(80, 1));
+    EXPECT_FALSE(info_.lastSegment(115, 1));
+
+    EXPECT_FALSE(info_.lastSegment(25, 2));
+    EXPECT_TRUE(info_.lastSegment(80, 2));
+    EXPECT_TRUE(info_.lastSegment(85, 2));
+    EXPECT_TRUE(info_.lastSegment(100, 2));
+    EXPECT_FALSE(info_.lastSegment(115, 2));
+
+}
+
+
+class BiasCalculation : public ::testing::Test {
+    protected:
+    std::unique_ptr<LaneInfo> l;
+    void SetUp() override {
+        
+        l =  std::make_unique<LaneInfo>(0.2, 0.4, 1600);
+        l->addSegment(0, 2000, 0);
+        l->addSegment(0, 6000, 1);
+        l->addSegment(4000, 10000, 0);
+        l->addSegment(6400, 10000, 1);
+    }
+};
+
+TEST_F(BiasCalculation, intoEndOfLane){
+    EXPECT_DOUBLE_EQ(l->calculateBias(400, 1, Direction::RIGHT), 0.2);
+    EXPECT_DOUBLE_EQ(l->calculateBias(600, 1, Direction::RIGHT), 0.15);
+    EXPECT_NEAR(l->calculateBias(1200, 1, Direction::RIGHT), 0.0, 1e-10);
+    EXPECT_DOUBLE_EQ(l->calculateBias(1800, 1, Direction::RIGHT), -0.15);
+    EXPECT_DOUBLE_EQ(l->calculateBias(2000, 1, Direction::RIGHT), -0.2);
+
+}
+
+TEST_F(BiasCalculation, outOfEndOfLane){
+
+    EXPECT_DOUBLE_EQ(l->calculateBias(400, 0, Direction::LEFT), -0.2);
+    EXPECT_DOUBLE_EQ(l->calculateBias(600, 0, Direction::LEFT), -0.15);
+    EXPECT_NEAR(l->calculateBias(1200, 0, Direction::LEFT), 0.0, 1e-10);
+    EXPECT_DOUBLE_EQ(l->calculateBias(1800, 0, Direction::LEFT), 0.15);
+    EXPECT_DOUBLE_EQ(l->calculateBias(2000, 0, Direction::LEFT), 0.2);
+
+}
+
+TEST_F(BiasCalculation, intoOfEndOfLaneLeft){
+
+    EXPECT_DOUBLE_EQ(l->calculateBias(4400, 1, Direction::RIGHT), 0.2);
+    EXPECT_DOUBLE_EQ(l->calculateBias(4600, 1, Direction::RIGHT), 0.25);
+    EXPECT_DOUBLE_EQ(l->calculateBias(5200, 1, Direction::RIGHT), 0.4);
+    EXPECT_DOUBLE_EQ(l->calculateBias(5800, 1, Direction::RIGHT), 0.55);
+    EXPECT_DOUBLE_EQ(l->calculateBias(6000, 1, Direction::RIGHT), 0.6);
+}
+
+TEST_F(BiasCalculation, outOfEndOfLaneLeft){
+
+    EXPECT_DOUBLE_EQ(l->calculateBias(4400, 0, Direction::LEFT), -0.2);
+    EXPECT_DOUBLE_EQ(l->calculateBias(4600, 0, Direction::LEFT), -0.25);
+    EXPECT_DOUBLE_EQ(l->calculateBias(5200, 0, Direction::LEFT), -0.4);
+    EXPECT_DOUBLE_EQ(l->calculateBias(5800, 0, Direction::LEFT), -0.55);
+    EXPECT_DOUBLE_EQ(l->calculateBias(6000, 0, Direction::LEFT), -0.6);
+}
+
+TEST_F(BiasCalculation, lastSegmentLeftLane){
+    for (size_t i : std::views::iota(0,3500)){
+        ASSERT_DOUBLE_EQ(l->calculateBias(6500 + double(i), 1, Direction::RIGHT), 0.2) << "X: " << 6500 + double(i);
+        ASSERT_DOUBLE_EQ(l->calculateBias(6500 + double(i), 0, Direction::LEFT), -0.2) << "X: " << 6500 + double(i);
+    }
+}
+

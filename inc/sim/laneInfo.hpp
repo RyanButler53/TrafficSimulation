@@ -25,6 +25,11 @@ struct LaneBoundary : public SimpleInterval<double>{
     size_t lane() const {return position_;}
 };    
 
+enum class Direction : int8_t{
+    RIGHT = -1,
+    LEFT = 1
+};
+
 /**
  * @class Class to hold and answer queries about lanes. Particularly start
  * and ends of lanes and segments of lanes. 
@@ -35,12 +40,19 @@ class LaneInfo {
     IntervalTree<LaneBoundary> iTree_;
     std::vector<std::optional<double>> laneEnds_;
     double endOfRoad_ = 0;
+    
+    double bias_ = 0.2;
+    double changePressure_ = 0.4;
+    // X threshold where biases break down to force a lane change. 
+    double switchThreshold_ = 1600;
 
     std::optional<LaneBoundary> getLane(double x, size_t ilane);
 
 
     public:
     LaneInfo() = default;
+
+    LaneInfo(double bias, double changePressure, double switchThreshold);
     /**
      * @brief Adds many segmemnts to a lane. Checks that they are all valid and there are no overlaps
      * 
@@ -68,6 +80,26 @@ class LaneInfo {
      */
     std::expected<double, std::string> endOfLane(size_t ilane);
 
+
+    /**
+     * @brief Calculates the lane change bias for a car looking to change lanes
+     * @warning This function has no error handing and can only be called if x exists in both the current and target lanes
+     * @param x X position of the current car
+     * @param ilane CURRENT lane the car is in
+     * @param dir Direction the car is trying to lane change.
+     * @return Bias for this x position, lane position and lane chang direction
+     */
+    double calculateBias(double x, size_t ilane, Direction dir);
+
+    /**
+     * @brief Returns if the segment x is in is at the end of the lane (encapsulates this computation)
+     * 
+     * @param x : X position to check
+     * @param ilane lane index
+     * @return true if x is in the last segment of its lane. Do true free road acceleration and bias calculation
+     * @return false if x is in a segment that will end. Acceleration and bias calculations must account for this. 
+     */
+    bool lastSegment(double x, size_t ilane);
     double endOfRoad() const;
 };
 
