@@ -56,7 +56,11 @@ std::expected<double, std::string> Car::acceleration(const Car& lead, double dt)
     }
     double vf = followStrategy_.update(vel_, vlead, gap, dt);
     if (vf < 0){
-        return std::unexpected(std::format("Negative final velocity: {} between cars {} and {}", vf, id_, lead.getId()));
+        if (vlead == 0 && lead.getId() == 0){
+            return std::unexpected(std::format("Car {} failed to move out of its lane before it ended.", id_));
+        } else {
+            return std::unexpected(std::format("Negative final velocity: {} between cars {} and {}", vf, id_, lead.getId()));
+        }
     } else if (std::isnan(vf)){
         return std::unexpected(std::format("Nan final velocity: {}", vf));
     }

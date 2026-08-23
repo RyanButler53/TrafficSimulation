@@ -28,7 +28,7 @@ struct RandomGenerator {
      * @param rng random number generator
      * @return double value
      */
-    virtual double getValue(std::mt19937 rng) = 0;
+    virtual double getValue(std::mt19937& rng) = 0;
 
 };
 
@@ -51,7 +51,7 @@ class UniformDistribution : public RandomGenerator {
     UniformDistribution(double min, double max):
         dist_{min, max}{}
 
-    double getValue(std::mt19937 rng) override {
+    double getValue(std::mt19937& rng) override {
         return dist_(rng);
     }
 };
@@ -68,7 +68,7 @@ class NormalDistribution : public RandomGenerator {
     NormalDistribution(double mean, double stdev):
         dist_(mean, stdev){}
 
-    double getValue(std::mt19937 rng) override {
+    double getValue(std::mt19937& rng) override {
         return dist_(rng);
     }
 

@@ -5,7 +5,7 @@
 
 
 struct AlwaysGenerate : public RandomGenerator {
-    double getValue(std::mt19937) override {return 0.0;}
+    double getValue(std::mt19937&) override {return 0.0;}
 };
 
 
@@ -84,4 +84,16 @@ TEST_F(FlowGeneratorTests, adjustedV0){
     EXPECT_EQ(gen->generateFlow(100, 15)->getVelocity(), 20); // Equal case doesn't slow down
     EXPECT_EQ(gen->generateFlow(115, 15)->getVelocity(), 20);
 
+}
+
+// Ensure the rng is properly modifying  
+TEST(RngTest, DifferentValues){
+    UniformDistribution dist(0, 1);
+    std::mt19937 rng{105};
+    double sum = 0;
+    for (size_t i : std::views::iota(0, 100)){
+        double v = dist.getValue(rng);
+        sum += dist.getValue(rng);
+    }
+    EXPECT_NEAR(sum, 50, 5);
 }

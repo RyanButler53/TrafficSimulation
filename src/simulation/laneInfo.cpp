@@ -43,6 +43,19 @@ std::optional<LaneBoundary> LaneInfo::getLane(double x, size_t ilane){
     }
 }
 
+std::optional<size_t> LaneInfo::nextLane(double x, size_t ilane, Direction dir){
+    // Overflow error
+    if (ilane == 0 && dir == Direction::RIGHT){
+        return std::nullopt;
+    }
+    size_t newLane = (dir == Direction::LEFT) ? ilane + 1 : ilane - 1;
+    if (laneValid(x, newLane)){
+        return newLane;
+    } else {
+        return std::nullopt;
+    }
+}
+
 bool LaneInfo::laneValid(double x, size_t ilane){
     return getLane(x, ilane).has_value();
 }
@@ -77,29 +90,33 @@ bool LaneInfo::lastSegment(double x, size_t ilane) {
 }
 
 double LaneInfo::calculateBias(double x, size_t ilane, Direction dir){
-    // If there is no lane end of lane 
-    size_t newLane = (dir == Direction::LEFT) ? ilane + 1 : ilane - 1;
-    double endOfCurSegment = endOfSegment(x, ilane).value();
-    double endOfNewSegment = endOfSegment(x, newLane).value();
 
-    bool curLaneEnds = !lastSegment(x, ilane) && (endOfCurSegment < x + switchThreshold_);
-    bool newLaneEnds = !lastSegment(x, newLane) && (endOfNewSegment < x + switchThreshold_);
-
-    // If neither lane ends within switchThreshold meters
-    std::function<double()> bias = [this, dir](){return -1 * double(dir) * bias_;};
-    if (!curLaneEnds && !newLaneEnds){
-        // -1 to flip left to negative bias 
-        return bias();
+    // Compute how many lane changes in direction dir are possibly allowed
+    auto lane = std::make_optional<size_t>(ilane);
+    std::vector<double> laneEnds;
+    while (lane.has_value()){
+        laneEnds.push_back(endOfSegment(x, lane.value()).value());
+        lane = nextLane(x, lane.value(), dir);
     }
 
-    double xCrit = std::min(endOfNewSegment, endOfCurSegment) - switchThreshold_;
-    if (curLaneEnds && !newLaneEnds) {
-        // Increase bias to encourage a lane change to the new lane
+    // Find the lane index of the closest lane to ending 
+    auto closest = std::min_element(laneEnds.begin(), laneEnds.end());
+    double closestEndOfLane = *closest;
+    auto distance = std::distance(laneEnds.begin(), closest);
+
+    // If none of the lanes end (closest is the end of the road), just return bias()
+    std::function<double()> bias = [this, dir](){return -1 * double(dir) * bias_;};
+
+    if (closestEndOfLane == endOfRoad_ or closestEndOfLane > x+ switchThreshold_){
+        return bias();
+    } 
+    double xCrit = closestEndOfLane - switchThreshold_;
+
+    if (distance == 0){ // the current lane is the one that needs to end. 
         return bias() + ((changePressure_/switchThreshold_) * (x - xCrit));
-    } else if (!curLaneEnds && newLaneEnds){
-        return bias() - ((changePressure_/switchThreshold_) * (x - xCrit));
-    } else { // both lanes end. Return positive bias to move towards finding an open lane. 
-        return bias_;
+    } else { // there is another lane that is going to end. Bias the
+        int d(distance);
+        return bias() - (1.0/double(d)) * ((changePressure_/switchThreshold_) * (x - xCrit));
     }
 
 }

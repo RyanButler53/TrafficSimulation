@@ -23,7 +23,7 @@ driverParams:
   p_stdev: 0.04
 
 # Highway Parameters:
-changePressure: 0.8
+changePressure: 0.6
 switchThreshold: 1600
 bias: 0.2
 
@@ -34,6 +34,8 @@ lanes:
       rate: 200 # flow rate (veh/hr)
       v0: 20
       vdes: 20
+      v0_stdev: 2
+      vdes_stdev: 2
 
     start: 0
     end: 2000
@@ -43,6 +45,8 @@ lanes:
       rate: 200
       v0: 0
       vdes: 30
+      v0_stdev: 0
+      vdes_stdev: 2 
 
     start: 5000
     end: 10000
@@ -52,7 +56,9 @@ lanes:
     flow:
       rate: 400
       v0: 20
-      vdes: 20
+      vdes: 25
+      v0_stdev: 2
+      vdes_stdev: 2 
 
     start: 0
     end: 10000
@@ -61,8 +67,10 @@ lanes:
   -
     flow:
       rate: 600
-      v0: 20
-      vdes: 20
+      v0: 25
+      vdes: 25
+      v0_stdev: 2
+      vdes_stdev: 2 
     start: 0
     end: 10000
     position: 2 # left lane

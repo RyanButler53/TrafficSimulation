@@ -48,6 +48,15 @@ class LaneInfo {
 
     std::optional<LaneBoundary> getLane(double x, size_t ilane);
 
+    /**
+     * @brief Returns the next lane given a lane change by direction dir at position x
+     * 
+     * @param x X position to check if the lane exists at this position
+     * @param ilane Current lane
+     * @param dir Direction to move
+     * @return std::optional<size_t> Returns the next lane over. std::nullopt if the lane doesn't exist at x
+     */
+    std::optional<size_t> nextLane(double x, size_t ilane, Direction dir);
 
     public:
     LaneInfo() = default;

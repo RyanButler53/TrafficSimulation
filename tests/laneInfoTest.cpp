@@ -68,12 +68,7 @@ TEST_F(LaneInfoTest, endOfLane){
 }
 
 TEST_F(LaneInfoTest, lastSegment){
-    // ASSERT_TRUE(info_.addSegment(0, 20, 0));
-    // ASSERT_TRUE(info_.addSegment(50, 80, 0));
-    // ASSERT_TRUE(info_.addSegment(0, 55, 1));
-    // ASSERT_TRUE(info_.addSegment(75, 100, 1));
-    // ASSERT_TRUE(info_.addSegment(0, 55, 2));
-    // ASSERT_TRUE(info_.addSegment(80, 100, 2));
+
     EXPECT_FALSE(info_.lastSegment(55, 0));
     EXPECT_FALSE(info_.lastSegment(18, 0));
     EXPECT_FALSE(info_.lastSegment(25, 0)); // x = 25 doesn't exist. 
@@ -99,6 +94,7 @@ class BiasCalculation : public ::testing::Test {
         l =  std::make_unique<LaneInfo>(0.2, 0.4, 1600);
         l->addSegment(0, 2000, 0);
         l->addSegment(0, 6000, 1);
+        l->addSegment(0, 10000, 2);
         l->addSegment(4000, 10000, 0);
         l->addSegment(6400, 10000, 1);
     }
@@ -121,6 +117,22 @@ TEST_F(BiasCalculation, outOfEndOfLane){
     EXPECT_DOUBLE_EQ(l->calculateBias(1800, 0, Direction::LEFT), 0.15);
     EXPECT_DOUBLE_EQ(l->calculateBias(2000, 0, Direction::LEFT), 0.2);
 
+}
+
+TEST_F(BiasCalculation, nearEndOfLaneRight){
+    EXPECT_DOUBLE_EQ(l->calculateBias(400, 2, Direction::RIGHT), 0.2);
+    EXPECT_DOUBLE_EQ(l->calculateBias(600, 2, Direction::RIGHT), 0.175);
+    EXPECT_DOUBLE_EQ(l->calculateBias(1200, 2, Direction::RIGHT), 0.1);
+    EXPECT_DOUBLE_EQ(l->calculateBias(1800, 2, Direction::RIGHT), 0.025);
+    EXPECT_NEAR(l->calculateBias(2000, 2, Direction::RIGHT), 0, 1e-10);
+}
+
+// Enable this test when lanes from the other side are reflected in bias calculations
+TEST_F(BiasCalculation, DISABLED_nearEndOfLaneLeft){
+    EXPECT_DOUBLE_EQ(l->calculateBias(400, 2, Direction::LEFT), -0.2);
+    EXPECT_DOUBLE_EQ(l->calculateBias(600, 2, Direction::LEFT), -0.175);
+    EXPECT_DOUBLE_EQ(l->calculateBias(1200, 2, Direction::LEFT), -0.1);
+    EXPECT_DOUBLE_EQ(l->calculateBias(1800, 2, Direction::LEFT), 0.025);
 }
 
 TEST_F(BiasCalculation, intoOfEndOfLaneLeft){

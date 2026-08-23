@@ -13,7 +13,7 @@
 #include <vector>
 #include <expected>
 #include <functional>
-#include <memory_resource>
+#include <print>
 #include <thread>
 #include "sim/simulator.hpp"
 #include "sim/parser.hpp"
@@ -43,6 +43,7 @@ std::expected<void, std::string> Simulator::mainLoop(){
     double t = 0.0;
     std::expected <void, std::string> simStatus;
     while (t < totalTime_){
+        std::println("T = {:.2f}", t);
         simStatus = highway_->update(dt_).transform([this](const auto& cdata){
             for (const auto& car : cdata){cars_.push_back(car);}
         });
