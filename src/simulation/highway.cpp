@@ -182,7 +182,7 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
 
                 if (!a_alphaChange || ! a_fChange || !a_fHatChange){
                     if (alpha->getId() == 16){
-                        std::println("Something is not defined: {}, {}, {}",!a_alphaChange, ! a_fChange, !a_fHatChange);
+                        // std::println("Something is not defined: {}, {}, {}",!a_alphaChange, ! a_fChange, !a_fHatChange);
                     }
                     return -1000.0;
                 }
@@ -192,7 +192,7 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
                 std::array<double, 3> accelerations = {*a_alphaChange, *a_fChange, *a_fHatChange};
                 if (*std::ranges::min_element(accelerations) < estimatedMaxBraking){
                     if (alpha->getId() == 16){
-                        std::println("Safety criterion not passed: {}, {}, {} at x = ",*a_alphaChange, *a_fChange, *a_fHatChange, alpha->getPosition());
+                        // std::println("Safety criterion not passed: {}, {}, {} at x = ",*a_alphaChange, *a_fChange, *a_fHatChange, alpha->getPosition());
                     }
                     return -1000.0;
                 }
@@ -209,7 +209,7 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
             if (laneInfo_->laneValid(alpha->getPosition(), ilane + 1)) { // rightmost lane, only change left
                 left = calculateUtility(ilane, ilane + 1,  laneInfo_->calculateBias(alpha->getPosition(), ilane, Direction::LEFT));
                 if (alpha->getId() == 16){
-                    std::println("Utility to go left: {}", left);
+                    // std::println("Utility to go left: {}", left);
                 }
             }
             // Map the utility to old lane, new lane
@@ -217,7 +217,7 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
                 laneChanges.push_back({alpha ,ilane, ilane-1});
             } else if (left > right and left > changeThreshold_){
                 if (alpha->getId() == 16){
-                    std::println("Going left!");
+                    // std::println("Going left!");
                 }
                 laneChanges.push_back({alpha, ilane, ilane+1});
             }
@@ -253,9 +253,9 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
         std::set<Car>::iterator nextCar = lanes_[l].upper_bound(Car::compare(gen.position()));
         std::optional<Car> c = std::nullopt;
         if (nextCar == lanes_[l].end()){
-            c = gen.generateFlow(dt);
+            c = gen.generateFlow();
         } else {
-            c = gen.generateFlow(dt, nextCar->getRearPosition(), nextCar->getVelocity());
+            c = gen.generateFlow(nextCar->getRearPosition(), nextCar->getVelocity());
         }
 
         if (c){ 

@@ -90,7 +90,7 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
     
     double bias = ParseField<double>(cfg_, "bias").value_or(0.2);
     double changePressure = ParseField<double>(cfg_, "changePressure").value_or(0.2);
-    double switchThreshold = ParseField<double>(cfg_, "switchThreshold").value_or(0.2);
+    double switchThreshold = ParseField<double>(cfg_, "switchThreshold").value_or(1600);
 
 
     std::unique_ptr<LaneInfo> lanes = std::make_unique<LaneInfo>(bias, changePressure, switchThreshold);
@@ -103,9 +103,18 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
         double start = ParseField<double>(node, "start").value_or(0);
         double end = ParseField<double>(node, "end").value_or(1000);
         size_t position = ParseField<double>(node, "position").value_or(0);
+        double v0_stdev = ParseField<double>(node, "flow", "v0_stdev").value_or(0);
+        double vdes_stdev=ParseField<double>(node, "flow", "vdes_stdev").value_or(0);
 
         // Store values for highway ctor 
-        flows.push_back({position, FlowGenerator(rate, start, v0, vdes, factory_, dt_, rng)});
+
+        FlowGenerator generator(rate, start, factory_, dt_, rng);
+        generator.setRng(
+            std::make_shared<NormalDistribution>(v0, v0_stdev),
+            std::make_shared<NormalDistribution>(vdes, vdes_stdev),
+            std::make_shared<UniformDistribution>(0, 1) // Ensures rate is correctly hit. 
+        );
+        flows.push_back({position, generator});
         lanes->addSegment(start, end, position);
         lanePositions.insert(position);
     }

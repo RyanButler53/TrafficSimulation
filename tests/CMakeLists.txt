@@ -25,7 +25,7 @@ target_link_libraries(testCases PRIVATE yaml-cpp::yaml-cpp GTest::gtest)
 macro(TrafficTest testname srcs)
     add_executable(${testname} ${srcs})
     target_link_libraries(${testname} PRIVATE GTest::gtest GTest::gtest_main ${ARGN})
-    gtest_discover_tests(${testname} )
+    gtest_discover_tests(${testname})
 endmacro()
 
 macro(SingleFixtureTest testname srcs)
@@ -47,6 +47,7 @@ target_compile_definitions(regression PUBLIC HASH_FILE="${CMAKE_CURRENT_SOURCE_D
 
 TrafficTest(queueTest queueTest.cpp)
 TrafficTest(laneinfoTest laneInfoTest.cpp shared)
+TrafficTest(flowGeneratorTest flowGeneratorTest.cpp shared setup)
 
 SingleFixtureTest(dbManagerTest dbManager.cpp testutil
                                         jobManager 
