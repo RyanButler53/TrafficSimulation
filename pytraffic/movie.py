@@ -11,6 +11,9 @@ import argparse
 import sys
 import jobManagement
 
+VELOCITY_MIN = 0
+VELOCITY_MAX = 30
+
 class MovieMaker(ABC):
 
     def __init__(self, x0, x1, t0, t1, nlanes):
@@ -21,6 +24,7 @@ class MovieMaker(ABC):
         if os.path.exists(self.temp_path):
             shutil.rmtree(self.temp_path)
         os.makedirs(self.temp_path)
+        plt.figure(figsize=(12, 6))
 
     def __repr__(self):
         pass
@@ -49,34 +53,36 @@ class TimeSeries(MovieMaker):
         super().__init__(x0, x1, t0, t1, nlanes)
         self.filepath = filepath
 
-        self.files = sorted(os.listdir(filepath))
-        self.files = self.files[2:]
-        self.files.sort(key=lambda s: float(s[5:-4]))
-        self.files = list(filter(lambda f:  (float(f[5:-4]) <= self.tlimits[1] and float(f[5:-4]) >= self.tlimits[0]), self.files))
-        self.index = 0
 
+        self.files = list(Path(self.filepath).glob("time_*.csv"))
+        self.files.sort(key=lambda s: float(s.name[5:-4]))
+        self.files = list(filter(lambda f:  (float(f.name[5:-4]) <= self.tlimits[1] and float(f.name[5:-4]) >= self.tlimits[0]), self.files))
+        self.index = 0
 
     def __repr__(self):
         return f"File Reader for folder {self.filepath}. X limits: {self.xlimits}, T limits: {self.tlimits}"
 
     def dt(self):
-        t0 = float(self.files[0][5:-4])
-        t1 = float(self.files[1][5:-4])
+        t0 = float(self.files[0].name[5:-4])
+        t1 = float(self.files[1].name[5:-4])
         return t1 - t0
 
     def generateNextFrame(self):
         file = self.files[self.index]
-        t = float(file[5:-4])
-        df = pd.read_csv(os.path.join(self.filepath, file), index_col=False)
+        t = float(file.name[5:-4])
+        df = pd.read_csv(os.path.join(file), index_col=False)
         validData = df[(df["x"] >= self.xlimits[0]) & (df["x"] <= self.xlimits[1])
                     & (t >= self.tlimits[0]) & (t <= self.tlimits[1])]
+        plt.title(f't = {t:.2f}s')
         plt.xlim(self.xlimits)
         plt.ylim(-0.2, self.lanes+0.2)
         plt.yticks(list(range(self.lanes+1)))
-        plt.scatter(validData["x"], validData["l"], c=validData["v"])
+        plt.scatter(validData["x"], validData["l"], c=validData["v"], vmin=VELOCITY_MIN, vmax=VELOCITY_MAX)
+        plt.colorbar()
         for row in validData.iterrows():
             snapshot = row[1]
             plt.annotate(f"{int(snapshot["id"])}", xy=(snapshot["x"], snapshot["l"]), xytext = (5,5), textcoords="offset points")
+        plt.tight_layout()
         plt.savefig(f"{self.temp_path}/frame{self.index}.jpg")
         plt.clf()
         self.index += 1

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <algorithm>
 #include <filesystem>
+#include <string>
 
 #include "api/DBManager.hpp"
 #include "api/jobManager.hpp"
@@ -125,7 +126,13 @@ TEST_F(DBManagerTest, carMetadata){
     std::expected<std::vector<CarMetadata>, std::string> allCarMetadata = reader.queryCars("test-dbreader1");
     EXPECT_TRUE(allCarMetadata.has_value()) << std::format("Error querying all cars metadata: {}", allCarMetadata.error());
     size_t ncars = allCarMetadata->size();
-    EXPECT_EQ(ncars, 22) << "Case is known to have 22 cars";
+
+    std::fstream in(std::string(DATA_DIR) + "/db_case_ncars.txt");
+    std::string data;
+    std::getline(in, data);
+    size_t ncars_expected = std::stoull(data);
+
+    EXPECT_EQ(ncars, ncars_expected) << "Case is known to have " << ncars_expected << " cars"; // Expected to see 50 cars
     for (size_t i = 0; i < ncars; ++i){
         auto data = reader.queryCars("test-dbreader1", i);
         EXPECT_TRUE(data.has_value()) << std::format("Error Querying Car {}: {}",i,  data.error());

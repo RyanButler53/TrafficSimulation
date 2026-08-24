@@ -55,6 +55,13 @@ class Car {
      */
     Car infinity() const;
     
+    /**
+     * @brief Creates a new car at X. This car can only be used for comparison. 
+     * 
+     * @param x 
+     */
+    Car(double x);
+
     public: 
 
     // Constructors
@@ -65,7 +72,7 @@ class Car {
     size_t getId() const {return id_;}
     double getPosition() const {return pos_;}
     double getVelocity() const {return vel_;}
-    double getLength() const {return len_;}
+    double getRearPosition() const {return pos_ - len_;}
     double politeness() const {return politeness_;}
     double braking() const {return followStrategy_.maxbraking;}
 
@@ -101,6 +108,23 @@ class Car {
     CarSnapshot snapshot(double t, uint16_t lane) const;
 
     CarData data() const;
+
+    /**
+     * @brief Creates a car that is only used for comparison with other cars
+     * 
+     * @param x X value to compare at. 
+     * @return Car at specified x value
+     */
+    static Car compare(double x);
+
+    /**
+     * @brief Creates a stopped car at a position x. This car can be be used for acceleration calculations
+     * 
+     * @param x X value to compare at. 
+     * @return Car at specified x value
+     */
+    static Car stoppedCar(double x);
+
 
     bool operator<(const Car& other) const{
         return pos_ < other.pos_;

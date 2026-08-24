@@ -7,7 +7,6 @@ timestep: 1
 seed: 70
 logtype: "file" # "file", "time-series", "test" or "db"
 highway-type: "cpu" # "cpu", "kokkos" or "metal".
-road-end: 5000 # All lanes have a hard cutoff at 5000
 
 # Driver Model
 driverType: "Gipps" # driver type

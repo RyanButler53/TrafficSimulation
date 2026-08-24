@@ -1,9 +1,9 @@
 ---
 # General Information
-jobname: 3-lane
+jobname: large-lane-closure
 type: "continuous" # differentiates between adding cars upfront or online
-time: 8000
-timestep: 1
+time: 500
+timestep: 0.2
 seed: 70
 logtype: "time-series"
 highway-type: "cpu" # "cpu", "kokkos" or "metal".
@@ -22,23 +22,43 @@ driverParams:
   bmax_stdev: 0.1
   p_stdev: 0.04
 
+# Highway Parameters:
+changePressure: 0.6
+switchThreshold: 1600
+bias: 0.2
+
 #Lane must have Flow, start, end and index (position)
 lanes:
   -
     flow:
       rate: 200 # flow rate (veh/hr)
-      v0: 0 # 0 represents all cars are starting from a standstill (stoplight case)
-      vdes: 30 # all cars want to go 30 m/s
+      v0: 20
+      vdes: 20
+      v0_stdev: 2
+      vdes_stdev: 2
 
     start: 0
+    end: 2000
+    position: 0 # right lane
+  -
+    flow:
+      rate: 200
+      v0: 0
+      vdes: 30
+      v0_stdev: 0
+      vdes_stdev: 2 
+
+    start: 5000
     end: 10000
-    position: 0 # left lane
+    position: 0 # right lane
 
   - 
     flow:
-      rate: 400 # flow rate (veh/hr)
-      v0: 30
-      vdes: 35 # all cars want to go 35 m/s
+      rate: 400
+      v0: 20
+      vdes: 25
+      v0_stdev: 2
+      vdes_stdev: 2 
 
     start: 0
     end: 10000
@@ -47,10 +67,18 @@ lanes:
   -
     flow:
       rate: 600
-      v0: 33
-      vdes: 38
+      v0: 25
+      vdes: 25
+      v0_stdev: 2
+      vdes_stdev: 2 
     start: 0
     end: 10000
     position: 2 # left lane
 
+  -
+    flow:
+      rate: 0
+    start: 6000
+    end: 10000
+    position: 3 # newly added leftmost lane
 

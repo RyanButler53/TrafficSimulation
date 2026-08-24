@@ -40,7 +40,7 @@ YAML::Node getConfigNode() {
     lane2["flow"]["vdes"] = 38;
     lane2["start"] = 0;
     lane2["end"] = 2000;
-    lane2["posiiton"]  = 1;
+    lane2["position"]  = 1;
 
     cfg["lanes"].push_back(lane1);
     cfg["lanes"].push_back(lane2);

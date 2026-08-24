@@ -16,43 +16,54 @@ find_package(libpqxx CONFIG REQUIRED)
 find_package(OpenSSL)
 find_package(CURL)
 
+# Test utility libraries
 add_library(testutil STATIC testUtil.cpp)
 target_link_libraries(testutil PUBLIC yaml-cpp::yaml-cpp PRIVATE pqxx_wrapper)
 
+add_library(testCases STATIC AlgTest.cpp)
+target_link_libraries(testCases PRIVATE yaml-cpp::yaml-cpp GTest::gtest)
 
-macro(TrafficTest testname srcs)
+# Test macros
+macro(TrafficTest testname srcs tag)
     add_executable(${testname} ${srcs})
     target_link_libraries(${testname} PRIVATE GTest::gtest GTest::gtest_main ${ARGN})
-    gtest_discover_tests(${testname} )
+    gtest_discover_tests(${testname} PROPERTIES LABELS ${tag})
 endmacro()
 
-macro(SingleFixtureTest testname srcs)
+macro(SingleFixtureTest testname srcs tag)
     add_executable(${testname} ${srcs})
     target_link_libraries(${testname} PRIVATE GTest::gtest GTest::gtest_main ${ARGN})
     add_test(NAME ${testname} COMMAND ${testname})
+    set_tests_properties(${testname} PROPERTIES LABELS ${tag})
 endmacro()
 
-TrafficTest(parsing parsing.cpp simulation yaml-cpp::yaml-cpp)
+# Test Cases
+TrafficTest(parsing parsing.cpp unit simulation yaml-cpp::yaml-cpp)
 
 
-TrafficTest(regression regression.cpp simulation
-                                      jobManager
-                                      testutil
-                                      pqxx_wrapper
-                                      $<IF:$<BOOL:${OpenSSL_FOUND}>,OpenSSL::Crypto,""> )
+TrafficTest(regression regression.cpp integration simulation
+                                                  jobManager
+                                                  testutil
+                                                  pqxx_wrapper
+                                                  $<IF:$<BOOL:${OpenSSL_FOUND}>,OpenSSL::Crypto,""> )
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
+target_compile_definitions(regression PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
-TrafficTest(queue QueueTest.cpp)
+TrafficTest(queueTest queueTest.cpp unit)
+TrafficTest(laneinfoTest laneInfoTest.cpp unit shared)
+TrafficTest(flowGeneratorTest flowGeneratorTest.cpp unit shared setup)
 
-SingleFixtureTest(dbManagerTest dbManager.cpp testutil
-                                        jobManager 
-                                        dbmanager
-                                        pqxx_wrapper)
+SingleFixtureTest(dbManagerTest dbManager.cpp integration testutil
+                                                          jobManager 
+                                                          dbmanager
+                                                          pqxx_wrapper)
+target_compile_definitions(dbManagerTest PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 
-SingleFixtureTest(algorithmTest algorithmTest.cpp simulation 
-                                            testutil
-                                            dbmanager)
+SingleFixtureTest(algorithmTest algorithmTest.cpp integration simulation 
+                                                              testCases
+                                                              testutil
+                                                              dbmanager)
 
 if (CURL_FOUND)
     # Bring in Json Dependency
@@ -61,10 +72,12 @@ if (CURL_FOUND)
     FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
     FetchContent_MakeAvailable(json)
 
-    SingleFixtureTest(apiTest apiTest.cpp api
-                                    nlohmann_json::nlohmann_json
-                                    testutil
-                                    CURL::libcurl)
+    SingleFixtureTest(apiTest apiTest.cpp integration api 
+                                                      nlohmann_json::nlohmann_json
+                                                      testutil
+                                                      CURL::libcurl)
+    target_compile_definitions(apiTest PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+
 endif()
 
 add_executable(timing timing.cpp)

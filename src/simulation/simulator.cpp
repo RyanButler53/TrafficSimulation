@@ -13,7 +13,6 @@
 #include <vector>
 #include <expected>
 #include <functional>
-#include <memory_resource>
 #include <thread>
 #include "sim/simulator.hpp"
 #include "sim/parser.hpp"

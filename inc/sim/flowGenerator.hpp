@@ -6,6 +6,7 @@
 
 #include "carFactory.hpp"
 #include "car.hpp"
+#include "random.hpp"
 
 class FlowGenerator
 {
@@ -15,12 +16,16 @@ private:
     std::shared_ptr<CarFactory> factory_;
 
     /// @brief Randomness generator
-    std::mt19937 rng_;
+    std::shared_ptr<std::mt19937> rng_;
+    RandomGenerator::ptr dist_;
+    RandomGenerator::ptr v0Dist_;
+    RandomGenerator::ptr vDesDist_;
 
-    std::uniform_real_distribution<double> dist_;
+    /// @brief Flows left in the hour
+    double flowsLeft_;
 
-    /// @brief required time gap between 2 second generated car
-    double TIME_GAP = 3.0;
+    /// @brief Timesteps left in the hour
+    double timestepsLeft_;
 
     /// @brief Rate of vechicle inflow. Units of vehicles/hr
     /// @todo This will be a function of time
@@ -28,21 +33,14 @@ private:
 
     // Car Data
     double x0_;
-    double v0_;
-    double vdes_;
 
     // Simulation Timestep
     double dt_;
-    /// @brief Total timesteps in an hour. 
-    double totalTimesteps_;
-
-    /// @brief when the next flow generation can occur
-    double nextGeneration_{0.0};
-
 
     double time_{0.0};
 
 public:
+
     /**
      * @brief Construct a new Flow Generator object with no flow
      * 
@@ -50,24 +48,41 @@ public:
     FlowGenerator();
 
     /**
-     * @brief Construct a new Flow Generator object with a specified Rate
+     * @brief Construct a new Flow Generator with a specified rate. 
      * 
-     * @param rate 
-     * @param x0 
-     * @param v0 
-     * @param vdes 
-     * @param seed 
+     * @param rate Approximate Number of cars that we be generated per hour by this flow generator
+     * @param x0 Initial position of each car generated. This is the same for each car
+     * @param factory Car factory 
+     * @param dt 
+     * @param rng 
      */
-    FlowGenerator(double rate, double x0, double v0, double vdes, std::shared_ptr<CarFactory> factory,  double dt, uint64_t seed = 0);
+    FlowGenerator(double rate, double x0, std::shared_ptr<CarFactory> factory,  double dt, std::shared_ptr<std::mt19937> rng);
     ~FlowGenerator() = default;
 
     /**
-     * @brief Probabalistically generates flow 
-     * @param dt timestep (seconds) to possibly generate a car. 
-     * @param lastcar x value of the "back bumper" of the car in front. Will not generate if this is less than x0
-     * @return std::optional<Car> Optionally generates a car. 
+     * @brief Sets random distributions for initial velocity, desired velocity and uniform main distribution
+     * 
+     * @param v0Dist Initial velocity distribution
+     * @param vDesDist Desired velocity distribution
+     * @param mainDist Uniform 0-1 distribution. Parameterized for mocking
      */
-    std::optional<Car> generateFlow(double dt);
+    void setRng(RandomGenerator::ptr v0Dist, RandomGenerator::ptr vDesDist, RandomGenerator::ptr mainDist);
+
+    /**
+     * @brief Returns the position that cars are generated at
+     * 
+     * @return double x position in meters
+     */
+    double position() const;
+
+    /**
+     * @brief Probabalistically generates flow 
+     * @param rearPosition x value of the "back bumper" of the car in front. Will not generate if this is less than x0
+     * @param vlead Velocity of the leading car. Used if the car is too close
+     * @return std::optional<Car> Car generated. Nullopt if no car is generated
+     */
+    std::optional<Car> generateFlow(double rearPosition, double vlead);
+    std::optional<Car> generateFlow();
 
 };
 

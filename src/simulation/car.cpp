@@ -13,13 +13,24 @@
 #include <memory>
 #include <optional>
 #include <format>
+#include <cmath>
 
 
 Car::Car(size_t id, double x0, double v0, double t0, double p, FollowModel follow):
         id_{id}, pos_{x0}, vel_{v0}, timestep_{t0}, len_{4.9}, politeness_{p},followStrategy_{follow}{}
     
+Car::Car(double x0): pos_{x0}, vel_{100}{}
+
 Car Car::infinity() const{
     return Car(0, pos_ + 500, vel_ + 50, 0, 0, {});
+}
+
+Car Car::compare(double x){
+    return Car(x);
+}
+
+Car Car::stoppedCar(double x){
+    return Car(0, x, 0, 0, 0, {});
 }
 
 double Car::acceleration(double dt) const {
@@ -31,7 +42,6 @@ std::expected<double, std::string> Car::acceleration(const Car& lead, double dt)
     // Get information about lead car
     double xlead = lead.getPosition();
     double vlead = lead.getVelocity();
-    double leadLen = lead.getLength();
 
     // Check for an accident
     if (xlead <= pos_){
@@ -40,13 +50,17 @@ std::expected<double, std::string> Car::acceleration(const Car& lead, double dt)
     }
 
     // Find the new velocity
-    double gap = xlead - leadLen - pos_;
+    double gap = lead.getRearPosition() - pos_;
     if (gap < 0){
         return std::unexpected(std::format("Negative Gap: {}", gap));
     }
     double vf = followStrategy_.update(vel_, vlead, gap, dt);
     if (vf < 0){
-        return std::unexpected(std::format("Negative final velocity: {} between cars {} and {}", vf, id_, lead.getId()));
+        if (vlead == 0 && lead.getId() == 0){
+            return std::unexpected(std::format("Car {} failed to move out of its lane before it ended.", id_));
+        } else {
+            return std::unexpected(std::format("Negative final velocity: {} between cars {} and {}", vf, id_, lead.getId()));
+        }
     } else if (std::isnan(vf)){
         return std::unexpected(std::format("Nan final velocity: {}", vf));
     }

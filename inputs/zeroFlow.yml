@@ -1,0 +1,29 @@
+type: continuous
+time: 55
+timestep: 0.2
+logtype: time-series
+driverType: Gipps
+jobname: ZeroFlow
+driverParams:
+  a: 1.981
+  b: -2.8955
+  bmax: -5.505
+  p: 0.2
+  a_stdev: 0
+  bmax_stdev: 0
+  p_stdev: 0
+lanes:
+  - flow:
+      rate: 800
+      v0: 20
+      vdes: 35
+    start: 0
+    end: 500
+    position: 0
+  - flow:
+      rate: 0
+      v0: 0
+      vdes: 38
+    start: 0
+    end: 500
+    posiiton: 1

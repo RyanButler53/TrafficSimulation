@@ -11,7 +11,8 @@ set (SHARED_SRC
     car.cpp
     flowGenerator.cpp
     highway.cpp
-    strategy.cpp)
+    strategy.cpp
+    laneInfo.cpp)
 
 set (SETUP_SRC
     carFactory.cpp

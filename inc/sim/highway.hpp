@@ -13,9 +13,12 @@
 #include <expected>
 #include <set>
 #include <unordered_map>
+#include <utility>
+#include <memory>
 
 #include "car.hpp"
 #include "flowGenerator.hpp"
+#include "laneInfo.hpp"
 
 struct Highway {
 
@@ -41,14 +44,13 @@ struct Highway {
 
 class CpuHighway : public Highway {
 
-    std::vector<FlowGenerator> flowGenerators_;
+    std::vector<std::pair<size_t, FlowGenerator>> flowGenerators_;
     std::vector<std::set<Car>> lanes_;
+    std::unique_ptr<LaneInfo> laneInfo_;
     size_t nLanes_;
-    double roadEnd_;
 
     // TODO make these all configurable
     const double changeThreshold_ = 0.1;
-    const double a_bias = 0.2;
     
     /**
      * @brief Gets a cache of acceleration values to use for lookup during lane chance calculatons
@@ -63,9 +65,20 @@ class CpuHighway : public Highway {
 
     void moveVehicles(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt);
 
+    /**
+     * @brief Computes the "free" road acceleration. 
+     * @details Encapsulates the logic to handle the case when there is no  offical car in front of c, but is a end of a lane segment
+     * 
+     * @param c Car to calculate acceleration for
+     * @param ilane Lane the car is in
+     * @param dt Timestep to calculate acceleration over
+     * @return std::expected<double, std::string> Acceleration of the car or error message. 
+     */
+    std::expected<double, std::string> leadCarAcceleration(const Car& c, size_t ilane, double dt);
+
     public: 
 
-    CpuHighway(size_t numLanes, std::vector<FlowGenerator> flows, double roadEnd);
+    CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenerator>> flows, std::unique_ptr<LaneInfo> lanes);
     std::expected<std::vector<CarData>, std::string> update(double dt) override;
     void log(double t, std::vector<CarSnapshot>& data) override;
 };

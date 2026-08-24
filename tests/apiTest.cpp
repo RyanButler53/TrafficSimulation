@@ -263,7 +263,12 @@ TEST_F(ApiTest, ValidRequests){
     EXPECT_EQ(response->jsonData["jobname"], "apiTest");
     EXPECT_EQ(response->jsonData["driverModel"], "Gipps");
     EXPECT_EQ(response->jsonData["status"], "DONE");
-    EXPECT_EQ(response->jsonData["numCars"], 16);
+
+    std::fstream in(std::string(DATA_DIR) + "/api_case_ncars.txt");
+    std::string ncars;
+    std::getline(in, ncars);
+    size_t ncars_expected = std::stoull(ncars);
+    EXPECT_EQ(response->jsonData["numCars"], ncars_expected) << "Case is known to have " << ncars_expected << " cars"; // Expect roughly 50 cars. 
 
 
     response = requester.queryJobs();

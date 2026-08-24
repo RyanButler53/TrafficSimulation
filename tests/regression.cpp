@@ -65,7 +65,7 @@ protected:
         if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
         if (std::filesystem::exists("timeSeriesConfig.yaml")) std::filesystem::remove("timeSeriesConfig.yaml");
 
-        // if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
+        if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
         if (std::filesystem::exists("file-test/time-series")) std::filesystem::remove_all("file-test/time-series");
     }
 
@@ -272,7 +272,12 @@ TEST_F(RegressionTest, FileHashEquivalence){
         hashes += hash;
     }
     std::string hash = hashBytes(hashes.data(),hashes.size());
-    const std::string expectedHash("4174313eb6b4a8b59d1163c9b2e32e6cf2e525bb97a45ac8074d7a63977641cd");
+   
+    // The expected hash of the simulation is in "hash.txt"
+    std::fstream in(std::string(DATA_DIR) + "/hash.txt");
+    std::string expectedHash;
+    std::getline(in, expectedHash);
+
     ASSERT_EQ(hash, expectedHash);
 }
 #endif
