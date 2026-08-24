@@ -1,7 +1,7 @@
 # General Information
-jobname: lane-closure2
-type: "continuous" # differentiates between adding cars upfront or online
-time: 180 # 15 minutes
+jobname: simple-lane-closure
+type: "continuous"
+time: 180 # 3 minutes
 timestep: 0.5
 seed: 70
 logtype: "time-series"

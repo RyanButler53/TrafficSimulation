@@ -3,7 +3,7 @@ time: 55
 timestep: 0.2
 logtype: time-series
 driverType: Gipps
-jobname: ZeroFlowAlgorithm
+jobname: ZeroFlow
 driverParams:
   a: 1.981
   b: -2.8955
