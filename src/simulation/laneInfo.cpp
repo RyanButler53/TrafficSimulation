@@ -27,7 +27,7 @@ bool LaneInfo::addSegment(double start, double end, size_t position){
 
         laneEnds_[position] = laneEnds_[position].transform([end](double cur)
                                                             { return std::max(cur, end); })
-                                                .or_else([end]()
+                                                 .or_else([end]()
                                                             { return std::make_optional(end); });
     }
     return iter == overlaps.end();
@@ -38,19 +38,6 @@ std::optional<LaneBoundary> LaneInfo::getLane(double x, size_t ilane){
     auto iter = std::ranges::find_if(overlaps, [ilane](const LaneBoundary& l){return l.position_ == ilane;});
     if (iter != overlaps.end()){
         return std::make_optional(*iter);
-    } else {
-        return std::nullopt;
-    }
-}
-
-std::optional<size_t> LaneInfo::nextLane(double x, size_t ilane, Direction dir){
-    // Overflow error
-    if (ilane == 0 && dir == Direction::RIGHT){
-        return std::nullopt;
-    }
-    size_t newLane = (dir == Direction::LEFT) ? ilane + 1 : ilane - 1;
-    if (laneValid(x, newLane)){
-        return newLane;
     } else {
         return std::nullopt;
     }
@@ -91,32 +78,42 @@ bool LaneInfo::lastSegment(double x, size_t ilane) {
 
 double LaneInfo::calculateBias(double x, size_t ilane, Direction dir){
 
-    // Compute how many lane changes in direction dir are possibly allowed
     auto lane = std::make_optional<size_t>(ilane);
-    std::vector<double> laneEnds;
-    while (lane.has_value()){
-        laneEnds.push_back(endOfSegment(x, lane.value()).value());
-        lane = nextLane(x, lane.value(), dir);
+    std::vector<double> laneEnds(laneEnds_.size());
+
+    // Figure out the of lane segments for ALL lanes. 
+    for (size_t laneIndex : std::views::iota(0UL, laneEnds_.size())){
+        if (laneValid(x, laneIndex)){
+            laneEnds[laneIndex] = endOfSegment(x, laneIndex).value();
+        } else {
+            laneEnds[laneIndex] = endOfRoad_;
+        }
     }
 
     // Find the lane index of the closest lane to ending 
     auto closest = std::min_element(laneEnds.begin(), laneEnds.end());
     double closestEndOfLane = *closest;
-    auto distance = std::distance(laneEnds.begin(), closest);
+    // If distance * direction is positive, then lane change in direction dir represents moving away from lane going to end. 
+    // Zero if the current lane will end. 
+    // Negative if moving towards the lane that will end.  
+    auto distance = std::distance(laneEnds.begin() + ilane, closest);
 
-    // If none of the lanes end (closest is the end of the road), just return bias()
-    std::function<double()> bias = [this, dir](){return -1 * double(dir) * bias_;};
-
+    std::function<double()> bias = [this, dir](){return double(dir) * bias_;};
+    // If none of the lanes end (closest is the end of the road), return bias()
     if (closestEndOfLane == endOfRoad_ or closestEndOfLane > x+ switchThreshold_){
         return bias();
     } 
     double xCrit = closestEndOfLane - switchThreshold_;
-
+    int d(distance);
     if (distance == 0){ // the current lane is the one that needs to end. 
         return bias() + ((changePressure_/switchThreshold_) * (x - xCrit));
-    } else { // there is another lane that is going to end. Bias the
-        int d(distance);
-        return bias() - (1.0/double(d)) * ((changePressure_/switchThreshold_) * (x - xCrit));
+    } else {
+        // If moving away from the lane that ends, increment/decrement the distance to scale the bias effect. 
+        bool movingAway = (double(dir) * 1.0/(d)) > 0;
+        if (movingAway){
+            d = d > 0 ? ++d : --d;
+        }
+        return bias() + double(dir) * 1.0/(d) * ((changePressure_/switchThreshold_) * (x - xCrit));
     }
 
 }

@@ -127,12 +127,16 @@ TEST_F(BiasCalculation, nearEndOfLaneRight){
     EXPECT_NEAR(l->calculateBias(2000, 2, Direction::RIGHT), 0, 1e-10);
 }
 
-// Enable this test when lanes from the other side are reflected in bias calculations
-TEST_F(BiasCalculation, DISABLED_nearEndOfLaneLeft){
-    EXPECT_DOUBLE_EQ(l->calculateBias(400, 2, Direction::LEFT), -0.2);
-    EXPECT_DOUBLE_EQ(l->calculateBias(600, 2, Direction::LEFT), -0.175);
-    EXPECT_DOUBLE_EQ(l->calculateBias(1200, 2, Direction::LEFT), -0.1);
-    EXPECT_DOUBLE_EQ(l->calculateBias(1800, 2, Direction::LEFT), 0.025);
+TEST_F(BiasCalculation, nearEndOfLaneLeft){
+    EXPECT_DOUBLE_EQ(l->calculateBias(400, 1, Direction::LEFT), -0.2);
+    EXPECT_DOUBLE_EQ(l->calculateBias(600, 1, Direction::LEFT), -0.175);
+    EXPECT_DOUBLE_EQ(l->calculateBias(1200, 1, Direction::LEFT), -0.1);
+    EXPECT_DOUBLE_EQ(l->calculateBias(1800, 1, Direction::LEFT), -0.025);
+    EXPECT_DOUBLE_EQ(l->calculateBias(2000, 1, Direction::LEFT), 0);
+
+    // After x = 2000, normal bias rules apply again. 
+    EXPECT_DOUBLE_EQ(l->calculateBias(2001, 1, Direction::LEFT), -0.2);
+
 }
 
 TEST_F(BiasCalculation, intoOfEndOfLaneLeft){
@@ -159,4 +163,3 @@ TEST_F(BiasCalculation, lastSegmentLeftLane){
         ASSERT_DOUBLE_EQ(l->calculateBias(6500 + double(i), 0, Direction::LEFT), -0.2) << "X: " << 6500 + double(i);
     }
 }
-
