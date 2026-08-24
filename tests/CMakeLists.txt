@@ -43,7 +43,7 @@ TrafficTest(regression regression.cpp simulation
                                       pqxx_wrapper
                                       $<IF:$<BOOL:${OpenSSL_FOUND}>,OpenSSL::Crypto,""> )
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
-target_compile_definitions(regression PUBLIC HASH_FILE="${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_definitions(regression PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 TrafficTest(queueTest queueTest.cpp)
 TrafficTest(laneinfoTest laneInfoTest.cpp shared)
@@ -53,6 +53,7 @@ SingleFixtureTest(dbManagerTest dbManager.cpp testutil
                                         jobManager 
                                         dbmanager
                                         pqxx_wrapper)
+target_compile_definitions(dbManagerTest PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 
 SingleFixtureTest(algorithmTest algorithmTest.cpp simulation 
@@ -71,6 +72,8 @@ if (CURL_FOUND)
                                     nlohmann_json::nlohmann_json
                                     testutil
                                     CURL::libcurl)
+    target_compile_definitions(apiTest PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+
 endif()
 
 add_executable(timing timing.cpp)
