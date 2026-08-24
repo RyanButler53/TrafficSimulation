@@ -38,11 +38,13 @@ class AlgTest {
     protected:
 
     void completeLaneBoundsCheck(const std::vector<RawData>& raw, float roadEnd);
+    void simpleFlowGenerationCheck(const std::vector<RawData>& raw, size_t n);
 
     public:
     virtual std::string testName() = 0;
     virtual std::filesystem::path filename() = 0;
     virtual void generateInput() = 0;
+    virtual size_t nlanes() const = 0;
     void forwardMovement(const std::vector<RawData>& raw);
     virtual void laneChanges(const std::vector<RawData>& raw);
     virtual void inBounds(const std::vector<RawData>& raw) = 0;
@@ -56,6 +58,7 @@ class Test3Lane : public AlgTest{
     std::string testName() override;
     std::filesystem::path filename() override;
     void generateInput() override;
+    size_t nlanes() const override;
     void inBounds(const std::vector<RawData>& raw) override;
     void flowGeneration(const std::vector<RawData>& raw) override;
 };
@@ -65,6 +68,17 @@ class TestZeroFlow : public AlgTest {
     public:
     std::string testName() override;
     std::filesystem::path filename() override;
+    size_t nlanes() const override;
+    void generateInput() override;
+    void inBounds(const std::vector<RawData>& raw) override;
+    void flowGeneration(const std::vector<RawData>& raw) override;
+};
+
+class TestLaneClosure : public AlgTest{
+    public:
+    std::string testName() override;
+    std::filesystem::path filename() override;
+    size_t nlanes() const override;
     void generateInput() override;
     void inBounds(const std::vector<RawData>& raw) override;
     void flowGeneration(const std::vector<RawData>& raw) override;

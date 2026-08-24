@@ -26,6 +26,7 @@ class NameGenerator {
       static std::string GetName(int) {
          if constexpr (std::is_same_v<T, Test3Lane>) return "Test3Lane";
          if constexpr (std::is_same_v<T, TestZeroFlow>) return "TestZeroFlow";
+         if constexpr (std::is_same_v<T, TestLaneClosure>) return "TestLaneClosure";
       }
   };
   
@@ -62,7 +63,8 @@ class AlgorithmTest : public testing::Test {
 using testing::Types;
 
 typedef Types<Test3Lane,
-              TestZeroFlow> Implementations;
+              TestZeroFlow,
+              TestLaneClosure> Implementations;
      
 TYPED_TEST_SUITE(AlgorithmTest, Implementations, NameGenerator);
 
