@@ -274,7 +274,7 @@ TEST_F(RegressionTest, FileHashEquivalence){
     std::string hash = hashBytes(hashes.data(),hashes.size());
    
     // The expected hash of the simulation is in "hash.txt"
-    std::fstream in(std::string(HASH_FILE) + "/hash.txt");
+    std::fstream in(std::string(DATA_DIR) + "/hash.txt");
     std::string expectedHash;
     std::getline(in, expectedHash);
 
