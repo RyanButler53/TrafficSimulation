@@ -70,8 +70,8 @@ class CpuHighway : public Highway {
      * @details Encapsulates the logic to handle the case when there is no  offical car in front of c, but is a end of a lane segment
      * 
      * @param c Car to calculate acceleration for
-     * @param endOfCurrentSegment End of car's current segment (cached to avoid inteval tree queries)
      * @param ilane Lane the car is in
+     * @param dt Timestep to calculate acceleration over
      * @return std::expected<double, std::string> Acceleration of the car or error message. 
      */
     std::expected<double, std::string> leadCarAcceleration(const Car& c, size_t ilane, double dt);

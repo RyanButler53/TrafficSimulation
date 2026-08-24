@@ -42,10 +42,10 @@ TrafficTest(parsing parsing.cpp unit simulation yaml-cpp::yaml-cpp)
 
 
 TrafficTest(regression regression.cpp integration simulation
-                                                    jobManager
-                                                    testutil
-                                                    pqxx_wrapper
-                                                    $<IF:$<BOOL:${OpenSSL_FOUND}>,OpenSSL::Crypto,""> )
+                                                  jobManager
+                                                  testutil
+                                                  pqxx_wrapper
+                                                  $<IF:$<BOOL:${OpenSSL_FOUND}>,OpenSSL::Crypto,""> )
 target_compile_definitions(regression PUBLIC $<IF:$<BOOL:${OpenSSL_FOUND}>,"WITH_OPEN_SSL","">)
 target_compile_definitions(regression PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
@@ -54,16 +54,16 @@ TrafficTest(laneinfoTest laneInfoTest.cpp unit shared)
 TrafficTest(flowGeneratorTest flowGeneratorTest.cpp unit shared setup)
 
 SingleFixtureTest(dbManagerTest dbManager.cpp integration testutil
-                                        jobManager 
-                                        dbmanager
-                                        pqxx_wrapper)
+                                                          jobManager 
+                                                          dbmanager
+                                                          pqxx_wrapper)
 target_compile_definitions(dbManagerTest PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 
 SingleFixtureTest(algorithmTest algorithmTest.cpp integration simulation 
-                                            testCases
-                                            testutil
-                                            dbmanager)
+                                                              testCases
+                                                              testutil
+                                                              dbmanager)
 
 if (CURL_FOUND)
     # Bring in Json Dependency
@@ -73,9 +73,9 @@ if (CURL_FOUND)
     FetchContent_MakeAvailable(json)
 
     SingleFixtureTest(apiTest apiTest.cpp integration api 
-                                    nlohmann_json::nlohmann_json
-                                    testutil
-                                    CURL::libcurl)
+                                                      nlohmann_json::nlohmann_json
+                                                      testutil
+                                                      CURL::libcurl)
     target_compile_definitions(apiTest PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 endif()

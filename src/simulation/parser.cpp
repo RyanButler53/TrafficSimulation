@@ -92,7 +92,6 @@ std::expected<void, std::string> ContinuousParser::parseHighway(){
     double changePressure = ParseField<double>(cfg_, "changePressure").value_or(0.2);
     double switchThreshold = ParseField<double>(cfg_, "switchThreshold").value_or(1600);
 
-
     std::unique_ptr<LaneInfo> lanes = std::make_unique<LaneInfo>(bias, changePressure, switchThreshold);
     auto rng = std::make_shared<std::mt19937>(seed_);
     for (const YAML::Node& node : laneNode) {

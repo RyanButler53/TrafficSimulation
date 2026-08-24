@@ -1,6 +1,5 @@
 #include "sim/flowGenerator.hpp"
 #include <ranges>
-#include <print>
 
 FlowGenerator::FlowGenerator():rate_{0}{}
 

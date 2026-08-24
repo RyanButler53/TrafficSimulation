@@ -12,22 +12,16 @@
 
 #include <concepts>
 #include <filesystem>
-#include <vector> 
+#include <vector>
+#include <type_traits>
 #include "api/structs.hpp"
 #include "yaml-cpp/yaml.h"
 
 
+class AlgTest;
+
 template <class A>
-concept AlgTestCase = requires(A test,
-    std::filesystem::path file
-){
-    file = test.filename();
-    test.generateInput();
-    test.forwardMovement();
-    test.laneChanges();
-    test.inBounds();
-    test.flowGeneration();
-};
+concept AlgTestCase = std::is_base_of_v<AlgTest, A>;
 
 /**
  * @brief Base class for Algorithm Tests

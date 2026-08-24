@@ -55,7 +55,11 @@ class Car {
      */
     Car infinity() const;
     
-    // Creates a car that is ONLY 
+    /**
+     * @brief Creates a new car at X. This car can only be used for comparison. 
+     * 
+     * @param x 
+     */
     Car(double x);
 
     public: 

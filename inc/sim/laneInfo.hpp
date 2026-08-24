@@ -99,6 +99,12 @@ class LaneInfo {
      * @return false if x is in a segment that will end. Acceleration and bias calculations must account for this. 
      */
     bool lastSegment(double x, size_t ilane);
+
+    /**
+     * @brief Returns the largest x value of any lane in the simulation
+     * 
+     * @return double X position in meters
+     */
     double endOfRoad() const;
 };
 

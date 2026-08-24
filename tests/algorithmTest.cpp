@@ -32,7 +32,7 @@ class NameGenerator {
   
 
 
-template <typename TestCase>
+template <AlgTestCase TestCase>
 class AlgorithmTest : public testing::Test {
 
     public:
@@ -68,7 +68,7 @@ typedef Types<Test3Lane,
      
 TYPED_TEST_SUITE(AlgorithmTest, Implementations, NameGenerator);
 
-template <typename TestCase>
+template <AlgTestCase TestCase>
 std::vector<RawData> AlgorithmTest<TestCase>::rawData_;
 
 TYPED_TEST(AlgorithmTest, ForwardMovement){
@@ -86,6 +86,3 @@ TYPED_TEST(AlgorithmTest, InBounds){
 TYPED_TEST(AlgorithmTest, FlowGeneration){
     TypeParam().flowGeneration(AlgorithmTest<TypeParam>::rawData_);
 }
-
-
-

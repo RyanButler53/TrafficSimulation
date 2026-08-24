@@ -219,8 +219,7 @@ void TestLaneClosure::inBounds(const std::vector<RawData>& raw){
             if (car.l_[timestep] == 0){
                 EXPECT_TRUE((car.x_[timestep] < 2000) || (car.x_[timestep] >= 5000.0)) << "Car found in invalid location";
             }
-        }        
-
+        }
     }
 }
 
