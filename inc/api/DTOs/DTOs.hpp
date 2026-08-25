@@ -52,6 +52,7 @@ class CarMetadataDTO : public oatpp::DTO {
     DTO_FIELD(Int64, carid);
     DTO_FIELD(Object<FollowModelDTO>, followModel);
     DTO_FIELD(Float32, politeness);
+    DTO_FIELD(Float32, desired_vel);
 
 };
 

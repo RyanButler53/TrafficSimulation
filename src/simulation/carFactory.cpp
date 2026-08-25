@@ -28,7 +28,7 @@ Car GippsCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
     double p = std::clamp<double>(politeness_dist_(rng_),0, 1);
     // auto follow = std::make_shared<Gipps>(a, b, bmax, vdes);
     
-    FollowModel m{makeGippsUpdateFunc(a, b, bmax, vdes), bmax, a, b, bmax};
+    FollowModel m{makeGippsUpdateFunc(a, b, bmax, vdes), bmax, a, b, bmax, vdes};
     // Make a gipps model, gipps can return a function that curries 
     return Car(carid_++, x0, v0, t0, p, m);
 }
@@ -44,7 +44,7 @@ Car IDMCarFactory::makeCar(double x0, double v0, double vdes, double t0) {
     double s0 = s0_dist(rng_);
     double p = std::clamp<double>(politeness_dist_(rng_),0, 1);
 
-    FollowModel m{makeIdmUpdateFunc(a, b, s0, vdes), b, a, b, s0};
+    FollowModel m{makeIdmUpdateFunc(a, b, s0, vdes), b, a, b, s0, vdes};
     return Car(carid_++, x0, v0, t0, p, m);
 }
     

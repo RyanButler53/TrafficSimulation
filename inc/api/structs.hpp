@@ -23,6 +23,7 @@ struct FollowModelParams {
 struct CarMetadata {
     FollowModelParams model_;
     float politeness_;
+    float vDes_;
     int id_;
 };
 
@@ -41,7 +42,7 @@ struct Snapshot {
     int l_;
 };
 
-struct TimeSeries{
+struct TimeSeries {
     std::vector<float> timestamps_;
     std::vector<std::vector<Snapshot>> snapshots_;
 };

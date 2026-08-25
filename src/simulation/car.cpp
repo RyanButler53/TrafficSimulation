@@ -83,5 +83,5 @@ CarSnapshot Car::snapshot(double t, uint16_t lane) const {
 }
 
 CarData Car::data() const {
-    return {followStrategy_.a, followStrategy_.b, followStrategy_.c, politeness_, id_};
+    return {followStrategy_.a, followStrategy_.b, followStrategy_.c, politeness_, vDes(), id_};
 }

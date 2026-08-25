@@ -62,6 +62,13 @@ class Car {
      */
     Car(double x);
 
+    /**
+     * @brief Returns the desired velocity. Stored in the follow strategy
+     * 
+     * @return double velocity in m/s
+     */
+    double vDes() const {return followStrategy_.vDes;}
+
     public: 
 
     // Constructors

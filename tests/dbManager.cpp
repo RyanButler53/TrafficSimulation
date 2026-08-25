@@ -149,12 +149,16 @@ TEST_F(DBManagerTest, carMetadata){
         EXPECT_EQ(single.politeness_, all.politeness_);
         EXPECT_EQ(single.model_.a_, all.model_.a_);
         EXPECT_EQ(single.model_.b_, all.model_.b_);
+        EXPECT_EQ(single.vDes_, all.vDes_);
 
         // Confirm the data is being read from the DB correctly. 
         EXPECT_FLOAT_EQ(all.model_.a_,  1.981);
         EXPECT_FLOAT_EQ(all.model_.b_, -2.8955);
         EXPECT_FLOAT_EQ(all.model_.c_, -5.505);
         EXPECT_FLOAT_EQ(all.politeness_, 0.2);
+
+        // Cannot discern in this test what the initial lane was
+        EXPECT_TRUE(all.vDes_ == 35.0 || all.vDes_ == 38.0);
     }
 
 }

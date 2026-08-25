@@ -35,9 +35,9 @@ TrafficJobs:
 
 CarData:
 
-| carID (int) | jobID (int) | Follow Strategy A (float)  | Follow Strategy B (float) | Follow Strategy C (float) | Politeness (float) |
-| --- | --- | --- | --- | --- | --- |
-| Unique Car Id to its simulation | Job ID that the car belongs to | Acceleration parameter to Car Following Strategy | Braking coefficent for car following strategy | C coefficent. C is either max braking for Gipps Car Following model or Minimum allowable gap for Intelligent driver model | Lane Changing Politeness (MOBIL Model) |
+| carID (int) | jobID (int) | Follow Strategy A (float)  | Follow Strategy B (float) | Follow Strategy C (float) | Politeness (float) | Desired Velocity (float) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Unique Car Id to its simulation | Job ID that the car belongs to | Acceleration parameter to Car Following Strategy | Braking coefficent for car following strategy | C coefficent. C is either max braking for Gipps Car Following model or Minimum allowable gap for Intelligent driver model | Lane Changing Politeness (MOBIL Model) | Desired velocity (v_des)
 
 JobID is a foreign key to the TrafficJobs table. The combination CarID and JobID are gauranteed to be unique. 
 
@@ -66,7 +66,7 @@ The API is hosted locally on port 8000 so the base url is `http://localhost:8000
 
 `GET "/data/{job-name}/raw/{id}"` -> Returns raw snapshot data for a single car in the specified job.
 
-`GET "/data/{job-name}/spatial/"` -> Runs a "spatial" query that returns snapshots occuring between two `t0` and `t1` and bewteen `x0` and `x1` 
+`GET "/data/{job-name}/spatial/"` -> Runs a "spatial" query that returns snapshots occuring between `t0` and `t1` and bewteen `x0` and `x1` 
 Requires a query parameter to specify the boundaries:
 
 ```
