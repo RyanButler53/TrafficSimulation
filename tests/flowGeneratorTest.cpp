@@ -9,7 +9,6 @@ struct AlwaysGenerate : public RandomGenerator {
 };
 
 
-
 struct MockCarFactory: public CarFactory {
 
     MockCarFactory(): CarFactory(0.2, 0){}

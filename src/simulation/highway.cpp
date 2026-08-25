@@ -205,8 +205,6 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
                 laneChanges.push_back({alpha, ilane, ilane+1});
             }
 
-
-
             if (lead != cars.end()) {++lead;};
             ++alpha;
             ++follow;

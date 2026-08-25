@@ -22,6 +22,7 @@ struct FollowModel {
     std::function<double(double, double, double, double)> update;
     double maxbraking;
     double a, b, c;
+    double vDes;
 };
 
 // Figure out cool way to unite this with a concept. So adding a new follow model is as easy as adding another "class"

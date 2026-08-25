@@ -109,6 +109,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         followModel->c = cm.model_.c_;
         response->followModel = followModel;
         response->carid = cm.id_; // id
+        response->desired_vel = cm.vDes_;
         return response;
     }
 

@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -280,19 +281,27 @@ TEST_F(ApiTest, ValidRequests){
     EXPECT_EQ(response->code, 200);
 
     // Homogeneous traffic
-    for (size_t i = 0; i < response->jsonData["cars"].size();++i){
-        EXPECT_FLOAT_EQ(response->jsonData["cars"][i]["followModel"]["a"], 1.981 );
-        EXPECT_FLOAT_EQ(response->jsonData["cars"][i]["followModel"]["b"], -2.8955);
-        EXPECT_FLOAT_EQ(response->jsonData["cars"][i]["followModel"]["c"], -5.505);
-        EXPECT_FLOAT_EQ(response->jsonData["cars"][i]["politeness"], 0.2);
+    json carMetadata = response->jsonData["cars"];
+    for (size_t i = 0; i < carMetadata.size();++i){
+        EXPECT_EQ(carMetadata[i]["carid"], i);
+        EXPECT_FLOAT_EQ(carMetadata[i]["followModel"]["a"], 1.981 );
+        EXPECT_FLOAT_EQ(carMetadata[i]["followModel"]["b"], -2.8955);
+        EXPECT_FLOAT_EQ(carMetadata[i]["followModel"]["c"], -5.505);
+        EXPECT_FLOAT_EQ(carMetadata[i]["politeness"], 0.2);
     }
 
+    std::array<float, 2> desiredVelocities {35.0, 38.0};
     response = requester.queryRawDatas("apiTest");
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying Raw Data: {}", response.error());
     EXPECT_EQ(response->code, 200);
+    size_t id = 0;
     for (const json& carXVT : response->jsonData["data"]){
         std::vector<float> xs = carXVT["x"];
-        ASSERT_TRUE(std::ranges::is_sorted(xs));
+        int initialLane = carXVT["l"][0];
+        // Check if x values are always increasing and the desired velocities are correct
+        ASSERT_TRUE(std::is_sorted(xs.begin(), xs.end()));
+        EXPECT_EQ(carMetadata[id]["desired_vel"], desiredVelocities[initialLane]);
+        ++id;
     }
 
     // Query for car not present in the job

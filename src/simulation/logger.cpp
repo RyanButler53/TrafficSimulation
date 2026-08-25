@@ -78,7 +78,7 @@ std::expected<void, std::string> FileLogger::logFailure(std::string message) {
 
 std::expected<void, std::string> FileLogger::writeStats(SimulationStats s) {
     std::ofstream statsOut(basepath_ / fs::path("stats.txt"));
-    statsOut << "Runtime: " << s.runtime_ << std::endl;
+    statsOut << "Runtime: " << s.runtime_ << " seconds" << std::endl;
     statsOut.close();
     return {};
 }
@@ -88,12 +88,12 @@ std::expected<void, std::string> FileLogger::writeCars(std::vector<CarData> data
     std::ranges::sort(data, [](const CarData& c1, const CarData& c2){return c1.id < c2.id;});
     if(!fs::exists(fname)){
         std::ofstream out(fname);
-        out << "id,a,b,c,p\n";
+        out << "id,a,b,c,p,vdes\n";
     }
 
     std::ofstream logfile(fname, std::ios::app);
     for (const CarData& c : data){
-        logfile << c.id << "," << c.a << ","<< c.b << "," << c.c<< "," << c.p <<"\n";
+        logfile << c.id << "," << c.a << ","<< c.b << "," << c.c<< "," << c.p << "," << c.vdes <<"\n";
     }
     return {};
 }
@@ -232,14 +232,14 @@ std::expected<void, std::string> DBLogger::writeCars(std::vector<CarData> cars) 
     try {
         pqxx::work tx(connect);
         for (CarData& cdata : cars){
-            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c, politeness)\nVALUES ({}, {}, {}, {}, {}, {})", cdata.id, jobid_, cdata.a, cdata.b, cdata.c, cdata.p));
+            tx.exec(std::format("INSERT INTO carData (carid, jobid, follow_a, follow_b, follow_c, politeness, desired_vel)\nVALUES ({}, {}, {}, {}, {}, {}, {})", cdata.id, jobid_, cdata.a, cdata.b, cdata.c, cdata.p, cdata.vdes));
         }
         tx.commit();
     } catch(const std::exception& e) {
         return std::unexpected(std::format("Error inserting car info data into database: {}", e.what()));
     }
 
-    // Update the number of cars.  This will break if writing to the DB is done in chunks. Number of Unique cars is the number of rows found in car metadata
+    // Update the number of cars
     nCars_ += cars.size();
     return updateField("numCars", nCars_, "Number of Cars");
 }
