@@ -11,29 +11,20 @@ JobManager::JobManager():jobid_{0},workerThread_{[this](){threadRoutine();}}{}
 
 JobManager::~JobManager(){
     isDone_.store(true);
-    cv_.notify_one(); // notify the worker thread to exit out
     if (workerThread_.joinable()){workerThread_.join();}
 }
 
 void JobManager::threadRoutine(){
     // Forever loop
     while (!isDone_.load()){
-        std::shared_ptr<Job> j;
-        {
-        std::scoped_lock lk(queueMutex_);
-        if (!workQueue_.empty()){
-            j = workQueue_.front();
-            workQueue_.pop();
-        } 
-        }
-        
+
+        // Wait for a job off the queue. 250 ms timeout
+        std::shared_ptr<Job> j = workQueue_.wait_and_pop(250);
+
         if (j){
             uint32_t id = j->id();
             statuses_[id] = JobStatus::RUNNING;
             statuses_[id] = (*j)();
-        } else {
-            std::unique_lock lk(queueMutex_);
-            cv_.wait(lk, [this](){return !workQueue_.empty() || isDone_.load();});
         }
     }
 
@@ -48,11 +39,8 @@ std::expected<uint32_t, std::string> JobManager::submit(std::string path){
         return std::unexpected("Input Checking Error: " + inputs.error());
     } 
     statuses_.push_back(JobStatus::QUEUED);
-    std::unique_lock lk(queueMutex_);
-    auto j = std::make_shared<Job>(inputs.value(), jobid_);
-    workQueue_.push(j);
-    lk.unlock();
-    cv_.notify_one();
+    // Return is always true since this work queue has no limit
+    workQueue_.try_push({inputs.value(), jobid_});
     return jobid_++;
 }
 

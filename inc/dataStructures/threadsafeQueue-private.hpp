@@ -1,6 +1,7 @@
 
 #include "threadsafeQueue.hpp"
 #include <iostream>
+#include <optional>
 
 template <typename T>
 ThreadsafeQueue<T>::ThreadsafeQueue(size_t n):maxSize{n}{}
@@ -12,6 +13,18 @@ void ThreadsafeQueue<T>::wait_and_pop(T &value)
     empty_cond.wait(lk,[this]{return !data_queue.empty();});
     value = std::move(*data_queue.front());
     data_queue.pop();
+}
+
+template <typename T>
+std::shared_ptr<T> ThreadsafeQueue<T>::wait_and_pop(size_t ms){
+    std::unique_lock lk(mut);
+    if (empty_cond.wait_for(lk,std::chrono::milliseconds(ms), [this]{return !data_queue.empty();})){
+        std::shared_ptr<T> value = data_queue.front();
+        data_queue.pop();
+        return value;
+    } else {
+        return nullptr;
+    }
 }
 
 template <typename T>

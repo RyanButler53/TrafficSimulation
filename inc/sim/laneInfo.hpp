@@ -9,7 +9,6 @@
  * 
  */
 #pragma once
-#include "dataStructures/intervalTree.hpp"
 #include <expected>
 #include <optional>
 #include <vector>
