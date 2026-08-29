@@ -1,21 +1,77 @@
 #include "sim/laneInfo.hpp"
 #include <ranges>
 #include <algorithm>
+#include <array>
 #include <format>
+#include <algorithm>
 #include <ranges>
 #include <functional>
 #include <iterator>
+
+std::optional<LaneBoundary> LaneInterval::getLaneSegment(size_t ilane, double x){
+    if (ilane >= lanes_.size()){
+        return std::nullopt;
+    } 
+    const std::set<double>& lane = lanes_[ilane];
+
+    if (x < *lane.begin() || x > *lane.rbegin()){
+        return std::nullopt;
+    }
+    // Get the index
+    auto iter = std::lower_bound(lane.begin(), lane.end(), x);
+    // On a boundary. Always in the segment. Which segment? If index is even, then (iter, iter+1), otherwise, iter-1, iter
+    if (*iter == x){
+        if (std::distance(lane.begin(), iter) % 2 == 1){
+            --iter;
+        }
+        return LaneBoundary(*iter, *(++iter));
+    }
+    // Not on a boundary. Lower_bound will always give me the upper bound of the interval
+    if (std::distance(lane.begin(), iter) % 2 == 1){
+        --iter;
+        return LaneBoundary(*iter, *(++iter));
+    } else {
+        return std::nullopt;
+    }
+
+}
+// what if it was just a set if numbers? If the index we find is odd or even it is in a lane ir not
+// 0, 20, 55,60, 85,100 -> 30,40 lower_bound is the same for both AND lower bound is at an odd index
+
+bool LaneInterval::insert(double start, double end, size_t position){
+    if (position >= lanes_.size()){
+        lanes_.resize(position + 1);
+        lanes_[position] = {start, end};
+        return true;
+    } else if (lanes_[position].empty()){
+        lanes_[position] = {start, end};
+        return true;
+    } else {
+        const std::set<double>& lane = lanes_[position];
+        auto lower = std::lower_bound(lane.begin(), lane.end(), start);
+        auto higher = std::lower_bound(lane.begin(), lane.end(), end);
+        // auto diff = std::distance(lane.begin(), lower);
+        if (lower == higher && lower != lane.end()){
+            auto dist = std::distance(lane.begin(), lower);
+            if (dist % 2 == 1){
+                lanes_[position].insert_range(std::array{start, end});
+            }
+            return dist % 2 == 1;
+        } else if (lower == lane.end()) {
+            lanes_[position].insert_range(std::array{start, end});
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
 
 LaneInfo::LaneInfo(double bias, double changePressure, double switchThreshold):
     bias_{bias}, changePressure_{changePressure}, switchThreshold_{switchThreshold}{}
 
 
 bool LaneInfo::addSegment(double start, double end, size_t position){
-
-    std::vector<LaneBoundary> overlaps = iTree_.findOverlaps(LaneBoundary{start, end});
-    auto iter = std::ranges::find_if(overlaps, [position](const LaneBoundary& l){return l.position_ == position;});
-    if (iter == overlaps.end()){
-        iTree_.insert({start, end, position});
+    if (lanes_.insert(start, end, position)){
 
         // Insert into the laneEnds lookup table
         if (laneEnds_.size() < position+1){
@@ -29,18 +85,14 @@ bool LaneInfo::addSegment(double start, double end, size_t position){
                                                             { return std::max(cur, end); })
                                                  .or_else([end]()
                                                             { return std::make_optional(end); });
+        return true;
+    } else {
+        return false;
     }
-    return iter == overlaps.end();
 }
 
 std::optional<LaneBoundary> LaneInfo::getLane(double x, size_t ilane){
-    std::vector<LaneBoundary> overlaps = iTree_.findOverlaps(x);
-    auto iter = std::ranges::find_if(overlaps, [ilane](const LaneBoundary& l){return l.position_ == ilane;});
-    if (iter != overlaps.end()){
-        return std::make_optional(*iter);
-    } else {
-        return std::nullopt;
-    }
+    return lanes_.getLaneSegment(ilane, x);
 }
 
 bool LaneInfo::laneValid(double x, size_t ilane){
@@ -53,7 +105,7 @@ std::expected<double, std::string> LaneInfo::endOfSegment(double x, size_t ilane
     //                         .or_else([x, ilane](){return std::unexpected(std::format("Lane {} is not present at x = {}", ilane, x));});
     std::optional<LaneBoundary> end = getLane(x, ilane);
     if (end){
-        return end->high();
+        return end->high_;
     } else {
         return std::unexpected(std::format("Lane {} is not present at x = {}", ilane, x));
     }

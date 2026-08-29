@@ -1,6 +1,77 @@
 #include "sim/laneInfo.hpp"
 #include <gtest/gtest.h>
 #include <ranges>
+#include <algorithm>
+
+class LaneIntervalHolderTest : public ::testing::Test {
+    protected:
+    LaneInterval lanes_;
+
+    void SetUp(){
+        ASSERT_TRUE(lanes_.insert(0, 20, 0));
+        ASSERT_TRUE(lanes_.insert(50, 80, 0));
+        ASSERT_TRUE(lanes_.insert(0, 55, 1));
+        ASSERT_TRUE(lanes_.insert(75, 100, 1));
+        ASSERT_TRUE(lanes_.insert(0, 55, 2));
+        ASSERT_TRUE(lanes_.insert(80, 100, 2));
+    }
+
+};
+
+TEST_F(LaneIntervalHolderTest, getSegment){
+    std::optional<LaneBoundary> result;
+
+    result = lanes_.getLaneSegment(0, 15);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value(), LaneBoundary(0, 20));
+
+    result = lanes_.getLaneSegment(0, 20);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result, LaneBoundary(0, 20));
+
+    result = lanes_.getLaneSegment(0, 55);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result, LaneBoundary(50, 80));
+
+    result = lanes_.getLaneSegment(1, 0);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result, LaneBoundary(0, 55));
+
+    result = lanes_.getLaneSegment(1, 40);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result, LaneBoundary(0, 55));
+
+    result = lanes_.getLaneSegment(1, 75);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result, LaneBoundary(75, 100));
+
+    result = lanes_.getLaneSegment(1, 80);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result, LaneBoundary(75, 100));
+
+    result = lanes_.getLaneSegment(2, 40);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result, LaneBoundary(0, 55));
+
+    result = lanes_.getLaneSegment(2, 80);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result, LaneBoundary(80, 100));
+
+    result = lanes_.getLaneSegment(2, 100);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result, LaneBoundary(80, 100));
+}
+
+TEST_F(LaneIntervalHolderTest, nonSegments){
+    EXPECT_FALSE(lanes_.getLaneSegment(0, 35).has_value());
+    EXPECT_FALSE(lanes_.getLaneSegment(0, -15).has_value());
+    EXPECT_FALSE(lanes_.getLaneSegment(0, 120).has_value());
+    EXPECT_FALSE(lanes_.getLaneSegment(3, 20).has_value());
+    EXPECT_FALSE(lanes_.getLaneSegment(2, 60).has_value());
+
+}
+
+
 
 class LaneInfoTest : public ::testing::Test {
     protected:
