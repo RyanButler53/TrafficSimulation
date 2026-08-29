@@ -20,6 +20,7 @@
 #include <expected>
 #include "structs.hpp"
 #include "sim/simulator.hpp"
+#include "dataStructures/threadsafeQueue.hpp"
 
 
 
@@ -49,12 +50,10 @@ class JobManager
 private:
 
     std::vector<JobStatus> statuses_;
-    std::queue<std::shared_ptr<Job>> workQueue_;
-    uint32_t jobid_; // Job ID from the Job manager. NOT releated to the Databse Job ID. 
+    ThreadsafeQueue<Job> workQueue_;
+    uint32_t jobid_; // Job ID from the Job manager. NOT releated to the Database Job ID. 
     std::atomic_bool isDone_;
-    std::mutex queueMutex_;
     std::thread workerThread_;
-    std::condition_variable cv_;
 
 
     /**

@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <memory>
 #include <numeric>
+#include <optional>
 
 template<typename T>
 class ThreadsafeQueue
@@ -33,6 +34,8 @@ public:
     bool try_push(T new_value); // use between 80% and 90% capacity
 
     void wait_and_push(T new_value); // Wait at 90% memory and always push it through
+
+    std::shared_ptr<T> wait_and_pop(size_t ms);
     
     size_t size() const;
 };
