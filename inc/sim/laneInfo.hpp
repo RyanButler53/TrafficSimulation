@@ -13,16 +13,16 @@
 #include <expected>
 #include <optional>
 #include <vector>
+#include <set>
 
 /// @brief Lane boundary class to implement IntervalTree's Interval interface
-struct LaneBoundary : public SimpleInterval<double>{
-    size_t position_;
+struct LaneBoundary {
+    double low_;
+    double high_;
 
-    using SimpleInterval<double>::SimpleInterval;
-    LaneBoundary(double low, double high, size_t p):
-        SimpleInterval<double>(low, high), position_{p}{}
-
-    size_t lane() const {return position_;}
+    bool operator==(const LaneBoundary& other) const {
+        return low_ == other.low_ && high_ == other.high_;
+    }
 };    
 
 enum class Direction : int8_t{
@@ -35,9 +35,46 @@ enum class Direction : int8_t{
  * and ends of lanes and segments of lanes. 
  * 
  */
-class LaneInfo {
 
-    IntervalTree<LaneBoundary> iTree_;
+// Replacement for interval tree: 
+// array/vector of sorted sets to prevent looking in interval tree
+
+class LaneInterval {
+
+    std::vector<std::set<double>> lanes_;
+
+    public: 
+
+    // Gets the lane segment (start, end, position) that (x, lane) is in.
+    /**
+     * @brief Get the Lane Segment that x would fall in if it exists. If the lane
+     * doesn't exist, returns std::nullopt. 
+     * 
+     * @param ilane Position of the lane
+     * @param x X position
+     * @return std::optional<LaneBoundary> Returns the low, high and position the x value lands in. 
+     * 
+     * @endif
+     * 
+     */
+    std::optional<LaneBoundary> getLaneSegment(size_t ilane, double x);
+
+    /**
+     * @brief Inserts a lane segment in the correct lane if it can fit there. 
+     * @details checks getLaneSegment() to see if one already exists before adding it. 
+     * 
+     * @param start Start of the lane (meters)
+     * @param end End of the lane (meters)
+     * @param position Lane position (index)
+     * @return true if a lane was added, false if not. 
+     */
+    bool insert(double start, double end, size_t position);
+};
+
+ class LaneInfo {
+
+    LaneInterval lanes_;
+
     std::vector<std::optional<double>> laneEnds_;
     double endOfRoad_ = 0;
     
