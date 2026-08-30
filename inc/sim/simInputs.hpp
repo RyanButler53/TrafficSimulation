@@ -19,6 +19,7 @@ struct SimulatorInputs {
     std::shared_ptr<Highway> highway_;
     double totalTime_;
     double dt_;
+    int thinning_;
 
     // System configuration inputs can live here
     // As well as compression type

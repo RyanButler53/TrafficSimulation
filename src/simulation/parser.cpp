@@ -20,6 +20,7 @@ std::expected<void, std::string> Parser::parseGeneral() {
     totaltime_ = ParseField<double>(cfg_, "time").value_or(100.0);
     dt_ = ParseField<double>(cfg_, "timestep").value_or(1.0);
     seed_ = ParseField<uint64_t>(cfg_, "seed").value_or(0);
+    thinning_ = std::max(ParseField<int>(cfg_, "thinning").value_or(1), 1);
 
     // Job name is not gauranteed to be present, probably needs to match the DB
 
@@ -72,7 +73,7 @@ std::expected<void, std::string> Parser::parseCarFactory(){
 std::expected<SimulatorInputs, std::string> Parser::parse() {
     return parseGeneral().and_then([this](){return parseCarFactory();})
                          .and_then([this](){return parseHighway();})
-                         .transform([this](){return SimulatorInputs{logger_, highway_, totaltime_, dt_};});
+                         .transform([this](){return SimulatorInputs{logger_, highway_, totaltime_, dt_, thinning_};});
 
 }
 

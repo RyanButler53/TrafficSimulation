@@ -50,9 +50,16 @@ protected:
         tsLog["logtype"] = "time-series";
         tsLog["logdir"] = "./file-test/time-series";
 
+        YAML::Node thinLog = TestUtil::getConfigNode_3Lane();
+        thinLog["jobname"] = "test-thinning";
+        thinLog["logtype"] = "time-series";
+        thinLog["logdir"] = "./file-test/thinning";
+        thinLog["thinning"] = 10; // Only write out every 10 time steps
+
         TestUtil::configToFile(fileLog, "fileConfig.yaml");
         TestUtil::configToFile(dbLog, "dbConfig.yaml");
         TestUtil::configToFile(tsLog, "timeSeriesConfig.yaml");
+        TestUtil::configToFile(thinLog, "thinningConfig.yaml");
 
         // Clear out the Test DB:
         TestUtil::clearDB();
@@ -64,9 +71,11 @@ protected:
         if (std::filesystem::exists("fileConfig.yaml")) std::filesystem::remove("fileConfig.yaml");
         if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
         if (std::filesystem::exists("timeSeriesConfig.yaml")) std::filesystem::remove("timeSeriesConfig.yaml");
+        if (std::filesystem::exists("thinningConfig.yaml")) std::filesystem::remove("thinningConfig.yaml");
 
         if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
         if (std::filesystem::exists("file-test/time-series")) std::filesystem::remove_all("file-test/time-series");
+        if (std::filesystem::exists("file-test/thinning")) std::filesystem::remove_all("file-test/thinning");
     }
 
     void getXVTFromFIle(std::vector<XVTL>& xvts, std::filesystem::path file){
@@ -254,6 +263,23 @@ TEST_F(RegressionTest, FileTimeSeriesEquivalence){
 }
 
 #ifdef WITH_OPEN_SSL
+
+TEST_F(RegressionTest, ThinnedEquivalence){
+    ASSERT_TRUE(Traffic::Simulate("thinningConfig.yaml").has_value());
+    ASSERT_TRUE(Traffic::Simulate("timeSeriesConfig.yaml").has_value());
+
+    std::filesystem::path timeSeries = "file-test/time-series";
+    for (std::filesystem::directory_entry file : std::filesystem::directory_iterator("file-test/thinning")){
+        // Skip hashing the stats.txt file with the runtime, which is always different. 
+        if (file.path().extension() == ".csv"){
+            std::string fname = file.path().filename().string();
+            std::string thinnedHash = hashFile(file.path());
+            std::string normalHash = hashFile(timeSeries / file.path().filename());
+            EXPECT_EQ(thinnedHash, normalHash);
+        }
+    }
+}
+
 TEST_F(RegressionTest, FileHashEquivalence){
     JobManager j;
     std::expected<uint32_t, std::string> id = j.submit("fileConfig.yaml");

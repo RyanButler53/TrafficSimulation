@@ -24,6 +24,7 @@ private:
     std::shared_ptr<Highway>highway_;
     double totalTime_;
     double dt_;
+    int thinning_;
 
     // 1 mb of max memory
     const size_t maxMemory_ = 1024 * 1024;
