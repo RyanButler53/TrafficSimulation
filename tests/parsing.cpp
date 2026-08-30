@@ -58,6 +58,7 @@ class ParsingTest : public ::testing::Test {
 
     void TearDown() {
         std::filesystem::remove("parseTest.yaml");
+        std::filesystem::remove("invalidThinning.yaml");
     }
 };
 
