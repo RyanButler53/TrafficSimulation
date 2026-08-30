@@ -10,8 +10,16 @@
 
 
 CpuHighway::CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenerator>>flows,
-                       std::unique_ptr<LaneInfo> lanes):flowGenerators_{flows}, 
-    lanes_{std::vector<std::set<Car>>(numLanes)},laneInfo_{std::move(lanes)}, nLanes_{numLanes}{}
+                       std::unique_ptr<LaneInfo> lanes):flowGenerators_{flows},
+    lanes_{std::vector<std::set<Car>>(numLanes)},laneInfo_{std::move(lanes)}, nLanes_{numLanes}{
+        std::ranges::sort(flowGenerators_, [](const auto& p1, const auto& p2){
+            if (p1.first < p2.first){
+                return false;
+            } else {
+                return p1.second.position() < p1.second.position();
+            }
+        });
+    }
 
 
 std::optional<std::string> CpuHighway::getAccelerationCache(std::vector<std::unordered_map<double, double>>& accelerationCache, double dt){
@@ -225,10 +233,10 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
         return std::unexpected(result.value());
     }
 
-    // Phase 5: Apply acceleration to each vehicle 
+    // Phase 5: Apply acceleration to each vehicle
     moveVehicles(accelerationCache, dt);
 
-    // Phase 6: Generate flow for each lane 
+    // Phase 6: Generate flow for each lane
     std::vector<CarData> newCars;
     for (auto& [l, gen] : flowGenerators_){
         std::set<Car>::iterator nextCar = lanes_[l].upper_bound(Car::compare(gen.position()));
@@ -239,7 +247,7 @@ std::expected<std::vector<CarData>, std::string> CpuHighway::update(double dt){
             c = gen.generateFlow(nextCar->getRearPosition(), nextCar->getVelocity());
         }
 
-        if (c){ 
+        if (c){
             lanes_[l].insert(*c);
             newCars.push_back({c->data()});
         }
@@ -253,4 +261,18 @@ void CpuHighway::log(double t, std::vector<CarSnapshot>& snapshots){
             snapshots.push_back(car.snapshot(t, ilane));
         }
     }
+}
+
+Environment CpuHighway::environment() {
+    Environment e = laneInfo_->getEnv();
+    // Flow generators are sorted so iterating by index gets the same generator as the one in the environment
+    if (flowGenerators_.size() != e.segments_.size()){
+        std::println("Error calculating the enviornment");
+        return e;
+    }
+    for (size_t i : std::views::iota(0UL, flowGenerators_.size())){
+        e.segments_[i].rate = flowGenerators_[i].second.rate();
+    }
+    return e;
+    
 }

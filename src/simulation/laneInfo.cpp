@@ -66,6 +66,26 @@ bool LaneInterval::insert(double start, double end, size_t position){
     }
 }
 
+Environment LaneInterval::getEnv(){
+    Environment e;
+    e.nlanes = lanes_.size();
+    for (size_t ilane = 0; ilane < e.nlanes; ++ilane){
+        // Convert into a vector for indexing syntax
+        std::vector<double> data(lanes_[ilane].begin(), lanes_[ilane].end());
+        for (size_t i = 0; i < data.size() - 1; ++i){
+            // If i is even, the interval between lanes[i]
+            if (i % 2 == 0) {
+                e.segments_.push_back({data[i], data[i+1], -1.0});
+            } else {
+                e.emptySegments_.push_back({data[i], data[i+1]});
+            }
+        }
+    }
+    return e;
+}
+
+// LANE INFO  FUNCTIONS
+
 LaneInfo::LaneInfo(double bias, double changePressure, double switchThreshold):
     bias_{bias}, changePressure_{changePressure}, switchThreshold_{switchThreshold}{}
 
@@ -79,6 +99,7 @@ bool LaneInfo::addSegment(double start, double end, size_t position){
         }
 
         // Update end of road and corresponding lane end. 
+        startOfRoad_ = std::min(start, startOfRoad_);
         endOfRoad_ = std::max(end, endOfRoad_);
 
         laneEnds_[position] = laneEnds_[position].transform([end](double cur)
@@ -167,4 +188,11 @@ double LaneInfo::calculateBias(double x, size_t ilane, Direction dir){
         }
         return bias() + double(dir) * 1.0/(d) * ((changePressure_/switchThreshold_) * (x - xCrit));
     }
+}
+
+Environment LaneInfo::getEnv(){
+    Environment e = lanes_.getEnv();
+    e.x0 = startOfRoad_;
+    e.xf = endOfRoad_;
+    return e;
 }

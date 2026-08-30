@@ -13,6 +13,8 @@
 #include <optional>
 #include <vector>
 #include <set>
+#include <numeric>
+#include "environment.hpp"
 
 /// @brief Lane boundary class to implement IntervalTree's Interval interface
 struct LaneBoundary {
@@ -31,20 +33,14 @@ enum class Direction : int8_t{
 
 /**
  * @class Class to hold and answer queries about lanes. Particularly start
- * and ends of lanes and segments of lanes. 
+ * and ends of lanes and segments of lanes and environment
  * 
  */
-
-// Replacement for interval tree: 
-// array/vector of sorted sets to prevent looking in interval tree
-
 class LaneInterval {
 
     std::vector<std::set<double>> lanes_;
 
     public: 
-
-    // Gets the lane segment (start, end, position) that (x, lane) is in.
     /**
      * @brief Get the Lane Segment that x would fall in if it exists. If the lane
      * doesn't exist, returns std::nullopt. 
@@ -68,6 +64,13 @@ class LaneInterval {
      * @return true if a lane was added, false if not. 
      */
     bool insert(double start, double end, size_t position);
+
+    /**
+     * @brief Returns the environment represented by this laneInterval object. 
+     * 
+     * @return Environment struct with the data for lane segments populated
+     */
+    Environment getEnv();
 };
 
  class LaneInfo {
@@ -76,7 +79,8 @@ class LaneInterval {
 
     std::vector<std::optional<double>> laneEnds_;
     double endOfRoad_ = 0;
-    
+    double startOfRoad_ = std::numeric_limits<double>::max();
+
     double bias_ = 0.2;
     double changePressure_ = 0.4;
     // X threshold where biases break down to force a lane change. 
@@ -142,5 +146,8 @@ class LaneInterval {
      * @return double X position in meters
      */
     double endOfRoad() const;
+
+    // Returns the envrionment associated with the underlying LaneIntervals
+    Environment getEnv();
 };
 

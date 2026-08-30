@@ -19,6 +19,7 @@
 #include "car.hpp"
 #include "flowGenerator.hpp"
 #include "laneInfo.hpp"
+#include "environment.hpp"
 
 struct Highway {
 
@@ -38,12 +39,20 @@ struct Highway {
      */
     virtual void log(double t, std::vector<CarSnapshot>& data) = 0;
 
+    /**
+     * @brief Returns the lane environment of the highway.
+     * 
+     * @return Environment struct containing lane info and flow rates
+     */
+    virtual Environment environment() = 0;
+
 };
 
  // Each derived class of the highway owns the cars 
 
 class CpuHighway : public Highway {
 
+    // Storing lane index and flow generator. 
     std::vector<std::pair<size_t, FlowGenerator>> flowGenerators_;
     std::vector<std::set<Car>> lanes_;
     std::unique_ptr<LaneInfo> laneInfo_;
@@ -79,8 +88,12 @@ class CpuHighway : public Highway {
     public: 
 
     CpuHighway(size_t numLanes, std::vector<std::pair<size_t, FlowGenerator>> flows, std::unique_ptr<LaneInfo> lanes);
+    
     std::expected<std::vector<CarData>, std::string> update(double dt) override;
+    
     void log(double t, std::vector<CarSnapshot>& data) override;
+
+    Environment environment() override;
 };
 
 // #ifdef TRAFFIC_WITH_KOKKOS

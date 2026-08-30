@@ -14,7 +14,7 @@
 
 /**
  * @brief Defines the envrionment struct to be passed to the logger
- * @details This struct is similar to the data in the input file but is only
+ * This struct is similar to the data in the input file but is only
  * about the road conditions. This struct is created by the Highway class
  * and is sent to the logger and sent to file or disk. 
  */

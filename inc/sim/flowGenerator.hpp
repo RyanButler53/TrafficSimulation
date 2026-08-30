@@ -76,6 +76,13 @@ public:
     double position() const;
 
     /**
+     * @brief Returns the flow rate for this current flow generator
+     * 
+     * @return double rate in vehicles per hour. 
+     */
+    double rate() const;
+    
+    /**
      * @brief Probabalistically generates flow 
      * @param rearPosition x value of the "back bumper" of the car in front. Will not generate if this is less than x0
      * @param vlead Velocity of the leading car. Used if the car is too close
