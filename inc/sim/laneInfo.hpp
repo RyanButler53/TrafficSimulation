@@ -14,16 +14,15 @@
 #include <vector>
 #include <set>
 #include <numeric>
-#include "environment.hpp"
+#include "shared/environment.hpp"
 
-/// @brief Lane boundary class to implement IntervalTree's Interval interface
+/// @brief Lane boundary class to store the high and low boundaries of a segment
 struct LaneBoundary {
     double low_;
     double high_;
 
-    bool operator==(const LaneBoundary& other) const {
-        return low_ == other.low_ && high_ == other.high_;
-    }
+    bool operator==(const LaneBoundary&) const = default;
+
 };    
 
 enum class Direction : int8_t{

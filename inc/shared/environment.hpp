@@ -2,7 +2,7 @@
  * @file environment.hpp
  * @author Ryan Butler
  * @brief Defines the Environment struct
- * @version 0.1
+ * @version 0.2
  * @date 2026-08-29
  * 
  * @copyright Copyright (c) 2026
@@ -13,22 +13,30 @@
  #include <vector>
 
 /**
- * @brief Defines the envrionment struct to be passed to the logger
+ * @brief Defines the envrionment struct to be passed to the logger and created from the database
  * This struct is similar to the data in the input file but is only
  * about the road conditions. This struct is created by the Highway class
  * and is sent to the logger and sent to file or disk. 
  */
 struct Environment {
 
-    struct LaneSegment{
+    struct LaneSegment {
         double start;
         double end;
         double rate;
+        int position;
+
+        bool operator==(const LaneSegment&) const = default;
+
     };
 
     struct EmptySegment{
         double start;
         double end;
+        int position;
+
+        bool operator==(const EmptySegment&) const = default;
+
     };
 
     std::vector<LaneSegment> segments_;

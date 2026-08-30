@@ -75,9 +75,9 @@ Environment LaneInterval::getEnv(){
         for (size_t i = 0; i < data.size() - 1; ++i){
             // If i is even, the interval between lanes[i]
             if (i % 2 == 0) {
-                e.segments_.push_back({data[i], data[i+1], -1.0});
+                e.segments_.push_back({data[i], data[i+1], -1.0, int(ilane)});
             } else {
-                e.emptySegments_.push_back({data[i], data[i+1]});
+                e.emptySegments_.push_back({data[i], data[i+1], int(ilane)});
             }
         }
     }

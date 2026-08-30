@@ -315,15 +315,15 @@ std::expected<void, std::string> DBLogger::logEnvironment(const Environment& env
         pqxx::connection connect(connectionStr_);
         pqxx::work tx(connect);
         for (const Environment::LaneSegment seg : env.segments_){
-            std::string query = std::format("INSERT INTO laneSegments (jobid, segmentStart, segmentEnd, rate)\nVALUES ({}, {}, {}, {})", jobid_, seg.start, seg.end, seg.rate);
+            std::string query = std::format("INSERT INTO laneSegments (jobid, segmentStart, segmentEnd, rate, position)\nVALUES ({}, {}, {}, {}, {})", jobid_, seg.start, seg.end, seg.rate, seg.position);
             tx.exec(query);
         }
-        for (const Environment::LaneSegment seg : env.segments_){
-            std::string query = std::format("INSERT INTO laneSegments (jobid, segmentStart, segmentEnd, rate)\nVALUES ({}, {}, {}, NULL)", jobid_, seg.start, seg.end);
+        for (const Environment::EmptySegment seg : env.emptySegments_){
+            std::string query = std::format("INSERT INTO laneSegments (jobid, segmentStart, segmentEnd, rate, position)\nVALUES ({}, {}, {}, NULL, {})", jobid_, seg.start, seg.end, seg.position);
             tx.exec(query);
         }
 
-        std::string query = std::format("INSERT INTO environments (jobid, x0, xf, numLanes)\nVALUES ({}, {}, {}, {})", jobid_, env.x0, env.xf, env.nlanes);
+        std::string query = std::format("INSERT INTO environment (jobid, x0, xf, numLanes)\nVALUES ({}, {}, {}, {})", jobid_, env.x0, env.xf, env.nlanes);
         tx.exec(query);
         
         tx.commit();

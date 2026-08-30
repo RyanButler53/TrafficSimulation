@@ -175,7 +175,7 @@ TEST_F(DBManagerTest, rawData){
         EXPECT_TRUE(cardata.has_value()) << std::format("Error querying car {}: {}", i, cardata.error());
         singleRawData.push_back(*cardata);
         std::vector<float>& xs = singleRawData.back().x_;
-        ASSERT_TRUE(std::ranges::is_sorted(xs));
+        ASSERT_TRUE(std::is_sorted(xs.begin(), xs.end()));
     }
 
     for (auto [single, all] : std::views::zip(singleRawData, *allRawData)){
@@ -184,6 +184,30 @@ TEST_F(DBManagerTest, rawData){
         EXPECT_EQ(single.v_, all.v_);
         EXPECT_EQ(single.t_, all.t_);
         EXPECT_EQ(single.l_, all.l_);
+    }
+}
+
+// Check that the environment was good. 
+TEST_F(DBManagerTest, environment){
+
+    std::vector<Environment::LaneSegment> segments({{0, 2000, 800, 0}, {0, 2000, 400, 1}});
+    DBManager reader(true);
+
+    std::expected<Environment, std::string> env = reader.queryEnvironment("test-dbreader2");
+    ASSERT_TRUE(env.has_value()) << "Error querying for environment: " << env.error();
+
+    EXPECT_TRUE(env->emptySegments_.empty()) << "Number of empty segments found: " << env->emptySegments_.size();
+
+    EXPECT_DOUBLE_EQ(env->x0, 0);
+    EXPECT_DOUBLE_EQ(env->xf, 2000);
+    EXPECT_EQ(env->nlanes, 2);
+    
+    ASSERT_EQ(env->segments_.size(), 2);
+    for (auto i : std::views::iota(0,2)){
+        EXPECT_EQ(env->segments_[i].start, segments[i].start);
+        EXPECT_EQ(env->segments_[i].end, segments[i].end);
+        EXPECT_EQ(env->segments_[i].rate, segments[i].rate);
+        EXPECT_EQ(env->segments_[i].position, segments[i].position);
     }
 }
 

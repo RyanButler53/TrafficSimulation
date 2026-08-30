@@ -19,7 +19,7 @@
 #include <unordered_map>
 #include <expected>
 #include "logStructs.hpp"
-#include "environment.hpp"
+#include "shared/environment.hpp"
 
 // Comms for streaming based logging
 #include "comms.hpp"

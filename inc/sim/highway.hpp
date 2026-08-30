@@ -19,7 +19,7 @@
 #include "car.hpp"
 #include "flowGenerator.hpp"
 #include "laneInfo.hpp"
-#include "environment.hpp"
+#include "shared/environment.hpp"
 
 struct Highway {
 
