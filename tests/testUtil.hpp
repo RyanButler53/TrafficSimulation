@@ -22,9 +22,12 @@ YAML::Node getConfigNode();
 YAML::Node getConfigNode_3Lane();
 
 
-// Clear out the testing database
+/**
+ * @brief Clears out the test database. Pass through to Database::clearDB
+ * 
+ */
 void clearDB();
 
 void configToFile(YAML::Node cfg, std::string fname);
 
-} // namespace test util
+} // namespace TestUtil

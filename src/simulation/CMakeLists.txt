@@ -45,5 +45,5 @@ add_library(pqxx_wrapper INTERFACE)
 target_link_libraries(pqxx_wrapper INTERFACE pqxx_import)
 
 target_link_libraries(setup PUBLIC yaml-cpp::yaml-cpp)
-target_link_libraries(simulation PUBLIC setup shared PRIVATE initdb pqxx_wrapper)
+target_link_libraries(simulation PUBLIC setup shared PRIVATE database pqxx_wrapper)
 

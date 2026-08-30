@@ -1,7 +1,7 @@
 
 #include "testUtil.hpp"
-#include <pqxx/pqxx>
 #include <fstream>
+#include "database/databaseInit.hpp"
 
 namespace TestUtil{
 
@@ -112,14 +112,7 @@ void configToFile(YAML::Node cfg, std::string fname){
 
 
 void clearDB() {
-    // Clear out the Test DB:
-    pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
-    pqxx::work tx(connect);
-
-    tx.exec("DROP TABLE IF EXISTS trafficjobs CASCADE");
-    tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
-    tx.exec("DROP TABLE IF EXISTS snapshotData");
-    tx.commit();
+    Database::clearDB(true);
 }
 
 }

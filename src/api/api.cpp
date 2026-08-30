@@ -9,7 +9,7 @@
 
 void TrafficApi::run() {
 
-    if (!initDB::initDB(useTestDB_)){
+    if (!Database::initDB(useTestDB_)){
         std::cerr << "Cannot initialize database!" << std::endl;
         return;
     }

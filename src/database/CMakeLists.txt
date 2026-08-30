@@ -1,2 +1,2 @@
-add_library(initdb DatabaseInit.cpp)
-target_link_libraries(initdb PRIVATE pqxx_wrapper)
+add_library(database DatabaseInit.cpp)
+target_link_libraries(database PRIVATE pqxx_wrapper)

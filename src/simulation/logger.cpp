@@ -207,7 +207,7 @@ DBLogger::DBLogger(std::string jobname, std::string config, bool test):
 
 std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string jobname, std::string config, std::string followType, bool test){
     DBLogger* logger = new DBLogger(jobname, config, test);
-    auto init = initDB::initDB(test);
+    auto init = Database::initDB(test);
     if (!init){return std::unexpected("Error initializing database: " + init.error());}
     try {
 

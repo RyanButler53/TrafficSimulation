@@ -12,8 +12,10 @@
 #include <expected>
 #include <string>
 
-namespace initDB {
+namespace Database {
 
 std::expected<void, std::string> initDB(bool useTestDB);
+
+std::expected<void, std::string> clearDB(bool useTestDB);
 
 }

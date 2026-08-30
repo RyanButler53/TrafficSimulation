@@ -1,2 +1,2 @@
 add_executable(clearProdDB migrateSchema.cpp)
-target_link_libraries(clearProdDB PUBLIC pqxx_wrapper)
+target_link_libraries(clearProdDB PUBLIC database)
