@@ -1,11 +1,11 @@
 #include "gtest/gtest.h"
-// #include "car.hpp"
 #include <string>
 #include <iostream>
 #include <fstream>
 #include "yaml-cpp/yaml.h"
 #include "sim/simulator.hpp"
 #include "sim/parserFactory.hpp"
+#include "testUtil.hpp"
 
 
 class ParsingTest : public ::testing::Test {
@@ -18,6 +18,7 @@ class ParsingTest : public ::testing::Test {
         cfg["timestep"] = 1;
         cfg["seed"] = 70;
         cfg["highway-type"] = "cpu";
+        cfg["thinning"] = 2;
 
         // Driver params (From traffic flow book example)
         cfg["driverType"] = "Gipps";
@@ -50,10 +51,9 @@ class ParsingTest : public ::testing::Test {
         cfg["lanes"].push_back(rightlane);
         cfg["lanes"].push_back(leftLane);
 
-        YAML::Emitter parseOut;
-        std::ofstream parseCfg("parseTest.yaml");
-        parseOut << cfg;
-        parseCfg << parseOut.c_str();
+        TestUtil::configToFile(cfg, "parseTest.yaml");
+        cfg["thinning"] = -2;
+        TestUtil::configToFile(cfg, "invalidThinning.yaml" );
     };
 
     void TearDown() {
@@ -67,5 +67,12 @@ TEST_F(ParsingTest, ParseMultiLane){
     SimulatorInputs res = parserFac.makeParser().and_then(std::mem_fn(&Parser::parse)).value();
     ASSERT_DOUBLE_EQ(res.dt_, 1.0);
     ASSERT_EQ(res.totalTime_, 150);
+    EXPECT_EQ(res.thinning_, 2);
+}
 
+TEST_F(ParsingTest, invalidThinning){
+    std::string configfile = "invalidThinning.yaml";
+    ParserFactory parserFac(configfile);
+    SimulatorInputs res = parserFac.makeParser().and_then(std::mem_fn(&Parser::parse)).value();
+    EXPECT_EQ(res.thinning_, 1);
 }

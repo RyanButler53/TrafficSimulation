@@ -38,7 +38,7 @@ macro(SingleFixtureTest testname srcs tag)
 endmacro()
 
 # Test Cases
-TrafficTest(parsing parsing.cpp unit simulation yaml-cpp::yaml-cpp)
+TrafficTest(parsing parsing.cpp unit simulation yaml-cpp::yaml-cpp testutil)
 
 
 TrafficTest(regression regression.cpp integration simulation
