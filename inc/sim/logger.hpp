@@ -200,4 +200,7 @@ class DBLogger : public CarLogger {
     std::expected<void, std::string> updateStatus(std::string newStatus) override;
 
     std::expected<void, std::string> logFailure(std::string message) override;
+
+    std::expected<void, std::string> logEnvironment(const Environment& env) override;
+
 };

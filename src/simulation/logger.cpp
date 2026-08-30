@@ -129,10 +129,13 @@ std::expected<void, std::string> FileLogger::logEnvironment(const Environment& e
     std::filesystem::path fname = basepath_ / "environment.yml";
     YAML::Emitter envyaml;
     std::ofstream fileout(fname);
+    if (!fileout.is_open()){
+        return std::unexpected("Unable to open environment file!");
+    }
     envyaml << node;
     fileout << envyaml.c_str();
     fileout.close();
-    
+    return {};
 }
 
 // INDIVIDUAL CAR BASED FILE LOGGER
@@ -259,7 +262,6 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
         }
     }
 
-
     return {};
 }
 
@@ -291,7 +293,7 @@ std::expected<void, std::string> DBLogger::updateField(std::string key, T value,
         finish_tx.exec(updateStatus); 
         finish_tx.commit();
         return {};
-    } catch(const std::exception& e) {
+    } catch (const std::exception& e) {
         return std::unexpected(std::format("Error updating the {}: {} ", errMsg, e.what()));
     }
 }
@@ -306,6 +308,33 @@ std::expected<void, std::string> DBLogger::writeStats(SimulationStats s) {
 
 std::expected<void, std::string> DBLogger::logFailure(std::string message) {
     return updateStatus("ERROR").and_then([this, &message](){return updateField("error", message, "error message");});
+}
+
+std::expected<void, std::string> DBLogger::logEnvironment(const Environment& env){
+    try {
+        pqxx::connection connect(connectionStr_);
+        pqxx::work tx(connect);
+        for (const Environment::LaneSegment seg : env.segments_){
+            std::string query = std::format("INSERT INTO laneSegments (jobid, start, end, rate)\nVALUES ({}, {}, {}, {})", jobid_, seg.start, seg.end, seg.rate);
+            tx.exec(query);
+        }
+        for (const Environment::LaneSegment seg : env.segments_){
+            std::string query = std::format("INSERT INTO laneSegments (jobid, start, end, rate)\nVALUES ({}, {}, {}, NULL)", jobid_, seg.start, seg.end);
+            tx.exec(query);
+        }
+        tx.commit();
+    }
+    catch(const std::exception& e)
+    {
+        return std::unexpected(std::format("Error adding lane segments to the database: {}", e.what()));
+    }
+    
+    // Update individual fields in the database
+    auto x0result = updateField<double>("x0", env.x0, "environment x0");
+    auto xfresult = updateField<double>("xf", env.xf, "environment xf");
+    auto lanesResult = updateField<size_t>("numLanes", env.nlanes, "environment numLanes");
+    std::string errmsg  = x0result.error_or("") + xfresult.error_or("") + lanesResult.error_or("");
+    return (errmsg.empty()) ? std::expected<void, std::string>{} : std::unexpected(errmsg);
 }
 
 // Template Instantiations
