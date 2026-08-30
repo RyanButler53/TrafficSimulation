@@ -20,7 +20,8 @@
 
 
 Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
-    highway_{input.highway_}, totalTime_{input.totalTime_}, dt_{input.dt_}, comms_{10, CompressionType::UNCOMPRESSED}{
+    highway_{input.highway_}, totalTime_{input.totalTime_}, dt_{input.dt_}, thinning_{input.thinning_},
+    comms_{10, CompressionType::UNCOMPRESSED}{
 
         // Resize vectors to have a maximum memory to stay under the limit 
         size_t snapshotMem = maxMemory_ * 0.9;
@@ -40,13 +41,17 @@ std::expected<void, std::string> Simulator::mainLoop(){
     std::jthread loggingThread([this](){logger_->run(comms_);});
     auto start = std::chrono::steady_clock::now();
     double t = 0.0;
+    long timesteps = 0;
     std::expected <void, std::string> simStatus;
     while (t < totalTime_){
         simStatus = highway_->update(dt_).transform([this](const auto& cdata){
             for (const auto& car : cdata){cars_.push_back(car);}
         });
         t += dt_;
-        highway_->log(t, snapshots_);
+        ++timesteps;
+        if (timesteps % thinning_ == 0){
+            highway_->log(t, snapshots_);
+        }
         if (!simStatus.has_value()){
             break;
         }

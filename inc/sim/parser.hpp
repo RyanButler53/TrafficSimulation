@@ -36,6 +36,7 @@ class Parser {
     std::shared_ptr <Highway> highway_;
     double totaltime_;
     double dt_;
+    int thinning_;
     uint64_t seed_;
 
 
