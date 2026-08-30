@@ -17,6 +17,7 @@
 #include <format>
 #include <iostream>
 #include <ranges>
+#include <yaml-cpp/yaml.h>
 
 // Database
 #include <pqxx/pqxx>
@@ -96,6 +97,42 @@ std::expected<void, std::string> FileLogger::writeCars(std::vector<CarData> data
         logfile << c.id << "," << c.a << ","<< c.b << "," << c.c<< "," << c.p << "," << c.vdes <<"\n";
     }
     return {};
+}
+
+std::expected<void, std::string> FileLogger::logEnvironment(const Environment& env){
+    YAML::Node node;
+    node["number-of-lanes"] = 4;
+    node["x0"] = env.x0;
+    node["xf"] = env.xf;
+
+    // Road Segments
+    YAML::Node segments, emptySegments;
+    
+    for (const Environment::LaneSegment& seg : env.segments_){
+        YAML::Node segment;
+        segment["start"] = seg.start;
+        segment["end"] = seg.end;
+        segment["rate"] = seg.rate;
+        segments.push_back(segment);
+    }
+
+    for (const Environment::EmptySegment& eseg : env.emptySegments_){
+        YAML::Node segment;
+        segment["start"] = eseg.start;
+        segment["end"] = eseg.end;
+        emptySegments.push_back(segment);
+    }
+
+    node["road-segments"] = segments;
+    node["empty-segments"] = emptySegments;
+
+    std::filesystem::path fname = basepath_ / "environment.yml";
+    YAML::Emitter envyaml;
+    std::ofstream fileout(fname);
+    envyaml << node;
+    fileout << envyaml.c_str();
+    fileout.close();
+    
 }
 
 // INDIVIDUAL CAR BASED FILE LOGGER
