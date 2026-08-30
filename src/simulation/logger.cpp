@@ -315,13 +315,17 @@ std::expected<void, std::string> DBLogger::logEnvironment(const Environment& env
         pqxx::connection connect(connectionStr_);
         pqxx::work tx(connect);
         for (const Environment::LaneSegment seg : env.segments_){
-            std::string query = std::format("INSERT INTO laneSegments (jobid, start, end, rate)\nVALUES ({}, {}, {}, {})", jobid_, seg.start, seg.end, seg.rate);
+            std::string query = std::format("INSERT INTO laneSegments (jobid, segmentStart, segmentEnd, rate)\nVALUES ({}, {}, {}, {})", jobid_, seg.start, seg.end, seg.rate);
             tx.exec(query);
         }
         for (const Environment::LaneSegment seg : env.segments_){
-            std::string query = std::format("INSERT INTO laneSegments (jobid, start, end, rate)\nVALUES ({}, {}, {}, NULL)", jobid_, seg.start, seg.end);
+            std::string query = std::format("INSERT INTO laneSegments (jobid, segmentStart, segmentEnd, rate)\nVALUES ({}, {}, {}, NULL)", jobid_, seg.start, seg.end);
             tx.exec(query);
         }
+
+        std::string query = std::format("INSERT INTO environments (jobid, x0, xf, numLanes)\nVALUES ({}, {}, {}, {})", jobid_, env.x0, env.xf, env.nlanes);
+        tx.exec(query);
+        
         tx.commit();
     }
     catch(const std::exception& e)
@@ -329,12 +333,7 @@ std::expected<void, std::string> DBLogger::logEnvironment(const Environment& env
         return std::unexpected(std::format("Error adding lane segments to the database: {}", e.what()));
     }
     
-    // Update individual fields in the database
-    auto x0result = updateField<double>("x0", env.x0, "environment x0");
-    auto xfresult = updateField<double>("xf", env.xf, "environment xf");
-    auto lanesResult = updateField<size_t>("numLanes", env.nlanes, "environment numLanes");
-    std::string errmsg  = x0result.error_or("") + xfresult.error_or("") + lanesResult.error_or("");
-    return (errmsg.empty()) ? std::expected<void, std::string>{} : std::unexpected(errmsg);
+    return {};
 }
 
 // Template Instantiations
