@@ -1,8 +1,8 @@
 /**
  * @file migrateSchema.cpp
  * @author Ryan Butler
- * @brief Small script to clear the production database and 
- * @version 0.1
+ * @brief Small script to clear the production database
+ * @version 0.2
  * @date 2026-07-27
  * 
  * @copyright Copyright (c) 2026

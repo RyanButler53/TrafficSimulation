@@ -1,17 +1,7 @@
 # Traffic Simulator
 
-Car factory: Creates cars with different distributions of aggressiveness, braking and reaction times. 
 
-Roadmap:
-Piecewise Functions
-Valuable Metrics (probably traffic flow at a specific X at a given time)
-Car Factory can be randomized
-
-
-Add actual test for postgres integration
-Add integration test for API access to DB
-
-Dependencies: 
+### Dependencies: 
 
 - PostgreSQL: Main Database system
 - libpqxx: C++ libpq wrapper
@@ -27,13 +17,17 @@ Compiler must be compatible with C++23 with `std::views::zip` and `std::expected
 There are two databases: TrafficDB and TrafficDBTest
 Both have 3 tables: trafficJobs, carData, snapshotData
 
-TrafficJobs: 
+#### Job Data:
+
+Table name: trafficJobs 
 
 | jobID (int) | configfile (text) | jobname (text) | status (varchar 7) | error (text) | followModel (varchar 5) | numCars (int) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Unique Job identifier | Configuration file for the simulation | User provided jobname (in input file) | Job Status (Queued, Running Error, Done) | Error message for erroring jobs | Follow model type: Gipps/IDM | Number of total cars in the simulation. 
 
-CarData:
+#### Car Metadata:
+
+Table name: carData
 
 | carID (int) | jobID (int) | Follow Strategy A (float)  | Follow Strategy B (float) | Follow Strategy C (float) | Politeness (float) | Desired Velocity (float) |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -41,7 +35,8 @@ CarData:
 
 JobID is a foreign key to the TrafficJobs table. The combination CarID and JobID are gauranteed to be unique. 
 
-Snapshot Data:
+#### Car Snapshot Data:
+Table name: snapshotData
 
 | carID (int) | jobID (int) | x (float) | v (float) | t (float) | Lane (int) |
 | --- | --- | --- | --- | --- | --- |
@@ -49,6 +44,24 @@ Snapshot Data:
 
 
 CarID and JobID is a foreign key to CarData's CarID and JobID values. The triplet CarID, JobID and timestamp (t) are gauranteed to be unique. 
+
+#### Lane Segments
+
+Table name: laneSegments
+
+| jobId (int) | segmentStart (float) | segmentEnd (float) | rate (float) | position (int)
+| --- | --- | --- | --- | --- | --- |
+| Job ID that the segment belongs to | Start of the road segment (m) | End of the road segment (m) | Flow rate (veh/hr). NULL if it is an unpopulated segment | Lane position of the segment (0 represents right lane)
+
+JobID is a foreigh key to the Job ID in the Traffic Jobs table. 
+
+#### Environment Data:
+
+| jobId (int) | x0 (float) | xf (float) | numLanes (int) |
+| --- | --- | --- | --- |
+| Job ID of the environment | Beginning of the road (m) | End of the road (m). The maximum of all segmentEnds with the same Job ID | Total number of lanes. Represents the maximum value of the "position" parameter in input files |
+
+JobID is a foreigh key to the Job ID in the Traffic Jobs table. There should be only one environment with a given JobID in this table, thus it is a primary key (although it is explicitly marked as one)
 
 # List of Api Endpoints
 
