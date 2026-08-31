@@ -68,14 +68,8 @@ protected:
     // Note that these tests CANNOT be run in parallel 
     // since they are interacting with the SAME files. 
     void TearDown() override {
-        if (std::filesystem::exists("fileConfig.yaml")) std::filesystem::remove("fileConfig.yaml");
-        if (std::filesystem::exists("dbConfig.yaml")) std::filesystem::remove("dbConfig.yaml");
-        if (std::filesystem::exists("timeSeriesConfig.yaml")) std::filesystem::remove("timeSeriesConfig.yaml");
-        if (std::filesystem::exists("thinningConfig.yaml")) std::filesystem::remove("thinningConfig.yaml");
-
-        if (std::filesystem::exists("file-test/logs")) std::filesystem::remove_all("file-test/logs");
-        if (std::filesystem::exists("file-test/time-series")) std::filesystem::remove_all("file-test/time-series");
-        if (std::filesystem::exists("file-test/thinning")) std::filesystem::remove_all("file-test/thinning");
+        TestUtil::conditionalFileCleanup({"fileConfig.yaml", "dbConfig.yaml", "timeSeriesConfig.yaml", "thinningConfig.yaml"});
+        TestUtil::conditionalFolderCleanup("file-test");
     }
 
     void getXVTFromFIle(std::vector<XVTL>& xvts, std::filesystem::path file){
@@ -203,7 +197,7 @@ TEST_F(RegressionTest, FileDBEquivalence){
     // Compare both file and DB, car by car at each timestamp. 
 
     size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
-    numCars -= 2; // Car Stats and Simulation stats files aren't counted. 
+    numCars -= 3; // Car Stats, Simulation stats and environment files aren't counted. 
     // Read in each file, query the DB for each specific car id. Then check if they are ASSERT_EQ
     pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
     for (size_t carid = 0; carid < numCars; ++carid){
@@ -241,7 +235,7 @@ TEST_F(RegressionTest, FileTimeSeriesEquivalence){
     fromTimeSeries("file-test/time-series", timeSeries);
 
     size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
-    numCars -= 2; // Car Stats and Simulation stats files aren't counted. 
+    numCars -= 3; // Car Stats and Simulation stats files aren't counted. 
     ASSERT_EQ(timeSeries.size(), numCars);
 
     for (size_t carid = 0; carid < numCars; ++carid){
@@ -290,7 +284,7 @@ TEST_F(RegressionTest, FileHashEquivalence){
     }
 
     // Get the hashes for each file and concatenate them
-    size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{}) - 2;
+    size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{}) - 3;
     std::string hashes;
     for (size_t carid = 0; carid < numCars; ++carid){
         std::filesystem::path p = std::format("file-test/logs/car{}.csv", carid);

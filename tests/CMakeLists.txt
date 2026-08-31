@@ -65,6 +65,12 @@ SingleFixtureTest(algorithmTest algorithmTest.cpp integration simulation
                                                               testutil
                                                               dbmanager)
 
+SingleFixtureTest(environmentTest environment.cpp integration simulation 
+                                                              yaml-cpp::yaml-cpp
+                                                              dbmanager
+                                                              testCases
+                                                              testutil)
+
 if (CURL_FOUND)
     # Bring in Json Dependency
     message(STATUS "Found CURL: Fetching JSON and enabling API Test")

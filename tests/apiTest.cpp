@@ -2,7 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <sstream>
 #include <thread>
 #include <format>
 #include <expected>
@@ -212,12 +211,8 @@ class ApiTest : public ::testing::Test {
 
         curl_global_cleanup();
         // Cleanup Input File. 
-        if (std::filesystem::exists("apiConfig.yml")){
-            std::filesystem::remove("apiConfig.yml");
-        }
-        if (std::filesystem::exists("apiTestTimeSeries.yml")){
-            std::filesystem::remove("apiTestTimeSeries.yml");
-        }
+        std::vector<std::string> files = {"apiConfig.yml", "apiTestTimeSeries.yml"};
+        TestUtil::conditionalFileCleanup(files);
         
         /* Destroy oatpp Environment */
         apiRunner_.closeServer();

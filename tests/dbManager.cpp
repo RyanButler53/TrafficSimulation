@@ -54,7 +54,7 @@ class DBManagerTest : public ::testing::Test {
     static void TearDownTestSuite() {
         for (size_t i = 0; i < 3; ++i){
             std::filesystem::path fname = std::format("dbConfig{}.yaml", i);
-            if (std::filesystem::exists(fname)) std::filesystem::remove(fname);
+            TestUtil::conditionalFileCleanup(fname);
         }
     }
 
@@ -81,7 +81,7 @@ class ErrorLogTest : public DBManagerTest {
 
     void TearDown() override {
         std::filesystem::path fname = "dbConfig3.yaml";
-        if (std::filesystem::exists(fname)) std::filesystem::remove(fname);
+        TestUtil::conditionalFileCleanup(fname);
     }
 };
 

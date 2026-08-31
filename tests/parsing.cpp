@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 #include <string>
-#include <iostream>
-#include <fstream>
 #include "yaml-cpp/yaml.h"
 #include "sim/simulator.hpp"
 #include "sim/parserFactory.hpp"

@@ -54,8 +54,7 @@ class AlgorithmTest : public testing::Test {
 
     static void TearDownTestSuite() {
         TestUtil::clearDB();
-        std::filesystem::path input = TestCase().filename();
-        if (std::filesystem::exists(input)) std::filesystem::remove(input);
+        TestUtil::conditionalFileCleanup(TestCase().filename());
     }
 
 };

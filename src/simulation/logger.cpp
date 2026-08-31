@@ -113,6 +113,7 @@ std::expected<void, std::string> FileLogger::logEnvironment(const Environment& e
         segment["start"] = seg.start;
         segment["end"] = seg.end;
         segment["rate"] = seg.rate;
+        segment["position"] = seg.position;
         segments.push_back(segment);
     }
 
@@ -120,6 +121,7 @@ std::expected<void, std::string> FileLogger::logEnvironment(const Environment& e
         YAML::Node segment;
         segment["start"] = eseg.start;
         segment["end"] = eseg.end;
+        segment["position"] = eseg.position;
         emptySegments.push_back(segment);
     }
 
