@@ -363,7 +363,7 @@ TEST_F(ApiTest, ErrorRequests){
     CurlWrapper requester;
     CurlResponse response = requester.queryJobs();
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying All Jobs: {}", response.error());
-    ASSERT_EQ(response.value().code, 200);
+    ASSERT_EQ(response.value().code, 200) << response.error();
     size_t initialNumJobs = response.value().jsonData["jobs"].size();
 
     response = requester.postJob("ApiConfig", "./apiConfig.yml");
