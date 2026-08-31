@@ -66,18 +66,28 @@ bool LaneInterval::insert(double start, double end, size_t position){
     }
 }
 
-Environment LaneInterval::getEnv(){
+Environment LaneInterval::getEnv(double start, double end){
     Environment e;
     e.nlanes = lanes_.size();
+    e.x0 = start;
+    e.xf = end;
+
     for (size_t ilane = 0; ilane < e.nlanes; ++ilane){
         // Convert into a vector for indexing syntax
         std::vector<double> data(lanes_[ilane].begin(), lanes_[ilane].end());
+
+        if (data.front() != start){
+            e.emptySegments_.emplace_back(start, data.front(), int(ilane));
+        }
+        if (data.back() != end){
+            e.emptySegments_.emplace_back(data.back(), end, int(ilane));
+        }
         for (size_t i = 0; i < data.size() - 1; ++i){
             // If i is even, the interval between lanes[i]
             if (i % 2 == 0) {
-                e.segments_.push_back({data[i], data[i+1], -1.0, int(ilane)});
+                e.segments_.emplace_back(data[i], data[i+1], -1.0, int(ilane));
             } else {
-                e.emptySegments_.push_back({data[i], data[i+1], int(ilane)});
+                e.emptySegments_.emplace_back(data[i], data[i+1], int(ilane));
             }
         }
     }
@@ -191,8 +201,5 @@ double LaneInfo::calculateBias(double x, size_t ilane, Direction dir){
 }
 
 Environment LaneInfo::getEnv(){
-    Environment e = lanes_.getEnv();
-    e.x0 = startOfRoad_;
-    e.xf = endOfRoad_;
-    return e;
+    return lanes_.getEnv(startOfRoad_, endOfRoad_);
 }

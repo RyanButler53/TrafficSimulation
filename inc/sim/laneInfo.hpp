@@ -67,9 +67,11 @@ class LaneInterval {
     /**
      * @brief Returns the environment represented by this laneInterval object. 
      * 
+     * @param start start of the road (m)
+     * @param end end of the road (m)
      * @return Environment struct with the data for lane segments populated
      */
-    Environment getEnv();
+    Environment getEnv(double start, double end);
 };
 
  class LaneInfo {

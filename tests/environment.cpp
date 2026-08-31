@@ -101,6 +101,36 @@ TEST_F(EnvironmentTest, Comparison){
 
 };
 
-// TEST_F(EnvironmentTest, LaneClosure){
+TEST_F(EnvironmentTest, LaneClosure){
 
-// }
+        std::vector<Environment::LaneSegment> segments({{0, 2000, 200, 0}, 
+                                                        {5000, 10000, 200, 0},
+                                                        {0, 10000, 400, 1},
+                                                        {0, 10000, 600, 2},
+                                                        {6000, 10000, 0, 3}});
+
+        std::vector<Environment::EmptySegment> empty({{2000, 5000, 0}, 
+                                                      {0, 6000, 3}}); 
+
+        Environment env = EnvironmentTest::fromYaml("environmentTest/environment.yml");
+        
+        EXPECT_DOUBLE_EQ(env.x0, 0);
+        EXPECT_DOUBLE_EQ(env.xf, 10000);
+        EXPECT_EQ(env.nlanes, 4);
+        
+        ASSERT_EQ(env.segments_.size(), 5) << "Number of road segments found: " << env.segments_.size();
+        for (auto i : std::views::iota(0,5)){
+            EXPECT_EQ(env.segments_[i].start, segments[i].start);
+            EXPECT_EQ(env.segments_[i].end, segments[i].end);
+            EXPECT_EQ(env.segments_[i].rate, segments[i].rate);
+            EXPECT_EQ(env.segments_[i].position, segments[i].position);
+        }
+
+        ASSERT_EQ(env.emptySegments_.size(), 2) << "Number of empty segments found: " << env.emptySegments_.size();
+        for (auto i : std::views::iota(0,2)){
+            EXPECT_EQ(env.segments_[i].start, segments[i].start);
+            EXPECT_EQ(env.segments_[i].end, segments[i].end);
+            EXPECT_EQ(env.segments_[i].rate, segments[i].rate);
+            EXPECT_EQ(env.segments_[i].position, segments[i].position);
+        }
+}
