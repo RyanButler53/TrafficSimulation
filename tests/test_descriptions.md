@@ -8,6 +8,8 @@ There are 4 modules with unit tests:
    - Includes bias calculation and LaneInterval test cases
 - Threadsafe Queue
 - Parsing
+- Environments
+   - Includes a comparison of File/DB based logging
 
 ## Integration Tests: 
 
