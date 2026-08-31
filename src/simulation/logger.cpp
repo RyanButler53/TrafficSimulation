@@ -101,7 +101,7 @@ std::expected<void, std::string> FileLogger::writeCars(std::vector<CarData> data
 
 std::expected<void, std::string> FileLogger::logEnvironment(const Environment& env){
     YAML::Node node;
-    node["number-of-lanes"] = 4;
+    node["number-of-lanes"] = env.nlanes;
     node["x0"] = env.x0;
     node["xf"] = env.xf;
 

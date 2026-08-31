@@ -65,11 +65,11 @@ SingleFixtureTest(algorithmTest algorithmTest.cpp integration simulation
                                                               testutil
                                                               dbmanager)
 
-SingleFixtureTest(environmentTest environment.cpp integration simulation 
-                                                              yaml-cpp::yaml-cpp
-                                                              dbmanager
-                                                              testCases
-                                                              testutil)
+TrafficTest(environmentTest environment.cpp unit simulation 
+                                                 yaml-cpp::yaml-cpp
+                                                 dbmanager
+                                                 testCases
+                                                 testutil)
 
 if (CURL_FOUND)
     # Bring in Json Dependency

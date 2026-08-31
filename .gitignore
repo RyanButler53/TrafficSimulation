@@ -1,6 +1,7 @@
 build/
 .vscode/
 *.csv
+.DS_store
 
 # Cmake user presets
 CMakeUserPresets.json
