@@ -4,6 +4,7 @@
 #include "api/structs.hpp"
 #include "api/DBManager.hpp"
 #include "api/jobManager.hpp"
+#include "shared/environment.hpp"
 #include <iostream>
 #include <filesystem>
 #include <chrono>
@@ -77,6 +78,14 @@ class Controller : public oatpp::web::server::api::ApiController {
         return decoded;
     }
 
+    /**
+     * @brief Converts T into R with a simple conversion. Assumes T has a built in conversion to R
+     * 
+     * @tparam T Type to convert
+     * @tparam R Return type
+     * @param value Value to convertc
+     * @return R converted value to return type
+     */
     template <typename T, typename R>
     static R simpleConvert(T value){
         return R(value);
@@ -147,6 +156,41 @@ class Controller : public oatpp::web::server::api::ApiController {
             std::ranges::transform(timestamps, snapshotVec->begin(), convertSnapshot);
             response->snapshots->push_back(snapshotVec);
         }
+        return response;
+    }
+
+    static EmptySegmentDTO::Wrapper convertEmptySegment(const Environment::EmptySegment& seg){
+        auto segmentDto = EmptySegmentDTO::createShared();
+        segmentDto->start = seg.start;
+        segmentDto->end = seg.end;
+        segmentDto->position = seg.position;
+        return segmentDto;
+    }
+
+    static RoadSegmentDTO::Wrapper convertRoadSegment(const Environment::LaneSegment& seg){
+        auto segmentDto = RoadSegmentDTO::createShared();
+        segmentDto->start = seg.start;
+        segmentDto->end = seg.end;
+        segmentDto->rate = seg.rate;
+        segmentDto->position = seg.position;
+        return segmentDto;
+    }
+
+    static EnvironmentDTO::Wrapper convertEnvironment(const Environment& env){
+        auto response = EnvironmentDTO::createShared();
+
+        response->x0 = env.x0;
+        response->xf = env.xf;
+        response->nlanes = int(env.nlanes);
+
+        response->roadSegments = {};
+        response->emptySegments = {};
+        response->roadSegments->resize(env.segments_.size());
+        response->emptySegments->resize(env.emptySegments_.size());
+
+        std::ranges::transform(env.segments_, response->roadSegments->begin(),Controller::convertRoadSegment);
+        std::ranges::transform(env.emptySegments_, response->emptySegments->begin(),Controller::convertEmptySegment);
+
         return response;
     }
 
@@ -263,6 +307,13 @@ class Controller : public oatpp::web::server::api::ApiController {
         }
         auto raw = dataManager_.queryData(job, paramMap["x0"], paramMap["x1"], paramMap["t0"], paramMap["t1"]);
         return getReturnDto(raw, Controller::convertTimeSeries);
+    }
+
+    ENDPOINT("GET", "jobs/{job-name}/environment", environmentQuery,
+        PATH(String, job, "job-name")){
+    OATPP_LOGI("Controller:", "Running a spatial query!");
+        auto raw = dataManager_.queryEnvironment(job);
+        return getReturnDto(raw, Controller::convertEnvironment);
     }
 
     // Submitting a job. Must check if jobname is unique. 
