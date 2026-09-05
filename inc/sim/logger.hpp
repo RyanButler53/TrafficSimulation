@@ -96,13 +96,14 @@ class CarLogger
      */
     virtual std::expected<void, std::string> logEnvironment(const Environment& env) = 0;
 
-    /**
-     * @brief Streaming run function.  Reads data from the comms manager 
+     /**
+      * @brief Streaming run function.  Reads data from the comms manager 
      * and gets it to the appropriate file sink
-     * 
-     * @param comms Communications manager that has Data Packets coming off the queue. 
-     */
-    void run(CommunicationsManager& comms);
+      * 
+      * @param comms Communications manager that has Data Packets coming off the queue. 
+      * @return std::expected<void, std::string> Nothing on success, string with each failure message on exit
+      */
+    std::expected<void, std::string> run(CommunicationsManager& comms);
 };
 
 class FileLogger : public CarLogger {

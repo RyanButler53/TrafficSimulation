@@ -40,20 +40,29 @@ void CarLogger::partition(std::vector<CarSnapshot>&& snapshots, std::unordered_m
 }
 
 // Main loop
-void CarLogger::run(CommunicationsManager& comms){
+std::expected<void, std::string> CarLogger::run(CommunicationsManager& comms){
     DataType messageType = DataType::NO_DATA;
+    std::expected<void, std::string> writeResult;
+    std::stringstream errorMsgs;
     while (messageType != DataType::END_OF_DATA){
         DataPacket::ptr packet = comms.getPacket();
         if (auto pkt = std::dynamic_pointer_cast<CarMetadataPacket>(packet)){
             messageType = DataType::CAR_DATA;
-            writeCars(pkt->moveData());
+            writeResult = writeCars(pkt->moveData());
         } else if (auto pkt = std::dynamic_pointer_cast<CarSnapshotPacket>(packet)){
             messageType = DataType::SNAPSHOT_DATA;
-            writeSnapshots(pkt->moveData());
+            writeResult = writeSnapshots(pkt->moveData());
         } else if (auto pkt = std::dynamic_pointer_cast<EndOfData>(packet)){
             messageType = DataType::END_OF_DATA;
         }
+
+        if (!writeResult.has_value()){
+           errorMsgs << writeResult.error() << "\n";
+        }
     }
+
+    std::string errMsg = errorMsgs.str();
+    return errMsg.empty() ? std::expected<void, std::string>() : std::unexpected(errMsg);
 }
 
 // FILE LOGGER
