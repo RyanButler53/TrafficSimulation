@@ -70,7 +70,7 @@ class TimeSeries(MovieMaker):
         with open(envfile, "r") as stream:
             env = yaml.safe_load(stream)
             self.emptySegments = env["empty-segments"]
-            self.nlanes = env["number-of-lanes"]
+            self.nlanes = env["nlanes"]
 
     def __repr__(self):
         return f"File Reader for folder {self.filepath}. X limits: {self.xlimits}, T limits: {self.tlimits}"
@@ -141,7 +141,7 @@ class Database(MovieMaker):
         plt.xlim(self.xlimits)
         plt.ylim(-0.2, self.nlanes-0.8) # + 0.2 for extended range but -1 for zero indexing error. 
         plt.yticks(list(range(self.nlanes)))
-        plt.scatter(xs, lanes, c=vs,  vmin=VELOCITY_MIN, vmax=VELOCITY_MAX)
+        plt.scatter(xs, lanes, c=vs, vmin=VELOCITY_MIN, vmax=VELOCITY_MAX)
         for snapshot in data:
             plt.annotate(f"{snapshot["id"]}", xy=(snapshot["x"], snapshot["l"]), xytext = (5,5), textcoords="offset points")
         plt.colorbar()

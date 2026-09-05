@@ -274,5 +274,4 @@ Environment CpuHighway::environment() {
         e.segments_[i].rate = flowGenerators_[i].second.rate();
     }
     return e;
-    
 }

@@ -11,6 +11,11 @@
 - openssl (optional): Hashing for regression testing. 
 - Curl: For making api requests for Api Testing
 
+For making movies based on the outputs: 
+- Python
+- ffmpeg (cli only)
+- pyyaml
+
 Compiler must be compatible with C++23 with `std::views::zip` and `std::expected`
 
 ### Database Schema:
@@ -88,6 +93,8 @@ Requires a query parameter to specify the boundaries:
  "x0": 100, 
  "x1": 250}
 ```
+
+`GET "/jobs/{jobname}/environments"` -> Returns the "environment for the specified job. The environment contains data  including the start and end of the road segment, the number of lanes, the lanes that are empty (invalid) and the road segments.  
 
 `POST "/submit/{job-name}"` -> Submits a job with the specified job name. The Job name must be unique. Requires a query parameter `{"cfg" : "configfile.yaml"}` to specify the config file. 
 

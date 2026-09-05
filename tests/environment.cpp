@@ -38,7 +38,7 @@ class EnvironmentComparison : public ::testing::Test {
         YAML::Node env = YAML::LoadFile(path);
         Environment e;
 
-        e.nlanes = size_t(env["number-of-lanes"].as<int>());
+        e.nlanes = size_t(env["nlanes"].as<int>());
         e.x0 = env["x0"].as<double>();
         e.xf = env["xf"].as<double>();
         for (YAML::Node n : env["road-segments"]){

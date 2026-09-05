@@ -27,7 +27,6 @@ struct Environment {
         int position;
 
         bool operator==(const LaneSegment&) const = default;
-
     };
 
     struct EmptySegment{
