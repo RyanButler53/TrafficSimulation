@@ -2,9 +2,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <sstream>
 #include <thread>
 #include <format>
+#include <ranges>
 #include <expected>
 #include <sstream>
 #include <print>
@@ -61,6 +61,7 @@ class CurlWrapper {
                                                       std::optional<double> t1 = std::nullopt,
                                                       std::optional<double> x0 = std::nullopt, 
                                                       std::optional<double> x1 = std::nullopt);
+    CurlResponse queryEnvironment(std::string jobname) {return getQuery(std::format("/jobs/{}/environment", jobname));}; // GET /jobs/{jobname}/environment
     // Post and delete
     CurlResponse postJob(std::string jobname, std::filesystem::path cfg);
     CurlResponse deleteJob(std::string jobname);
@@ -212,12 +213,8 @@ class ApiTest : public ::testing::Test {
 
         curl_global_cleanup();
         // Cleanup Input File. 
-        if (std::filesystem::exists("apiConfig.yml")){
-            std::filesystem::remove("apiConfig.yml");
-        }
-        if (std::filesystem::exists("apiTestTimeSeries.yml")){
-            std::filesystem::remove("apiTestTimeSeries.yml");
-        }
+        std::vector<std::string> files = {"apiConfig.yml", "apiTestTimeSeries.yml"};
+        TestUtil::conditionalFileCleanup(files);
         
         /* Destroy oatpp Environment */
         apiRunner_.closeServer();
@@ -336,14 +333,29 @@ TEST_F(ApiTest, TimeSeriesRequests){
     }
     ASSERT_EQ(response->code, 200) << std::format("Error posting job: {}", response->error());
     
+    // Test Environment;
+    response = requester.queryEnvironment("apiTestTimeSeries");
+    ASSERT_EQ(response->code, 200) << "Error in Environmental Query: " << response->error();
+    json data = response->jsonData;
+    EXPECT_EQ(data["x0"], 0);
+    EXPECT_EQ(data["xf"], 2000);
+    EXPECT_EQ(data["nlanes"], 3);
+    std::array<float, 3> rates{200.0, 400.0, 450.0};
+    for (size_t i : std::views::iota(0UL, 3UL)){
+        EXPECT_EQ(data["roadSegments"][i]["start"], 0);
+        EXPECT_EQ(data["roadSegments"][i]["end"], 2000);
+        EXPECT_EQ(data["roadSegments"][i]["rate"], rates[i]);
+        EXPECT_EQ(data["roadSegments"][i]["position"], i);
+    }
+    EXPECT_EQ(data["emptySegments"].size(), 0);
+
     response = requester.queryTimeSeries("apiTestTimeSeries", 50, 100);
     // The cars must be within 50 and 100 timestep
     ASSERT_EQ(response->code, 200);
-    json data = response->jsonData;
+    data = response->jsonData;
     std::vector<float> timestamps = data["timestamps"];
     EXPECT_EQ(timestamps.size(), 51);
     EXPECT_EQ(data["snapshots"].size(), 51);
-
 
     response = requester.deleteJob("apiTestTimeSeries");
     ASSERT_EQ(response->code, 200) << std::format("Error deleting job: {}", response->error());
@@ -368,7 +380,7 @@ TEST_F(ApiTest, ErrorRequests){
     CurlWrapper requester;
     CurlResponse response = requester.queryJobs();
     ASSERT_TRUE(response.has_value()) << std::format("Error Querying All Jobs: {}", response.error());
-    ASSERT_EQ(response.value().code, 200);
+    ASSERT_EQ(response.value().code, 200) << response.error();
     size_t initialNumJobs = response.value().jsonData["jobs"].size();
 
     response = requester.postJob("ApiConfig", "./apiConfig.yml");

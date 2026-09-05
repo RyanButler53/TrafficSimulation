@@ -1,7 +1,7 @@
 
 #include "testUtil.hpp"
-#include <pqxx/pqxx>
 #include <fstream>
+#include "database/databaseInit.hpp"
 
 namespace TestUtil{
 
@@ -112,14 +112,27 @@ void configToFile(YAML::Node cfg, std::string fname){
 
 
 void clearDB() {
-    // Clear out the Test DB:
-    pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
-    pqxx::work tx(connect);
+    Database::clearDB(true);
+}
 
-    tx.exec("DROP TABLE IF EXISTS trafficjobs CASCADE");
-    tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
-    tx.exec("DROP TABLE IF EXISTS snapshotData");
-    tx.commit();
+
+void conditionalFileCleanup(std::string file){
+    if (std::filesystem::exists(file)) std::filesystem::remove(file);
+}
+void conditionalFileCleanup(std::vector<std::string> files){
+    for (const std::string& f : files){
+        conditionalFileCleanup(f);
+    }
+}
+
+void conditionalFolderCleanup(std::filesystem::path folder){
+    if (std::filesystem::exists(folder)) std::filesystem::remove_all(folder);
+
+}
+void conditionalFolderCleanup(std::vector<std::filesystem::path> folders){
+    for (const std::string& f : folders){
+        conditionalFolderCleanup(f);
+    }
 }
 
 }

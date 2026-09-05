@@ -134,12 +134,16 @@ class Reader():
         plt.scatter(param_vals, times)
         plt.show()
 
-    def  spatialQuery(self, x0 = None, x1 = None, t0 = None, t1 = None):
+    def spatialQuery(self, x0 = None, x1 = None, t0 = None, t1 = None):
         params = {}
         if x0: params["x0"] = x0
         if x1: params["x1"] = x1
         if t0: params["t0"] = t0
         if t1: params["t1"] = t1
         response = requests.get(f"{self.base_url}/data/{self.jobname}/spatial", params = params)
+        return response
+    
+    def environmentQuery(self):
+        response = requests.get(f"{self.base_url}/jobs/{self.jobname}/environment")
         return response
 

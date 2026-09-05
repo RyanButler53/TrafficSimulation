@@ -74,7 +74,10 @@ std::expected<void, std::string> Simulator::mainLoop(){
 
     SimulationStats stats{double(ms / 1000000.0)};
     auto statsStatus = logger_->writeStats(stats).transform_error(Simulator::errorFunc("writing stats"));
-    std::string errmsg  = simStatus.error_or("") + statsStatus.error_or("");
+
+    auto envStatus = logger_->logEnvironment(highway_->environment()).transform_error(Simulator::errorFunc("writing environment"));
+
+    std::string errmsg  = simStatus.error_or("") + statsStatus.error_or("") + envStatus.error_or("");
     return (errmsg.empty()) ? std::expected<void, std::string>{} : std::unexpected(errmsg);
 }
 

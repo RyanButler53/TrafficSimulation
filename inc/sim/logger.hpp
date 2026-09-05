@@ -2,7 +2,7 @@
  * @file logger.hpp
  * @author Ryan Butler
  * @brief Header for logger and other logging related classes. 
- * @version 0.3
+ * @version 0.4
  * @date 2025-06-22
  * 
  * @copyright Copyright (c) 2025
@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <expected>
 #include "logStructs.hpp"
+#include "shared/environment.hpp"
 
 // Comms for streaming based logging
 #include "comms.hpp"
@@ -59,8 +60,6 @@ class CarLogger
      * @param [in] snapshots Car Snapshots sent to the logger 
      * @param [out] partitions Mapping of car ids to all their timestampe
      */
-
-
     void partition(std::vector<CarSnapshot>&& snapshots, std::unordered_map<size_t, std::vector<CarSnapshot>>& partitions);
 
     public:
@@ -90,6 +89,14 @@ class CarLogger
     virtual std::expected<void, std::string> logFailure(std::string message) = 0;
 
     /**
+     * @brief Writes and commits the enviornment to the sink. For files this is a yaml file
+     * 
+     * @param env Environment data to save
+     * @return std::expected<void, std::string> Nothing on success or an error message on failure
+     */
+    virtual std::expected<void, std::string> logEnvironment(const Environment& env) = 0;
+
+    /**
      * @brief Streaming run function.  Reads data from the comms manager 
      * and gets it to the appropriate file sink
      * 
@@ -115,6 +122,8 @@ class FileLogger : public CarLogger {
     std::expected<void, std::string> writeStats(SimulationStats s) override;
 
     std::expected<void, std::string> logFailure(std::string message) override;
+
+    std::expected<void, std::string> logEnvironment(const Environment& env) override;
 };
 
 /**
@@ -191,4 +200,7 @@ class DBLogger : public CarLogger {
     std::expected<void, std::string> updateStatus(std::string newStatus) override;
 
     std::expected<void, std::string> logFailure(std::string message) override;
+
+    std::expected<void, std::string> logEnvironment(const Environment& env) override;
+
 };

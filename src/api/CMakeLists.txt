@@ -5,7 +5,7 @@ find_package(oatpp 1.3.0 REQUIRED)
 find_package(libpqxx CONFIG REQUIRED)
 
 add_library(api api.cpp)
-target_link_libraries(api PUBLIC oatpp::oatpp PRIVATE pqxx_wrapper dbmanager jobManager initdb)
+target_link_libraries(api PUBLIC oatpp::oatpp PRIVATE pqxx_wrapper dbmanager jobManager database)
 
 # Separate dbreader and jobmanager into separate libs for testing
 add_library(dbmanager dbManager.cpp)

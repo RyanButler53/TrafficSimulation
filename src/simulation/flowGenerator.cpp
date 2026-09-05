@@ -10,6 +10,8 @@ FlowGenerator::FlowGenerator(double rate, double x0, std::shared_ptr<CarFactory>
 
 double FlowGenerator::position() const {return x0_;}
 
+double FlowGenerator::rate() const {return rate_;}
+
 void FlowGenerator::setRng(RandomGenerator::ptr v0Dist, RandomGenerator::ptr vDesDist, RandomGenerator::ptr mainDist){
     v0Dist_ = v0Dist;
     vDesDist_ = vDesDist;

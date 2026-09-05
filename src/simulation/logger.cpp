@@ -17,6 +17,7 @@
 #include <format>
 #include <iostream>
 #include <ranges>
+#include <yaml-cpp/yaml.h>
 
 // Database
 #include <pqxx/pqxx>
@@ -98,6 +99,47 @@ std::expected<void, std::string> FileLogger::writeCars(std::vector<CarData> data
     return {};
 }
 
+std::expected<void, std::string> FileLogger::logEnvironment(const Environment& env){
+    YAML::Node node;
+    node["nlanes"] = env.nlanes;
+    node["x0"] = env.x0;
+    node["xf"] = env.xf;
+
+    // Road Segments
+    YAML::Node segments, emptySegments;
+    
+    for (const Environment::LaneSegment& seg : env.segments_){
+        YAML::Node segment;
+        segment["start"] = seg.start;
+        segment["end"] = seg.end;
+        segment["rate"] = seg.rate;
+        segment["position"] = seg.position;
+        segments.push_back(segment);
+    }
+
+    for (const Environment::EmptySegment& eseg : env.emptySegments_){
+        YAML::Node segment;
+        segment["start"] = eseg.start;
+        segment["end"] = eseg.end;
+        segment["position"] = eseg.position;
+        emptySegments.push_back(segment);
+    }
+
+    node["road-segments"] = segments;
+    node["empty-segments"] = emptySegments;
+
+    std::filesystem::path fname = basepath_ / "environment.yml";
+    YAML::Emitter envyaml;
+    std::ofstream fileout(fname);
+    if (!fileout.is_open()){
+        return std::unexpected("Unable to open environment file!");
+    }
+    envyaml << node;
+    fileout << envyaml.c_str();
+    fileout.close();
+    return {};
+}
+
 // INDIVIDUAL CAR BASED FILE LOGGER
 std::expected<void, std::string> IndividualCarLogger::writeSnapshots(std::vector<CarSnapshot> snapshots){
 
@@ -167,7 +209,7 @@ DBLogger::DBLogger(std::string jobname, std::string config, bool test):
 
 std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string jobname, std::string config, std::string followType, bool test){
     DBLogger* logger = new DBLogger(jobname, config, test);
-    auto init = initDB::initDB(test);
+    auto init = Database::initDB(test);
     if (!init){return std::unexpected("Error initializing database: " + init.error());}
     try {
 
@@ -222,7 +264,6 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
         }
     }
 
-
     return {};
 }
 
@@ -254,7 +295,7 @@ std::expected<void, std::string> DBLogger::updateField(std::string key, T value,
         finish_tx.exec(updateStatus); 
         finish_tx.commit();
         return {};
-    } catch(const std::exception& e) {
+    } catch (const std::exception& e) {
         return std::unexpected(std::format("Error updating the {}: {} ", errMsg, e.what()));
     }
 }
@@ -269,6 +310,32 @@ std::expected<void, std::string> DBLogger::writeStats(SimulationStats s) {
 
 std::expected<void, std::string> DBLogger::logFailure(std::string message) {
     return updateStatus("ERROR").and_then([this, &message](){return updateField("error", message, "error message");});
+}
+
+std::expected<void, std::string> DBLogger::logEnvironment(const Environment& env){
+    try {
+        pqxx::connection connect(connectionStr_);
+        pqxx::work tx(connect);
+        for (const Environment::LaneSegment seg : env.segments_){
+            std::string query = std::format("INSERT INTO laneSegments (jobid, segmentStart, segmentEnd, rate, position)\nVALUES ({}, {}, {}, {}, {})", jobid_, seg.start, seg.end, seg.rate, seg.position);
+            tx.exec(query);
+        }
+        for (const Environment::EmptySegment seg : env.emptySegments_){
+            std::string query = std::format("INSERT INTO laneSegments (jobid, segmentStart, segmentEnd, rate, position)\nVALUES ({}, {}, {}, NULL, {})", jobid_, seg.start, seg.end, seg.position);
+            tx.exec(query);
+        }
+
+        std::string query = std::format("INSERT INTO environment (jobid, x0, xf, numLanes)\nVALUES ({}, {}, {}, {})", jobid_, env.x0, env.xf, env.nlanes);
+        tx.exec(query);
+        
+        tx.commit();
+    }
+    catch(const std::exception& e)
+    {
+        return std::unexpected(std::format("Error adding lane segments to the database: {}", e.what()));
+    }
+    
+    return {};
 }
 
 // Template Instantiations

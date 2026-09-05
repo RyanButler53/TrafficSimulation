@@ -1,23 +1,20 @@
 /**
  * @file migrateSchema.cpp
  * @author Ryan Butler
- * @brief Small script to clear the production database and 
- * @version 0.1
+ * @brief Small script to clear the production database
+ * @version 0.2
  * @date 2026-07-27
  * 
  * @copyright Copyright (c) 2026
  * 
  */
 
-#include <pqxx/pqxx>
+#include "database/databaseInit.hpp"
+#include <print>
 
 int main(){
-
-    pqxx::connection connect("host=localhost port=5432 dbname=trafficDB");
-    pqxx::work tx(connect);
-
-    tx.exec("DROP TABLE IF EXISTS trafficjobs CASCADE");
-    tx.exec("DROP TABLE IF EXISTS cardata CASCADE");
-    tx.exec("DROP TABLE IF EXISTS snapshotData");
-    tx.commit();
+    std::expected<void, std::string> result = Database::clearDB(false);
+    if (!result){
+        std::println("{}", result.error());
+    }
 }

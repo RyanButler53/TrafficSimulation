@@ -230,6 +230,43 @@ std::expected<TimeSeries, std::string> DBManager::queryData(std::string jobname,
 }
 
 
+std::expected<Environment, std::string> DBManager::queryEnvironment(std::string jobname){
+    auto connect = getConnection(connectionStr_);
+    if (!connect){return std::unexpected(connect.error());}
+    pqxx::work tx{*connect};
+
+    Environment env;
+    std::string segmentsQuery = std::format("SELECT segmentStart, segmentEnd, rate, position FROM laneSegments INNER JOIN TrafficJobs ON TrafficJobs.jobID = laneSegments.jobID WHERE TrafficJobs.jobname = '{}' ORDER BY laneSegments.position ASC, laneSegments.segmentStart ASC", jobname);
+    std::string envQuery =  std::format("SELECT x0, xf, numLanes FROM environment INNER JOIN TrafficJobs ON TrafficJobs.JobID = environment.jobID WHERE TrafficJobs.jobname = '{}'", jobname);
+    try {
+        pqxx::result res = tx.exec(segmentsQuery);
+        for (const pqxx::row& r : res){
+
+            double start = r["segmentStart"].as<double>();
+            double end = r["segmentEnd"].as<double>();
+            int position = r["position"].as<int>();
+            
+            // Empty unpopulated lane
+            if (r["rate"].is_null()){
+                env.emptySegments_.push_back({start, end, position});
+            } else { // normal segment
+                double rate = r["rate"].as<double>();
+                env.segments_.push_back({start, end, rate, position});
+            }
+        }
+
+        pqxx::row row = tx.exec(envQuery).one_row();
+        env.nlanes = row["numLanes"].as<int>();
+        env.x0 = row["x0"].as<double>();
+        env.xf = row["xf"].as<double>();
+
+        return env;
+
+    } catch(const std::exception& e) {
+        return std::unexpected(std::format("Error reading environment data from job {}: {}", jobname, e.what()));
+    }
+}
+
 std::expected<std::vector<int>, std::string> DBManager::getJobId(std::string jobname) {
     
     auto connect = getConnection(connectionStr_);
@@ -259,14 +296,10 @@ DBResponse DBManager::deleteJob(std::string jobname){
                 auto connect = getConnection(connectionStr_);
                 if (!connect){return std::unexpected(connect.error());}
                 pqxx::work tx{*connect};
-                std::string querystr = std::format("DELETE FROM snapshotData  WHERE jobid = '{}'", id);
-                tx.exec(querystr);
-                querystr = std::format("DELETE FROM CarData WHERE jobid = '{}'", id);
-    
-                tx.exec(querystr);
-                querystr = std::format("DELETE FROM TrafficJobs WHERE jobid = '{}'", id);
-    
-                tx.exec(querystr);
+                for (std::string table : {"snapshotData", "CarData", "laneSegments", "environment", "TrafficJobs"}){
+                    std::string querystr = std::format("DELETE FROM {} WHERE jobid = '{}'", table, id);
+                    tx.exec(querystr);
+                }
                 tx.commit();
             }
             return DBResponse{};

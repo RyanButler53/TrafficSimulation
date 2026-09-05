@@ -163,3 +163,44 @@ class DeleteDTO : public oatpp::DTO {
 
 };
 #include OATPP_CODEGEN_END(DTO)
+
+
+// Environment related DTOs
+
+#include OATPP_CODEGEN_BEGIN(DTO)
+
+class RoadSegmentDTO : public oatpp::DTO {
+  DTO_INIT(RoadSegmentDTO, DTO);
+
+  DTO_FIELD(Float32, start);
+  DTO_FIELD(Float32, end);
+  DTO_FIELD(Float32, rate);
+  DTO_FIELD(Int32, position);
+
+};
+#include OATPP_CODEGEN_END(DTO)
+
+#include OATPP_CODEGEN_BEGIN(DTO)
+
+class EmptySegmentDTO : public oatpp::DTO {
+  DTO_INIT(EmptySegmentDTO, DTO);
+  DTO_FIELD(Float32, start);
+  DTO_FIELD(Float32, end);
+  DTO_FIELD(Int32, position);
+};
+#include OATPP_CODEGEN_END(DTO)
+
+#include OATPP_CODEGEN_BEGIN(DTO)
+
+class EnvironmentDTO : public oatpp::DTO {
+  DTO_INIT(EnvironmentDTO, DTO);
+
+  DTO_FIELD(Float32, x0);
+  DTO_FIELD(Float32, xf);
+  DTO_FIELD(Int32, nlanes);
+
+  DTO_FIELD(Vector<Object<RoadSegmentDTO>>, roadSegments);
+  DTO_FIELD(Vector<Object<EmptySegmentDTO>>, emptySegments);
+
+};
+#include OATPP_CODEGEN_END(DTO)

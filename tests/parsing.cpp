@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 #include <string>
-#include <iostream>
-#include <fstream>
 #include "yaml-cpp/yaml.h"
 #include "sim/simulator.hpp"
 #include "sim/parserFactory.hpp"
@@ -10,7 +8,7 @@
 
 class ParsingTest : public ::testing::Test {
 
-    void  SetUp() {
+    void  SetUp() override {
         YAML::Node cfg;
         cfg["jobname"] = "continuous-flow";
         cfg["type"] = "continuous";
@@ -56,8 +54,9 @@ class ParsingTest : public ::testing::Test {
         TestUtil::configToFile(cfg, "invalidThinning.yaml" );
     };
 
-    void TearDown() {
+    void TearDown() override {
         std::filesystem::remove("parseTest.yaml");
+        std::filesystem::remove("invalidThinning.yaml");
     }
 };
 

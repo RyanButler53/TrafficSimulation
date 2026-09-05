@@ -18,7 +18,7 @@ find_package(CURL)
 
 # Test utility libraries
 add_library(testutil STATIC testUtil.cpp)
-target_link_libraries(testutil PUBLIC yaml-cpp::yaml-cpp PRIVATE pqxx_wrapper)
+target_link_libraries(testutil PUBLIC yaml-cpp::yaml-cpp PRIVATE database)
 
 add_library(testCases STATIC AlgTest.cpp)
 target_link_libraries(testCases PRIVATE yaml-cpp::yaml-cpp GTest::gtest)
@@ -64,6 +64,12 @@ SingleFixtureTest(algorithmTest algorithmTest.cpp integration simulation
                                                               testCases
                                                               testutil
                                                               dbmanager)
+
+TrafficTest(environmentTest environment.cpp unit simulation 
+                                                 yaml-cpp::yaml-cpp
+                                                 dbmanager
+                                                 testCases
+                                                 testutil)
 
 if (CURL_FOUND)
     # Bring in Json Dependency

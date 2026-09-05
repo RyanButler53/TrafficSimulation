@@ -10,16 +10,22 @@ from pathlib import Path
 import argparse
 import sys
 import jobManagement
+import yaml 
+
 
 VELOCITY_MIN = 0
 VELOCITY_MAX = 30
 
+class Environment(object):
+    def __init__(self, nlanes, emptyLanes):
+        self.nlanes = nlanes
+        self.emptyLanes = emptyLanes
+
 class MovieMaker(ABC):
 
-    def __init__(self, x0, x1, t0, t1, nlanes):
+    def __init__(self, x0, x1, t0, t1):
         self.xlimits = (x0, x1)
         self.tlimits = (t0, t1)
-        self.lanes = nlanes
         self.temp_path = ".movie_tmp"
         if os.path.exists(self.temp_path):
             shutil.rmtree(self.temp_path)
@@ -47,17 +53,24 @@ class MovieMaker(ABC):
         """Returns the timestamp t
         and a list of the cars (x, v, l) points"""
 
+
 class TimeSeries(MovieMaker):
 
-    def __init__(self, filepath:os.path,  x0, x1, t0, t1, nlanes):
-        super().__init__(x0, x1, t0, t1, nlanes)
+    def __init__(self, filepath:os.path,  x0, x1, t0, t1):
+        super().__init__(x0, x1, t0, t1)
         self.filepath = filepath
-
 
         self.files = list(Path(self.filepath).glob("time_*.csv"))
         self.files.sort(key=lambda s: float(s.name[5:-4]))
         self.files = list(filter(lambda f:  (float(f.name[5:-4]) <= self.tlimits[1] and float(f.name[5:-4]) >= self.tlimits[0]), self.files))
         self.index = 0
+
+        envfile = os.path.join(filepath, "environment.yml")
+        self.emptySegments = []
+        with open(envfile, "r") as stream:
+            env = yaml.safe_load(stream)
+            self.emptySegments = env["empty-segments"]
+            self.nlanes = env["nlanes"]
 
     def __repr__(self):
         return f"File Reader for folder {self.filepath}. X limits: {self.xlimits}, T limits: {self.tlimits}"
@@ -75,13 +88,17 @@ class TimeSeries(MovieMaker):
                     & (t >= self.tlimits[0]) & (t <= self.tlimits[1])]
         plt.title(f't = {t:.2f}s')
         plt.xlim(self.xlimits)
-        plt.ylim(-0.2, self.lanes+0.2)
-        plt.yticks(list(range(self.lanes+1)))
+        plt.ylim(-0.2, self.nlanes-0.8)
+        plt.yticks(list(range(self.nlanes)))
         plt.scatter(validData["x"], validData["l"], c=validData["v"], vmin=VELOCITY_MIN, vmax=VELOCITY_MAX)
         plt.colorbar()
         for row in validData.iterrows():
             snapshot = row[1]
             plt.annotate(f"{int(snapshot["id"])}", xy=(snapshot["x"], snapshot["l"]), xytext = (5,5), textcoords="offset points")
+
+        for empty in self.emptySegments:
+            plt.plot([empty["start"], empty["end"]], [empty["position"], empty["position"]], color="red", lw=6)
+
         plt.tight_layout()
         plt.savefig(f"{self.temp_path}/frame{self.index}.jpg")
         plt.clf()
@@ -89,8 +106,8 @@ class TimeSeries(MovieMaker):
         return t
 
 class Database(MovieMaker):
-    def __init__(self, jobname,  x0, x1, t0, t1, nlanes):
-        super().__init__(x0, x1, t0, t1, nlanes)
+    def __init__(self, jobname,  x0, x1, t0, t1):
+        super().__init__(x0, x1, t0, t1)
 
         self.reader = reader.Reader(jobname)
         # +1 to prevent floating point
@@ -102,6 +119,11 @@ class Database(MovieMaker):
         else:
             raise RuntimeError(data.json()["errmsg"])
         
+        env = self.reader.environmentQuery()
+        if (env.status_code == 200):
+            jsondata = env.json()
+            self.nlanes = jsondata["nlanes"]
+            self.emptySegments = jsondata["emptySegments"]
         self.index = 0
 
     def dt(self):
@@ -117,11 +139,16 @@ class Database(MovieMaker):
         lanes = [snapshot["l"] for snapshot in data]
         plt.title(f't = {t:.2f}s')
         plt.xlim(self.xlimits)
-        plt.ylim(-0.2, self.lanes+0.2)
-        plt.yticks(list(range(self.lanes+1)))
-        plt.scatter(xs, lanes, c=vs)
+        plt.ylim(-0.2, self.nlanes-0.8) # + 0.2 for extended range but -1 for zero indexing error. 
+        plt.yticks(list(range(self.nlanes)))
+        plt.scatter(xs, lanes, c=vs, vmin=VELOCITY_MIN, vmax=VELOCITY_MAX)
         for snapshot in data:
             plt.annotate(f"{snapshot["id"]}", xy=(snapshot["x"], snapshot["l"]), xytext = (5,5), textcoords="offset points")
+        plt.colorbar()
+        for empty in self.emptySegments:
+            plt.plot([empty["start"], empty["end"]], [empty["position"], empty["position"]], color="red", lw=6)
+        
+        plt.tight_layout()
         plt.savefig(f"{self.temp_path}/frame{self.index}.jpg")
         plt.clf()
         self.index += 1
@@ -137,7 +164,6 @@ if __name__ == "__main__":
     parser.add_argument('-x', required=True, help="Min and max x values. Given as -x x0,xf")
     parser.add_argument('-s', required=True, help="Source. Filepath or DB job name")
     parser.add_argument('-o', required=True, help="Output filename")
-    parser.add_argument('-l', required=True, help="Number of lanes")
 
     args = parser.parse_args()
 
@@ -148,7 +174,6 @@ if __name__ == "__main__":
         tf = float(tf)
         x0 = float(x0)
         xf = float(xf)
-        l = int(args.l)
 
     except ValueError:
         print("Error: -t and -x must be comma-separated pair fo numbers.", file=sys.stderr)
@@ -158,14 +183,14 @@ if __name__ == "__main__":
     
     if (Path(filepath).exists()):
         if len(list(Path(filepath).glob("*time_*.csv"))):
-            movie_maker = TimeSeries(filepath, x0, xf, t0, tf,l )
+            movie_maker = TimeSeries(filepath, x0, xf, t0, tf)
         else:
             print(f"File {filepath} is not a directory holding time series data")
             sys.exit(1)
     else:
         allJobs = jobManagement.jobs()
         if (allJobs.count(filepath)== 1):
-            movie_maker = Database(filepath,  x0, xf, t0, tf,l)
+            movie_maker = Database(filepath,  x0, xf, t0, tf)
         else:
             print(f"\'{filepath}\' is not a valid job name in the database")
             sys.exit(1)

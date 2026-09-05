@@ -5,8 +5,11 @@ There are 4 modules with unit tests:
 
 - Flow Generator
 - Lane Info
+   - Includes bias calculation and LaneInterval test cases
 - Threadsafe Queue
-- Parsing (Incomplete)
+- Parsing
+- Environments
+   - Includes a comparison of File/DB based logging
 
 ## Integration Tests: 
 
@@ -15,9 +18,10 @@ Submits jobs via the Job Manager and reads data from the Database via the DB Rea
 Compares the values from the Multiple Cars cases to the Single Car cases. 
 
 #### Regression Test: 
-Submit one job that uses the file logger. Compare the hashes of the logs with the known hash
-Submit one job that uses the file logger. Submit one that uses the Test db logger. 
-Compare those to see if they are the same via SHA 256 (Requires OpenSSL)
+Submit one job that uses the file logger. Submit one that uses the Test db logger and compare
+Submit one jog with the file logger and one with time series logger and compare output results. 
+Submit one job with the time series logger. Runs the same job with 10:1 thinning and checks if the logs match (Requires OpenSSL)
+Submit one job with the file logger with a known hash of the outputs. Compare with the known hash.
 
 #### Api Integration Test: (Requires curl and json)
 Runs the API in Test mode
