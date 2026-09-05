@@ -57,14 +57,22 @@ private:
 
 
     /**
-     * @brief Worker thread routine. 
+     * @brief Worker thread routine.
+     * @details Begins  
      * 
      */
     void threadRoutine();
 
 public:
-    JobManager();
+
+    JobManager(bool delayStart = false);
     ~JobManager();
+
+    /**
+     * @brief Starts submitting jobs to the queue. 
+     * @details Used for querying jobs that are still queued
+     */
+    void start();
 
     /**
      * @brief Submits a job to the queue. 

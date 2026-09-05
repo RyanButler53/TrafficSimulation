@@ -55,8 +55,7 @@ TrafficTest(flowGeneratorTest flowGeneratorTest.cpp unit shared setup)
 
 SingleFixtureTest(dbManagerTest dbManager.cpp integration testutil
                                                           jobManager 
-                                                          dbmanager
-                                                          pqxx_wrapper)
+                                                          dbmanager)
 target_compile_definitions(dbManagerTest PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 
@@ -70,6 +69,11 @@ TrafficTest(environmentTest environment.cpp unit simulation
                                                  dbmanager
                                                  testCases
                                                  testutil)
+
+TrafficTest(queuedJobTest queuedJob.cpp unit jobManager
+                                             dbmanager
+                                             testutil
+                                             simulation)
 
 if (CURL_FOUND)
     # Bring in Json Dependency

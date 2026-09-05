@@ -67,13 +67,7 @@ std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
         status = r["status"].as<std::string>();
         followModel = r["followModel"].as<std::string>();
         numCars = r["numCars"].as<int>();
-        // Runtime is null when the job hasn't finished. 
-        if (r["runtime"].is_null()){
-             runtime = -1.0;     
-        } else {
-            runtime = r["runtime"].as<float>();
-        }
-
+        runtime = r["runtime"].as<float>();
 
     } catch(const std::exception& e) {
         return std::unexpected("Error converting name, cfgfile, error or status to a string");

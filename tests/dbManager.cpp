@@ -10,8 +10,6 @@
 #include "yaml-cpp/yaml.h"
 #include "testUtil.hpp"
 
-#include <pqxx/pqxx>
-
 class DBManagerTest : public ::testing::Test {
 
     protected:
@@ -239,3 +237,5 @@ TEST_F(ErrorLogTest, DISABLED_errorLogging){
     // ASSERT_EQ(data->errorMsg_, "Accident at t = 10: Car 6: x = 39.24 Leader: x = 16.13");
     EXPECT_EQ(data->status_, "ERROR");
 }
+
+// How to test a queued job: Running jobs can't be "tested" since they are inconsistent. Timing test is good enough

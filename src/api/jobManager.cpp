@@ -7,11 +7,19 @@
 #include <iostream>
 #include <functional>
 
-JobManager::JobManager():jobid_{0},workerThread_{[this](){threadRoutine();}}{}
+JobManager::JobManager(bool delayStart):jobid_{0}{
+    if (!delayStart){
+        workerThread_ = std::thread([this](){threadRoutine();});
+    }
+}
 
 JobManager::~JobManager(){
     isDone_.store(true);
     if (workerThread_.joinable()){workerThread_.join();}
+}
+
+void JobManager::start(){
+    workerThread_ = std::thread([this](){threadRoutine();});
 }
 
 void JobManager::threadRoutine(){
