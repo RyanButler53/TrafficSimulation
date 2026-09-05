@@ -347,7 +347,7 @@ TEST_F(ApiTest, TimeSeriesRequests){
         EXPECT_EQ(data["roadSegments"][i]["rate"], rates[i]);
         EXPECT_EQ(data["roadSegments"][i]["position"], i);
     }
-    EXPECT_EQ(data["emptyLanes"].size(), 0);
+    EXPECT_EQ(data["emptySegments"].size(), 0);
 
     response = requester.queryTimeSeries("apiTestTimeSeries", 50, 100);
     // The cars must be within 50 and 100 timestep
