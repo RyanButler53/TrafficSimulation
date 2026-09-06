@@ -276,10 +276,10 @@ TEST_F(RegressionTest, ThinnedEquivalence){
 
 TEST_F(RegressionTest, FileHashEquivalence){
     JobManager j;
-    std::expected<uint32_t, std::string> id = j.submit("fileConfig.yaml");
+    std::expected<std::pair<uint32_t, std::string>, std::string> id = j.submit("fileConfig.yaml");
     ASSERT_TRUE(id.has_value()) << id.error();
     // Need to wait for the job to be done
-    while (j.status(*id) != JobStatus::DONE){
+    while (j.status(id->first) != JobStatus::DONE){
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 

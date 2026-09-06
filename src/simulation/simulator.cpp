@@ -14,6 +14,7 @@
 #include <expected>
 #include <functional>
 #include <thread>
+#include <future>
 #include "sim/simulator.hpp"
 #include "sim/parser.hpp"
 #include "sim/parserFactory.hpp"
@@ -38,7 +39,9 @@ std::function<std::string(std::string)> Simulator::errorFunc(std::string prefix)
 std::expected<void, std::string> Simulator::mainLoop(){
 
     // Logger
-    std::jthread loggingThread([this](){logger_->run(comms_);});
+    std::future<std::expected<void, std::string>> logResult =  std::async(std::launch::async, [this](){
+        return logger_->run(comms_);
+    });
     auto start = std::chrono::steady_clock::now();
     double t = 0.0;
     long timesteps = 0;
@@ -77,7 +80,9 @@ std::expected<void, std::string> Simulator::mainLoop(){
 
     auto envStatus = logger_->logEnvironment(highway_->environment()).transform_error(Simulator::errorFunc("writing environment"));
 
-    std::string errmsg  = simStatus.error_or("") + statsStatus.error_or("") + envStatus.error_or("");
+    auto logStatus = logResult.get().transform_error(Simulator::errorFunc("logging data"));
+
+    std::string errmsg  = simStatus.error_or("") + statsStatus.error_or("") + envStatus.error_or("") + logStatus.error_or("");
     return (errmsg.empty()) ? std::expected<void, std::string>{} : std::unexpected(errmsg);
 }
 

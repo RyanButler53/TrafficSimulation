@@ -96,6 +96,6 @@ Requires a query parameter to specify the boundaries:
 
 `GET "/jobs/{jobname}/environments"` -> Returns the "environment for the specified job. The environment contains data  including the start and end of the road segment, the number of lanes, the lanes that are empty (invalid) and the road segments.  
 
-`POST "/submit/{job-name}"` -> Submits a job with the specified job name. The Job name must be unique. Requires a query parameter `{"cfg" : "configfile.yaml"}` to specify the config file. 
+`POST "/submit"` -> Submits a job. The job name is specified in the config file and must be unique. Requires a query parameter `{"cfg" : "configfile.yaml"}` to specify the config file. 
 
-`DELETE "/jobs/{jobname}"` -> Deletes the specified job if it exists. 
+`DELETE "/jobs/{jobname}"` -> Deletes the specified job by name if it exists. 

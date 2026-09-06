@@ -10,6 +10,8 @@ There are 4 modules with unit tests:
 - Parsing
 - Environments
    - Includes a comparison of File/DB based logging
+- Queued Job
+   - Ensures jobs that are in queued and running states can be properly queried
 
 ## Integration Tests: 
 

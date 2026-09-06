@@ -38,6 +38,7 @@ class Parser {
     double dt_;
     int thinning_;
     uint64_t seed_;
+    std::string jobname_;
 
 
     // Template Utility functions of parsing algorithm

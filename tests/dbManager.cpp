@@ -10,8 +10,6 @@
 #include "yaml-cpp/yaml.h"
 #include "testUtil.hpp"
 
-#include <pqxx/pqxx>
-
 class DBManagerTest : public ::testing::Test {
 
     protected:
@@ -41,7 +39,7 @@ class DBManagerTest : public ::testing::Test {
         // Run the tests with the job scheduler. 
         JobManager j;
         for (size_t i = 0; i< 3; ++i){
-            std::expected<uint32_t, std::string> result = j.submit(std::format("dbConfig{}.yaml", i));
+            auto result = j.submit(std::format("dbConfig{}.yaml", i));
             ASSERT_TRUE(result.has_value()) << "Error during job submission: " << result.error();
         }
         for (size_t i = 0; i < 3; ++i){

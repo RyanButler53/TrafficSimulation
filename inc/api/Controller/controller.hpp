@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <chrono>
 #include <fstream>
+#include <regex>
 #include <optional>
 #include <ranges>
 #include <format>
@@ -194,7 +195,6 @@ class Controller : public oatpp::web::server::api::ApiController {
         return response;
     }
 
-
     public:
 
     Controller(OATPP_COMPONENT(std::shared_ptr<ObjectMapper>, mapper))
@@ -317,8 +317,7 @@ class Controller : public oatpp::web::server::api::ApiController {
     }
 
     // Submitting a job. Must check if jobname is unique. 
-    ENDPOINT("POST", "/submit/{job-name}", submitJob, 
-        PATH(String, jobname, "job-name"),
+    ENDPOINT("POST", "/submit", submitJob,
         QUERY(String, cfg, "config") ){ // path must be an ABSOLUTE PATH 
 
     std::string path = std::string(Controller::decodeURL(cfg));
@@ -328,32 +327,23 @@ class Controller : public oatpp::web::server::api::ApiController {
         return createDtoResponse(Status::CODE_400, error);
     }
 
-    std::string msg = std::format("Submitting Job {}", std::string(jobname));
-    OATPP_LOGI("Controller", "%s", msg.c_str());
-    std::expected<std::vector<int>, std::string> exists = dataManager_.getJobId(jobname);
-
-    // Exists has value -> jobid has been found and jobname is taken. 
-    if (exists.has_value()){
+    std::expected<std::pair<uint32_t, std::string>, std::string> submit = jobManager_.submit(path);
+    if (!submit){
         auto error = ErrorDTO::createShared();
-        error->errmsg = "Job with this name already exists";
-        return createDtoResponse(Status::CODE_409, error);
-        // Job is not found . Submit one. 
-    } else if (exists.error() == std::format("No jobs with job name \"{}\" not found", std::string(jobname))) {
-        std::expected<uint32_t, std::string> submit = jobManager_.submit(path);
-        if (!submit){
-            auto error = ErrorDTO::createShared();
-            error->errmsg = submit.error();
+        error->errmsg = submit.error();
+        std::regex existsRegex("Job with provided jobname .* already exists!");
+        if (std::regex_search(submit.error(), existsRegex)){
+            return createDtoResponse(Status::CODE_409, error);
+        } else {
             return createDtoResponse(Status::CODE_400, error);
         }
+    } else {
         auto response = JobSubmitDTO::createShared();
+        auto [jobid, jobname] = submit.value();
         response->jobname = jobname;
         response->configpath = path;
-        response->jobID = submit.value();
+        response->jobID = jobid;
         return createDtoResponse(Status::CODE_200, response);
-    } else {
-        auto error = ErrorDTO::createShared();
-        error->errmsg = exists.error();
-        return createDtoResponse(Status::CODE_404, error); 
     }
     }
 

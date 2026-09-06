@@ -20,6 +20,7 @@ struct SimulatorInputs {
     double totalTime_;
     double dt_;
     int thinning_;
+    std::string jobname_;
 
     // System configuration inputs can live here
     // As well as compression type

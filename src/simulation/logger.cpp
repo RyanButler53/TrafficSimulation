@@ -40,20 +40,29 @@ void CarLogger::partition(std::vector<CarSnapshot>&& snapshots, std::unordered_m
 }
 
 // Main loop
-void CarLogger::run(CommunicationsManager& comms){
+std::expected<void, std::string> CarLogger::run(CommunicationsManager& comms){
     DataType messageType = DataType::NO_DATA;
+    std::expected<void, std::string> writeResult;
+    std::stringstream errorMsgs;
     while (messageType != DataType::END_OF_DATA){
         DataPacket::ptr packet = comms.getPacket();
         if (auto pkt = std::dynamic_pointer_cast<CarMetadataPacket>(packet)){
             messageType = DataType::CAR_DATA;
-            writeCars(pkt->moveData());
+            writeResult = writeCars(pkt->moveData());
         } else if (auto pkt = std::dynamic_pointer_cast<CarSnapshotPacket>(packet)){
             messageType = DataType::SNAPSHOT_DATA;
-            writeSnapshots(pkt->moveData());
+            writeResult = writeSnapshots(pkt->moveData());
         } else if (auto pkt = std::dynamic_pointer_cast<EndOfData>(packet)){
             messageType = DataType::END_OF_DATA;
         }
+
+        if (!writeResult.has_value()){
+           errorMsgs << writeResult.error() << "\n";
+        }
     }
+
+    std::string errMsg = errorMsgs.str();
+    return errMsg.empty() ? std::expected<void, std::string>() : std::unexpected(errMsg);
 }
 
 // FILE LOGGER
@@ -215,7 +224,13 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
 
         pqxx::connection connect(logger->connectionStr_);
         pqxx::work tx(connect);
-       
+
+        // Check if the Job exists: 
+        std::string querystr = std::format("SELECT jobID FROM TrafficJobs WHERE jobname = '{}'", jobname);
+        pqxx::result res = tx.exec(querystr);
+        if (!res.empty()){
+            return std::unexpected(std::format("Job with provided jobname {} already exists! Submit job with a different job name", jobname));
+        }
         // Read in entire config file (1KB) into memory and store in database
         std::ifstream cfgin(config);
         size_t n = std::filesystem::file_size(config);
@@ -223,7 +238,7 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
         inputfile.resize(n);
         cfgin.read(inputfile.data(), n);
 
-        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error, followModel, numCars)\nVALUES ('{}', '{}', 'QUEUED', '', '{}', 0) RETURNING jobID", inputfile, jobname, followType);
+        std::string row = std::format("INSERT INTO trafficJobs (configfile, jobname, status, error, followModel, numCars, runtime)\nVALUES ('{}', '{}', 'QUEUED', '', '{}', 0, -1.0) RETURNING jobID", inputfile, jobname, followType);
         pqxx::result result = tx.exec(row);
         logger->jobid_ = result.one_field().as<int>();
         tx.commit();

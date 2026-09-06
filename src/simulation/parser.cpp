@@ -22,15 +22,19 @@ std::expected<void, std::string> Parser::parseGeneral() {
     seed_ = ParseField<uint64_t>(cfg_, "seed").value_or(0);
     thinning_ = std::max(ParseField<int>(cfg_, "thinning").value_or(1), 1);
 
-    // Job name is not gauranteed to be present, probably needs to match the DB
+    auto jobname = ParseField<std::string>(cfg_, "jobname");
+    if (!jobname){
+        return std::unexpected(jobname.error());
+    } else {
+        jobname_ = *jobname;
+    }
 
     std::string logtype = ParseField<std::string>(cfg_, "logtype").value_or("file");
-    std::string jobname = ParseField<std::string>(cfg_, "jobname").value(); // needs a default that is the specified by api call. 
-    std::string logdir = ParseField<std::string>(cfg_, "logdir").value_or(std::format("./{}", jobname)); // assumes user has rw access to current dir. 
+    std::string logdir = ParseField<std::string>(cfg_, "logdir").value_or(std::format("./{}", jobname_)); // assumes user has rw access to current dir. 
     std::string drivertype = ParseField<std::string>(cfg_, "driverType").value_or("Gipps");
 
     if (logtype == "db" or logtype == "test"){
-        return DBLogger::make(jobname, configPath_, drivertype, logtype == "test").transform([this](std::shared_ptr<DBLogger> log){logger_ = log;});
+        return DBLogger::make(jobname_, configPath_, drivertype, logtype == "test").transform([this](std::shared_ptr<DBLogger> log){logger_ = log;});
     } else if (logtype == "time-series"){
         logger_ = std::make_shared<TimeSeriesLogger>(logdir);
         return {};
@@ -73,7 +77,7 @@ std::expected<void, std::string> Parser::parseCarFactory(){
 std::expected<SimulatorInputs, std::string> Parser::parse() {
     return parseGeneral().and_then([this](){return parseCarFactory();})
                          .and_then([this](){return parseHighway();})
-                         .transform([this](){return SimulatorInputs{logger_, highway_, totaltime_, dt_, thinning_};});
+                         .transform([this](){return SimulatorInputs{logger_, highway_, totaltime_, dt_, thinning_, jobname_};});
 
 }
 

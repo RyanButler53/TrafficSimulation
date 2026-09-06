@@ -57,22 +57,29 @@ private:
 
 
     /**
-     * @brief Worker thread routine. 
+     * @brief Worker thread routine.
+     * @details Launches a background thread that continuously runs jobs from the queue. 
      * 
      */
     void threadRoutine();
 
 public:
-    JobManager();
+    JobManager(bool delayStart = false);
     ~JobManager();
+
+    /**
+     * @brief Starts submitting jobs to the queue. 
+     * @details Used for querying jobs that are still queued
+     */
+    void start();
 
     /**
      * @brief Submits a job to the queue. 
      * 
      * @param path Config file to use. 
-     * @return Job ID to query status
+     * @return Job ID and job name to query status
      */
-    std::expected<uint32_t, std::string> submit(std::string path);
+    std::expected<std::pair<uint32_t, std::string>, std::string> submit(std::string path);
 
     /**
      * @brief Check the status of a given job id. 
