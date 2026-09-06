@@ -58,13 +58,12 @@ private:
 
     /**
      * @brief Worker thread routine.
-     * @details Begins  
+     * @details Launches a background thread that continuously runs jobs from the queue. 
      * 
      */
     void threadRoutine();
 
 public:
-
     JobManager(bool delayStart = false);
     ~JobManager();
 
