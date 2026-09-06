@@ -123,7 +123,7 @@ CurlResponse CurlWrapper::postJob(std::string jobname, std::filesystem::path cfg
         return std::unexpected("Could not initalize curl handle");
     }
 
-    std::string url = std::format("http://localhost:8000/submit/{}?config={}", jobname, cfgpath.string());
+    std::string url = std::format("http://localhost:8000/submit?config={}", cfgpath.string());
     std::string response_string;
 
     curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
@@ -242,7 +242,7 @@ TEST_F(ApiTest, ValidRequests){
     response = requester.postJob("apiTest", std::filesystem::absolute("./apiConfig.yml"));
     ASSERT_TRUE(response.has_value()) << std::format("Error Submitting Simulation: {}", response.error());
 
-    EXPECT_EQ(response->code, 200);
+    EXPECT_EQ(response->code, 200) << std::format("Error submitting job: {}", response.error());
     json data = response->jsonData;
 
     ASSERT_EQ(data["jobname"], "apiTest");

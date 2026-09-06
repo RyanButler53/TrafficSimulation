@@ -39,7 +39,7 @@ void JobManager::threadRoutine(){
 }
 
 // Do this with monads better
-std::expected<uint32_t, std::string> JobManager::submit(std::string path){
+std::expected<std::pair<uint32_t, std::string>, std::string> JobManager::submit(std::string path){
     
     std::expected<SimulatorInputs, std::string> inputs = ParserFactory(path).makeParser()
                                                                             .and_then(std::mem_fn(&Parser::parse));
@@ -49,7 +49,8 @@ std::expected<uint32_t, std::string> JobManager::submit(std::string path){
     statuses_.push_back(JobStatus::QUEUED);
     // Return is always true since this work queue has no limit
     workQueue_.try_push({inputs.value(), jobid_});
-    return jobid_++;
+    ++jobid_;
+    return std::make_pair(jobid_ - 1, inputs->jobname_);
 }
 
 JobStatus JobManager::status(uint32_t id){
@@ -62,7 +63,7 @@ JobStatus JobManager::status(uint32_t id){
 
 // Runs the job
 JobStatus Job::operator()(){
-    // Error message will go to the database if DB Logging is selected
+    // Error message will go to the database/file depending on logging type
     return Simulator(inputs_).run().transform([](){return JobStatus::DONE;}).value_or(JobStatus::ERROR);
 }
 

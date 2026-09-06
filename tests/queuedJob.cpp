@@ -23,7 +23,7 @@ class QueuedJobTest : public ::testing::Test {
         dbLog["seed"] = 133;
 
         TestUtil::configToFile(dbLog, "test-queued.yml");
-        dbManager_.deleteJob("test-queue");
+        dbManager_.deleteJob("test-queued");
         TestUtil::clearDB();
     }
 
@@ -38,7 +38,8 @@ TEST_F(QueuedJobTest, QueryQueuedJob){
 
     auto job = j.submit("test-queued.yml");
     ASSERT_TRUE(job.has_value()) << "Error submitting job: " << job.error();
-    uint32_t jobid = *job;
+    uint32_t jobid = job->first;
+    EXPECT_EQ(job->second, "test-queued");
     EXPECT_EQ(j.status(jobid), JobStatus::QUEUED);
 
     DBManager db(true);

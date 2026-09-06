@@ -224,7 +224,13 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
 
         pqxx::connection connect(logger->connectionStr_);
         pqxx::work tx(connect);
-       
+
+        // Check if the Job exists: 
+        std::string querystr = std::format("SELECT jobID FROM TrafficJobs WHERE jobname = '{}'", jobname);
+        pqxx::result res = tx.exec(querystr);
+        if (!res.empty()){
+            return std::unexpected(std::format("Job with provided jobname {} already exists! Submit job with a different job name", jobname));
+        }
         // Read in entire config file (1KB) into memory and store in database
         std::ifstream cfgin(config);
         size_t n = std::filesystem::file_size(config);

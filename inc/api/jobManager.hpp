@@ -78,9 +78,9 @@ public:
      * @brief Submits a job to the queue. 
      * 
      * @param path Config file to use. 
-     * @return Job ID to query status
+     * @return Job ID and job name to query status
      */
-    std::expected<uint32_t, std::string> submit(std::string path);
+    std::expected<std::pair<uint32_t, std::string>, std::string> submit(std::string path);
 
     /**
      * @brief Check the status of a given job id. 
