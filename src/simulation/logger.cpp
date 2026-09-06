@@ -254,31 +254,17 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
         return std::unexpected("No cars!");
     }
 
-    std::unordered_map<size_t, std::vector<CarSnapshot>> byCar;
-    partition(std::move(snapshots), byCar);
-
-    pqxx::connection connect(connectionStr_);
-
-    // Update the big data table
-    for (auto& [id, car] : byCar){
-        if (car.empty()) continue;
-        if (id != car[0].id){
-            return std::unexpected("Partition Mismatch: Car id does not match partition id");
+    try {
+        pqxx::connection connect(connectionStr_);
+        pqxx::work car_transaction(connect);
+        pqxx::stream_to stream = pqxx::stream_to::raw_table(car_transaction, "snapshotData", "jobid, carid, x, v, t, lane");
+        for (const auto& entry : snapshots){
+            stream << std::make_tuple(jobid_, entry.id, entry.x, entry.v, entry.t, entry.l);
         }
-        try {
-            pqxx::work car_transaction(connect);
-
-            std::string logstr;
-            for (CarSnapshot& log : car){
-                logstr = std::format("INSERT INTO snapshotData (jobid, carid, x, v, t, lane)\nVALUES ({}, {}, {}, {}, {}, {})", jobid_, log.id, log.x, log.v, log.t, log.l);
-                car_transaction.exec(logstr);
-            }
-            car_transaction.commit();
-        } catch(const std::exception& e) {
-            return std::unexpected(std::format("Error inserting car raw snapshot data into database: {}", e.what()));
-        }
+        stream.complete();
+    } catch(const std::exception& e) {
+        return std::unexpected(std::format("Error inserting car raw snapshot data into database: {}", e.what()));
     }
-
     return {};
 }
 

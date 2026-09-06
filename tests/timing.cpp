@@ -119,7 +119,7 @@ class Benchmark{
 
 int main(int argc, char** argv){
     int n = 5;
-    if (argc > 2){
+    if (argc >= 2){
         std::string s(argv[1]);
         std::from_chars(s.data(), s.data() + s.size(), n);
     }
