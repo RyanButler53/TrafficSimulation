@@ -262,6 +262,7 @@ std::expected<std::shared_ptr<DBLogger>, std::string> DBLogger::make(std::string
             stream << std::make_tuple(jobid_, entry.id, entry.x, entry.v, entry.t, entry.l);
         }
         stream.complete();
+        car_transaction.commit();
     } catch(const std::exception& e) {
         return std::unexpected(std::format("Error inserting car raw snapshot data into database: {}", e.what()));
     }
