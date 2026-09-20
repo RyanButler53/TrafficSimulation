@@ -81,7 +81,7 @@ std::filesystem::path FileLogger::basePath(){
 
 std::expected<void, std::string> FileLogger::logFailure(std::string message) {
     std::ofstream errorOut(basepath_ / fs::path("error.txt"));
-    errorOut << "Job failed: " << message << std::endl;
+    errorOut << "Job failed:\n " << message << std::endl;
     errorOut.close();
     return {};
 }

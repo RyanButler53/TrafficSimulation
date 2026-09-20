@@ -52,7 +52,7 @@ std::expected<double, std::string> Car::acceleration(const Car& lead, double dt)
     // Find the new velocity
     double gap = lead.getRearPosition() - pos_;
     if (gap < 0){
-        return std::unexpected(std::format("Negative Gap: {}", gap));
+        return std::unexpected(std::format("Negative Gap between lead car {} and car {}. Distance: {}. X position: {}", lead.getId(), id_, gap, pos_));
     }
     double vf = followStrategy_.update(vel_, vlead, gap, dt);
     if (vf < 0){

@@ -33,7 +33,7 @@ Simulator::Simulator(SimulatorInputs input): logger_{input.logger_},
     }
 
 std::function<std::string(std::string)> Simulator::errorFunc(std::string prefix){
-    return [prefix](const std::string& e){return std::format("Error {}: {}\n", prefix, e);};
+    return [prefix](const std::string& e){return std::format("Error {}:\n {}", prefix, e);};
 }
 
 std::expected<void, std::string> Simulator::mainLoop(){
@@ -71,7 +71,7 @@ std::expected<void, std::string> Simulator::mainLoop(){
     comms_.send(std::move(snapshots_));
     comms_.endOfData();
 
-    simStatus = simStatus.transform_error(Simulator::errorFunc("simulating error"));
+    simStatus = simStatus.transform_error(Simulator::errorFunc(std::format("simulating error at t = {:4f}", t)));
     auto end = std::chrono::steady_clock::now();
     long ms = std::chrono::duration_cast<std::chrono::microseconds>((end - start)).count();
 

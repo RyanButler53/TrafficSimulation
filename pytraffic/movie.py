@@ -35,13 +35,15 @@ class MovieMaker(ABC):
     def __repr__(self):
         pass
 
-    def run(self, outputFilename:str, speedup):
+    def run(self, outputFilename:str, speedup, override):
         t = 0
         while t < self.tlimits[1]:
             t = self.generateNextFrame()
         framerate = round(1/self.dt()) * speedup
-
-        subprocess.run(f"ffmpeg -r {framerate} -i {self.temp_path}/frame%d.jpg -loglevel 16 -c:v libx264 -pix_fmt yuv420p {outputFilename}.mp4", shell=True)
+        overrideCmd = ""
+        if (override):
+            overrideCmd = "-y"
+        subprocess.run(f"ffmpeg -r {framerate} -i {self.temp_path}/frame%d.jpg -loglevel 16 {overrideCmd} -c:v libx264 -pix_fmt yuv420p {outputFilename}.mp4", shell=True)
         shutil.rmtree(self.temp_path)
 
     @abstractmethod
@@ -165,6 +167,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', required=True, help="Source. Filepath or DB job name")
     parser.add_argument('-o', required=True, help="Output filename")
     parser.add_argument('-r', required=False, help="Factor to speed up the video by")
+    parser.add_argument('-y', action="store_true", required=False, help="Override existing file")
 
     args = parser.parse_args()
 
@@ -183,7 +186,8 @@ if __name__ == "__main__":
     filepath = args.s
     speedup = 1
     if (args.r):
-        speedup = args.r
+        speedup = float(args.r)
+    
     
     if (Path(filepath).exists()):
         if len(list(Path(filepath).glob("*time_*.csv"))):
@@ -198,7 +202,7 @@ if __name__ == "__main__":
         else:
             print(f"\'{filepath}\' is not a valid job name in the database")
             sys.exit(1)
-    movie_maker.run(args.o, speedup)
+    movie_maker.run(args.o, speedup, bool(args.y))
 
 
    
