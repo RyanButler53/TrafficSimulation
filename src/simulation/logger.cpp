@@ -67,12 +67,13 @@ std::expected<void, std::string> CarLogger::run(CommunicationsManager& comms){
 
 // FILE LOGGER
 
-FileLogger::FileLogger(std::string basepath):basepath_{basepath}{
+FileLogger::FileLogger(std::string basepath, std::filesystem::path config):basepath_{basepath}{
     // create the directory if it doesn't exist and clear it out if it does
     if (fs::exists(basepath_)){
         fs::remove_all(basepath);
     }
     fs::create_directories(basepath_);
+    fs::copy_file(config, basepath_ / config.filename());
 }
 
 std::filesystem::path FileLogger::basePath(){
