@@ -65,8 +65,11 @@ protected:
         TestUtil::clearDB();
     }
 
-    // Note that these tests CANNOT be run in parallel 
-    // since they are interacting with the SAME files. 
+    /// @brief There are 4 files that are not car data files: stats.txt, environment.yml, config.yml, car_stats.csv
+    size_t nonCarFiles = 4;
+
+    // Note that these tests CANNOT be run in parallel
+    // since they are interacting with the SAME files.
     void TearDown() override {
         TestUtil::conditionalFileCleanup({"fileConfig.yaml", "dbConfig.yaml", "timeSeriesConfig.yaml", "thinningConfig.yaml"});
         TestUtil::conditionalFolderCleanup("file-test");
@@ -197,7 +200,7 @@ TEST_F(RegressionTest, FileDBEquivalence){
     // Compare both file and DB, car by car at each timestamp. 
 
     size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
-    numCars -= 3; // Car Stats, Simulation stats and environment files aren't counted. 
+    numCars -= nonCarFiles; // Car Stats, Simulation stats, cfg and environment files aren't counted. 
     // Read in each file, query the DB for each specific car id. Then check if they are ASSERT_EQ
     pqxx::connection connect("host=localhost port=5432 dbname=trafficDBTest");
     for (size_t carid = 0; carid < numCars; ++carid){
@@ -235,7 +238,7 @@ TEST_F(RegressionTest, FileTimeSeriesEquivalence){
     fromTimeSeries("file-test/time-series", timeSeries);
 
     size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{});
-    numCars -= 3; // Car Stats and Simulation stats files aren't counted. 
+    numCars -= nonCarFiles; // Car Stats and Simulation stats files aren't counted. 
     ASSERT_EQ(timeSeries.size(), numCars);
 
     for (size_t carid = 0; carid < numCars; ++carid){
@@ -257,6 +260,17 @@ TEST_F(RegressionTest, FileTimeSeriesEquivalence){
 }
 
 #ifdef WITH_OPEN_SSL
+
+TEST_F(RegressionTest, ConfigFileEquivalence){
+    ASSERT_TRUE(Traffic::Simulate("timeSeriesConfig.yaml").has_value());
+
+    std::string testCfg = "file-test/time-series/timeSeriesConfig.yaml";
+    ASSERT_TRUE(std::filesystem::exists(testCfg));
+    std::string config = hashFile(testCfg);
+
+    std::string original=hashFile("timeSeriesConfig.yaml");
+    EXPECT_EQ(config, original) << "Hashes do not match!";
+}
 
 TEST_F(RegressionTest, ThinnedEquivalence){
     ASSERT_TRUE(Traffic::Simulate("thinningConfig.yaml").has_value());
@@ -284,7 +298,7 @@ TEST_F(RegressionTest, FileHashEquivalence){
     }
 
     // Get the hashes for each file and concatenate them
-    size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{}) - 3;
+    size_t numCars  = std::distance(std::filesystem::directory_iterator("file-test/logs"), std::filesystem::directory_iterator{}) - nonCarFiles;
     std::string hashes;
     for (size_t carid = 0; carid < numCars; ++carid){
         std::filesystem::path p = std::format("file-test/logs/car{}.csv", carid);

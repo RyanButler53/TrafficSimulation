@@ -114,7 +114,7 @@ class FileLogger : public CarLogger {
     std::filesystem::path basePath();
 
     public: 
-    FileLogger(std::string basepath);
+    FileLogger(std::string basepath, std::filesystem::path config);
     ~FileLogger() = default;
 
     // Snapshots are different for individual car logging vs time series logging
