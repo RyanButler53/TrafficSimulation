@@ -58,7 +58,7 @@ class Car {
     /**
      * @brief Creates a new car at X. This car can only be used for comparison. 
      * 
-     * @param x 
+     * @param x x position of the car
      */
     Car(double x);
 
@@ -71,7 +71,16 @@ class Car {
 
     public: 
 
-    // Constructors
+    /**
+     * @brief Construct a new Car object with initial position, velocity, timestamp and follow model
+     * 
+     * @param id Car ID. 
+     * @param x0 Initial position
+     * @param v0 initial velocity
+     * @param t0 Initial timestamp
+     * @param politeness Lane changing politeness
+     * @param follow Car following follow model
+     */
     Car(size_t id, double x0, double v0, double t0, double politeness,
         FollowModel follow);
 
@@ -87,7 +96,6 @@ class Car {
     /**
      * @brief Calculates the acceleration of the car at current state
      * 
-     * @overload Overload for the lead car with no. 
      * @param dt Timestep
      * @return double acceleration a
      */
@@ -96,13 +104,11 @@ class Car {
     /**
      * @brief Calculates the acceleration of the car with a leader car
      * 
-     * @overload OVerload for car with a leader
      * @param lead lead car
      * @param dt timestep
      * @return std::expected<double, std::string> acceleration on success, string on failure. 
      */
     std::expected<double, std::string> acceleration(const Car& lead, double dt) const;
-
 
     /**
      * @brief Update based on acceleration. Forwards to other update overload. 
@@ -112,8 +118,19 @@ class Car {
      */
     void update(double acceleration, double dt);
 
+    /**
+     * @brief Returns a car snapshot of the car at the durrent time 
+     * 
+     * @param lane Current lane the car is in
+     * @return CarSnapshot 
+     */
     CarSnapshot snapshot(double t, uint16_t lane) const;
 
+    /**
+     * @brief Returns the car metadata in the CarData struct. Only called once
+     * This dat includes follow model and lane change parameters. 
+     * @return CarData 
+     */
     CarData data() const;
 
     /**
@@ -132,7 +149,11 @@ class Car {
      */
     static Car stoppedCar(double x);
 
-
+    /**
+     * @brief Comparison operator. Used to store in an std::map
+     * 
+     * @param other Car to compare against
+     */
     bool operator<(const Car& other) const{
         return pos_ < other.pos_;
     }
