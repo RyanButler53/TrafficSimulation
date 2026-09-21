@@ -35,7 +35,6 @@ struct Highway {
     /**
      * @brief Converts the state of the highway at the current timestep into car snapshots
      * @details Each derived class stores cars differently and has a different conversion algorithm. 
-     * @return std::vector<CarSnapshot> 
      */
     virtual void log(double t, std::vector<CarSnapshot>& data) = 0;
 

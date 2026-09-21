@@ -16,7 +16,6 @@
 using DBResponse = std::expected<void, std::string>;
 
 /**
- * @class DB Manager
  * @brief Handles all API Database Queries and Updates
  * @details Implements many overloads of the query() function to handle
  * different endpoints

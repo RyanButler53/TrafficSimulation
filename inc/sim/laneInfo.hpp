@@ -1,5 +1,5 @@
 /**
- * @file laneBounds.hpp
+ * @file laneInfo.hpp
  * @author  Ryan Butler (rmbutler@outlook.com)
  * @brief Class holding lane boundaries
  * @version 0.1
@@ -31,7 +31,7 @@ enum class Direction : int8_t{
 };
 
 /**
- * @class Class to hold and answer queries about lanes. Particularly start
+ * @brief Class to hold and answer queries about lanes. Particularly start
  * and ends of lanes and segments of lanes and environment
  * 
  */
@@ -47,8 +47,6 @@ class LaneInterval {
      * @param ilane Position of the lane
      * @param x X position
      * @return std::optional<LaneBoundary> Returns the low, high and position the x value lands in. 
-     * 
-     * @endif
      * 
      */
     std::optional<LaneBoundary> getLaneSegment(size_t ilane, double x);

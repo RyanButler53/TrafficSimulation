@@ -1,5 +1,5 @@
 /**
- * @file traffic.cpp
+ * @file trafficJob.cpp
  * @author Ryan Butler
  * @brief  Driver code to run the simulation
  * @version 0.2

@@ -22,7 +22,7 @@
 #include "simInputs.hpp"
 
 /**
- * @class Parser: A base class for Continuous and Discrete parsers. Continuous parsers 
+ * @brief Parser: A base class for Continuous and Discrete parsers. Continuous parsers 
  * have to handle flow based parameters
  * 
  */
@@ -66,8 +66,6 @@ class Parser {
 
     /**
      * @brief Creates the highway and sets up flow generators for highway construction. 
-     * 
-     * @param lane Lane to populate with cars
      */
     virtual std::expected<void, std::string> parseHighway() = 0;
 
