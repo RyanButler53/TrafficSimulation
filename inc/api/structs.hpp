@@ -35,6 +35,10 @@ struct RawData {
     int id_;
 };
 
+/**
+ * @brief Struct holding snapshot data for the API. 
+ * 
+ */
 struct Snapshot {
     int id_;
     float x_;
@@ -42,9 +46,13 @@ struct Snapshot {
     int l_;
 };
 
+/**
+ * @brief Struct to hold Databaes data as a time series
+ * 
+ */
 struct TimeSeries {
-    std::vector<float> timestamps_;
-    std::vector<std::vector<Snapshot>> snapshots_;
+    std::vector<float> timestamps_; ///< All timestamps found (sorted)
+    std::vector<std::vector<Snapshot>> snapshots_; ///< All car snapshots found by timestamp
 };
 
 enum class JobStatus : uint8_t {

@@ -14,15 +14,18 @@
 #include "logger.hpp"
 
 
+/**
+ * @brief Struct containing simulator inputs
+ * @note This struct can be expanded to have other system configuration inputs and compression type
+ * 
+ */
 struct SimulatorInputs {
-    std::shared_ptr<CarLogger> logger_;
-    std::shared_ptr<Highway> highway_;
-    double totalTime_;
-    double dt_;
-    int thinning_;
-    std::string jobname_;
+    std::shared_ptr<CarLogger> logger_;   ///< Logger that writes car data to its sink
+    std::shared_ptr<Highway> highway_;    ///< Highway with all lanes set up. 
+    double totalTime_;                    ///< Total time that the simulation will run for
+    double dt_;                           ///< Delta timestep.
+    int thinning_;                        ///< Frequency of writing out car snapshots. 
+    std::string jobname_;                 ///< Name of the simulation job.
 
-    // System configuration inputs can live here
-    // As well as compression type
 };
 

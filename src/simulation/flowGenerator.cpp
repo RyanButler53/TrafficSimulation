@@ -18,7 +18,6 @@ void FlowGenerator::setRng(RandomGenerator::ptr v0Dist, RandomGenerator::ptr vDe
     dist_ = mainDist;
 }
 
-// Generate flow when there is no car in front
 std::optional<Car> FlowGenerator::generateFlow(){
     return generateFlow(std::numeric_limits<double>::max(), 500);
 }

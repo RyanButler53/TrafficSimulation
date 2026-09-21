@@ -23,7 +23,6 @@
     uint16_t l;      ///< Lane
 };
 
-
 /**
  * @brief Struct containing data about a specific car
  * @details Data is specific to the car follow model and is consistent across all timesteps

@@ -29,23 +29,25 @@
 class Parser {
 
     protected:
-    YAML::Node cfg_;
-    std::filesystem::path configPath_; // Required for reproducing simulation runs
-    std::shared_ptr<CarFactory> factory_;
-    std::shared_ptr<CarLogger> logger_;
-    std::shared_ptr <Highway> highway_;
-    double totaltime_;
-    double dt_;
-    int thinning_;
-    uint64_t seed_;
-    std::string jobname_;
+    YAML::Node cfg_;                        ///< Node for the main yaml file.
+    std::filesystem::path configPath_;      ///< Path to the input config file.
+    std::shared_ptr<CarFactory> factory_;   ///< Factory used to create cars.
+    std::shared_ptr<CarLogger> logger_;     ///< Logger that records car data.
+    std::shared_ptr<Highway> highway_;      ///< Highway the simulation runs on.
+    double totaltime_;                      ///< Total simulation time.
+    double dt_;                             ///< Time step.
+    int thinning_;                          ///< Logging thinning ratio. n thinning -> log every n timestamps
+    uint64_t seed_;                         ///< Seed for rng. Used for Flow Generation
+    std::string jobname_;                   ///< Name of the simulation job.
 
 
     // Template Utility functions of parsing algorithm
 
     /**
-     * @brief General stuff for all simulations
-     * @details Log directory, Time, dt, seed
+     * @brief General stuff for all simulations. Sets
+     * @details Parses fields: Log directory, Time, dt, seed
+     * @post Logger member var has been initialized after this
+     * @return Nothing on success, error string on error 
      */
     std::expected<void, std::string> parseGeneral();
 
@@ -53,6 +55,8 @@ class Parser {
      * @brief Parses the Driver Factory. Can be either Gipps or Intelligent
      * @throw Throws an error if factory is not "Gipps" or "IDM" (case sensitive) or 
      * if the driver parameters are incorrect. 
+     * @post Car Factory member var has been initialized after this
+     * @return Nothing on success, error string on error 
      */
     std::expected<void, std::string> parseCarFactory(void);
 
@@ -69,6 +73,14 @@ class Parser {
      */
     virtual std::expected<void, std::string> parseHighway() = 0;
 
+    /**
+     * @brief Parses an individual field from the YAML node with a specified type. 
+     * 
+     * @tparam T Type to convert to. 
+     * @param node Yaml node to parse
+     * @param key Key value to get node[key]
+     * @return std::expected<T, std::string> T on success, error message on success. Errors can be null node, no field or type conversion error.  
+     */
     template <typename T>
     static std::expected<T, std::string> ParseField(YAML::Node node, std::string key){
         if (!node){
@@ -83,6 +95,16 @@ class Parser {
         }   
     }
 
+    /**
+     * @brief Parses a field that is many layers deep in a yaml node. 
+     * 
+     * @tparam T End type to convert the key to
+     * @tparam Fields 
+     * @param node Yaml node to parse
+     * @param key Current key to use
+     * @param keys Variable number of later keys to use
+     * @return std::expected<T, std::string> T on success, error message on success.
+     */
     template <typename T, typename... Fields>
     static std::expected<T, std::string> ParseField(YAML::Node node, std::string key, Fields... keys){
         // Base case: There is only one field. 
@@ -94,6 +116,13 @@ class Parser {
     }
 
     public:
+
+    /**
+     * @brief Constructs a parser object.
+     * 
+     * @param cfg Yaml node representing the entire input file
+     * @param cfgpath Path to the original config file. 
+     */
     Parser(YAML::Node cfg, std::filesystem::path cfgpath):cfg_{cfg},configPath_{cfgpath}{};
     virtual ~Parser() {}
 
@@ -108,8 +137,8 @@ class Parser {
 class ContinuousParser : public Parser {
 
     public:
+    using Parser::Parser;
 
     std::expected<void, std::string> parseHighway() override;
 
-    using Parser::Parser;
 };
