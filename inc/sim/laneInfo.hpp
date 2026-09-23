@@ -214,6 +214,8 @@ class LaneInterval {
      * 
      * @return Populated environment struct with the lane intervals. Passes down to lanes_.getEnd
      */
-    inline Environment getEnv();
+    inline Environment getEnv(){
+        return lanes_.getEnv(startOfRoad_, endOfRoad_);
+    }
 };
 
