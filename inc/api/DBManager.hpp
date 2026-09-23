@@ -33,7 +33,6 @@ class DBManager {
 
 public:
 
-    // 
     /**
      * @brief Construct a new DBManager object.
      * @note By default, constructs a reader for the PROD database. 
