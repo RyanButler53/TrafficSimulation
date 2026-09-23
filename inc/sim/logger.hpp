@@ -183,7 +183,7 @@ class DBLogger : public CarLogger {
      * 
      * @param jobname Job Name the logger represents
      * @param config Config file to use
-     * @param Follow Model Type (Gipps/IDM/...)
+     * @param followType Model Type (Gipps/IDM/...)
      * @param test True to use test db, false for prod DB
      * @return std::expected<DBLogger*, std::string> 
      */

@@ -1,5 +1,5 @@
 /**
- * @file Compressor.cpp
+ * @file compression.cpp
  * @author Ryan Butler
  * @brief Implements different compression for logging data
  * @version 0.1

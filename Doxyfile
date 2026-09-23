@@ -1,0 +1,34 @@
+# Minimal Doxyfile - edit PROJECT_NAME and INPUT for your repo.
+# Run `doxygen -g Doxyfile.full` locally if you want the full option list.
+
+PROJECT_NAME           = "Traffic Simulation"
+OUTPUT_DIRECTORY       = docs
+
+# Directories/files to scan (space separated, relative to repo root)
+INPUT                  = src inc scripts README.md
+RECURSIVE              = YES
+FILE_PATTERNS          = *.c *.cc *.cpp *.cxx *.h *.hh *.hpp *.hxx *.md
+EXCLUDE_PATTERNS       = */build/* */third_party/* */external/*
+
+USE_MDFILE_AS_MAINPAGE = README.md
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+
+# HTML output (published to GitHub Pages)
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_TREEVIEW      = YES
+SEARCHENGINE           = YES
+GENERATE_LATEX         = NO
+GENERATE_XML           = NO
+
+# Class/include/collaboration diagrams (needs Graphviz, installed in the workflow)
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+INCLUDE_GRAPH          = YES

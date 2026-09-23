@@ -45,10 +45,10 @@ struct DataPacket {
 template <typename Data_t>
 class CarDataPacket : public DataPacket {
 
-    std::vector<Data_t> cars_;
-    std::vector<std::byte> compressed_;
-    size_t compressedSize_;
-    size_t originalSize_;
+    std::vector<Data_t> cars_; /// Vector of data for all the cars in the data packet
+    std::vector<std::byte> compressed_; ///< Compressed bytes
+    size_t compressedSize_; ///< Size of compressed data
+    size_t originalSize_; ///< Original size of the data
 
     public:
 
@@ -59,12 +59,21 @@ class CarDataPacket : public DataPacket {
   
     void decompress(Compressor* compressor) override;
 
+    /**
+     * @brief Moves the data to the caller
+     * 
+     * @return std::vector<Data_t>&& rvalue reference to the underlying data. 
+     */
     std::vector<Data_t>&& moveData(){return std::move(cars_);}
 };
   
 using CarMetadataPacket = CarDataPacket<CarData>;
 using CarSnapshotPacket = CarDataPacket<CarSnapshot>;
 
+/**
+ * @brief Small struct to represent the end of data. 
+ * 
+ */
 struct EndOfData : public DataPacket {
 
     void compress(Compressor* compressor) override{}

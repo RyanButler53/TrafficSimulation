@@ -22,11 +22,30 @@ enum class CompressionType : uint8_t{
     BROTLI = 2
 };
 
+/**
+ * @brief Abstract base class representing an object that can compress a stream of bytes
+ * 
+ */
 class Compressor {
 
-
-    // Compression and decompression bytes that each compression type needs to implement
+    /**
+     * @brief Compresses a chunk of bytes
+     * 
+     * @param data Pointer to data to compress
+     * @param size Size of data buffer to compress
+     * @param out Output buffer to put the data. This buffer is pre-allocated. 
+     * @return size_t Number of bytes returned. 
+     */
     virtual size_t compressBytes(std::byte* data, size_t size, std::byte* out) = 0;
+
+    /**
+     * @brief Decompresses the bytes. 
+     * 
+     * @param data Pointer to data to compress
+     * @param size Size of compressed eata
+     * @param out Preallocated buffer of data for output data
+     * @return size_t Returns the number fo bytes of uncompressed data. 
+     */
     virtual size_t decompressBytes(std::byte* data, size_t size, std::byte* out) = 0;
 
     public:
@@ -71,6 +90,10 @@ struct NoCompression : public Compressor {
 
 };
 
+/**
+ * @brief Class for Compression based on ZStd compressino
+ * 
+ */
 class ZStandard : public Compressor {
 
     public:
@@ -78,6 +101,10 @@ class ZStandard : public Compressor {
     size_t decompressBytes(std::byte* data, size_t size, std::byte* out) override;
 };
 
+/**
+ * @brief Compression based on Brotli compression
+ * 
+ */
 class Brotli : public Compressor {
 
     public:

@@ -199,7 +199,3 @@ double LaneInfo::calculateBias(double x, size_t ilane, Direction dir){
         return bias() + double(dir) * 1.0/(d) * ((changePressure_/switchThreshold_) * (x - xCrit));
     }
 }
-
-Environment LaneInfo::getEnv(){
-    return lanes_.getEnv(startOfRoad_, endOfRoad_);
-}

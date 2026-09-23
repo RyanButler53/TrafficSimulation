@@ -1,5 +1,5 @@
 /**
- * @file laneBounds.hpp
+ * @file laneInfo.hpp
  * @author  Ryan Butler (rmbutler@outlook.com)
  * @brief Class holding lane boundaries
  * @version 0.1
@@ -25,13 +25,14 @@ struct LaneBoundary {
 
 };    
 
+/// @brief Small enum representing lane change direction
 enum class Direction : int8_t{
     LEFT = -1,
     RIGHT = 1
 };
 
 /**
- * @class Class to hold and answer queries about lanes. Particularly start
+ * @brief Class to hold and answer queries about lanes. Particularly start
  * and ends of lanes and segments of lanes and environment
  * 
  */
@@ -47,8 +48,6 @@ class LaneInterval {
      * @param ilane Position of the lane
      * @param x X position
      * @return std::optional<LaneBoundary> Returns the low, high and position the x value lands in. 
-     * 
-     * @endif
      * 
      */
     std::optional<LaneBoundary> getLaneSegment(size_t ilane, double x);
@@ -74,36 +73,99 @@ class LaneInterval {
     Environment getEnv(double start, double end);
 };
 
+/**
+ * @brief Class storing lane info. 
+ * @details This class stores data about each lane. Used to quickly determine
+ * what segment an x position is in and other properties about the road. See the listed
+ * public methods
+ * 
+ */
  class LaneInfo {
 
+    /// @brief Underlying representation of the lanes. 
     LaneInterval lanes_;
 
+    /**
+     * @brief Vector storing the lane ends for all known lanes. 
+     * @note This stores optionals since the index is used as a lookup key. If resizing 
+     * the vector, initializing to a nullopt ensures that the the maximum value is set correctly.
+     * 
+     */
     std::vector<std::optional<double>> laneEnds_;
+
+    /**
+     * @brief  The maximum x value for all lanes in the simulation. 
+     * @note Initialized to zero to ensure all the end is continuously updated correctly 
+     * 
+     */
     double endOfRoad_ = 0;
+
+    /**
+     * @brief Start of road. The minimum x value for all lanes in the simulation. This probably will be zero
+     * @note Initialized to the max to ensure that the start is continuously updated correctly. 
+     */
     double startOfRoad_ = std::numeric_limits<double>::max();
 
+    /**
+     * @brief Keep right bias for the highway. This is defaulted to 0.2 (per Traffic Flow Dynamics textbook)
+     * @details This bias is used when all lanes in a lane change are open. The bias is added to right lane changes
+     * and subtracted for left lane changes
+     * @note This is configureable in the input parameter
+     */
     double bias_ = 0.2;
+
+    /**
+     * @brief Scalar value for adding "pressure" to move away from a lane that is going to end. 
+     * @details The bias is changed by a factor of changePressure_/switchThreshold for every meter past
+     * switchThreshold_. This encourages cars to move away from a lane that is about to end
+     */
     double changePressure_ = 0.4;
-    // X threshold where biases break down to force a lane change. 
+
+    /**
+     * @brief X threshold where the keep right bias begins to break down to encourage a lane change. 
+     * @details See \ref changePressure to see how this is used mathematically 
+     * 
+     */
     double switchThreshold_ = 1600;
 
-    std::optional<LaneBoundary> getLane(double x, size_t ilane);
+    /**
+     * @brief Utility function to get the lane segment (start and end) that x is in.
+     * 
+     * @param x x position to check
+     * @param ilane Lane index
+     * @return std::optional<LaneBoundary> Returns a Lane Boundary if the lane exists at the given x position, nullopt if not. 
+     */
+    inline std::optional<LaneBoundary> getLane(double x, size_t ilane);
 
     public:
+
+    /** 
+     * @brief Constructs a default LaneInfo. This initially has no lane segments added. 
+     * @note This constructor doesn't set changePressure, switchThreshold and bias
+     */
     LaneInfo() = default;
 
-    LaneInfo(double bias, double changePressure, double switchThreshold);
     /**
-     * @brief Adds many segmemnts to a lane. Checks that they are all valid and there are no overlaps
+     * @brief Constructs a default LaneInfo. This initially has no lane segments added. 
      * 
-     * @param start 
-     * @param end 
-     * @param position 
+     * @param bias Keep right bias. See \ref bias_
+     * @param changePressure Factor to encourage lane change. See \ref changePressure
+     * @param switchThreshold Threhold number of meters before cars start trying to move over to avoid lane changes. See \ref switchThreshold_
+     */
+    LaneInfo(double bias, double changePressure, double switchThreshold);
+
+    /**
+     * @brief Add a lane segment to a lane. Checks that there is no overlap with existing lane segments
+     * 
+     * @param start Start position of the new lane
+     * @param end End position of the new lane. 
+     * @param position Index of the lane. Index of zero means rightmost lane. Higher indexes mean further left lanes. 
+     * @return True if the lane was added, false if it had an overlap with another lane. 
      */
     bool addSegment(double start, double end, size_t position);
 
     /**
-     * @brief Check if a lane exists at a specific x value
+     * @brief Check if a lane exists at a specific x value. Thin wrapper around LaneInfo::getLane
      */
     bool laneValid(double x, size_t lane);
 
@@ -116,10 +178,9 @@ class LaneInterval {
     /**
      * @brief Returns the end of the lane. 
      * @details Used to determine if a car can use true free road acceleration or a stopped car
-     * 
+     * @return Returns the x position (m) of the end of lane if it exists, error string otherwise
      */
     std::expected<double, std::string> endOfLane(size_t ilane);
-
 
     /**
      * @brief Calculates the lane change bias for a car looking to change lanes
@@ -148,7 +209,13 @@ class LaneInterval {
      */
     double endOfRoad() const;
 
-    // Returns the envrionment associated with the underlying LaneIntervals
-    Environment getEnv();
+    /**
+     * @brief Gets the envrionment associated with the underlying LaneIntervals 
+     * 
+     * @return Populated environment struct with the lane intervals. Passes down to lanes_.getEnd
+     */
+    inline Environment getEnv(){
+        return lanes_.getEnv(startOfRoad_, endOfRoad_);
+    }
 };
 

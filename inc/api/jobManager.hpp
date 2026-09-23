@@ -23,7 +23,10 @@
 #include "dataStructures/threadsafeQueue.hpp"
 
 
-
+/**
+ * @brief Class to encapsulate a job
+ * 
+ */
 class Job {
 
     private:
@@ -31,9 +34,27 @@ class Job {
     uint32_t id_;
     
     public:
+
+    /**
+     * @brief Construct a new Job object
+     * 
+     * @param inputs Simulator inputs for the corresponding job
+     * @param id Job id. Assigned by the Job Manager
+     */
     Job(const SimulatorInputs& inputs, uint32_t id):inputs_{inputs}, id_{id}{}
 
+    /**
+     * @brief Call operator. Runs the job
+     * 
+     * @return JobStatus Enumerated job status for the end of the job
+     */
     JobStatus operator()();
+
+    /**
+     * @brief Reurns the job's corresponding job id. 
+     * 
+     * @return uint32_t Integer job id. 
+     */
     uint32_t id() const {return id_;}
 };
 

@@ -8,6 +8,10 @@
 #include "car.hpp"
 #include "random.hpp"
 
+/**
+ * @brief Class to encapsulate flow generation for each lane
+ * 
+ */
 class FlowGenerator
 {
 private:
@@ -17,8 +21,14 @@ private:
 
     /// @brief Randomness generator
     std::shared_ptr<std::mt19937> rng_;
+
+    /// @brief Distribution for whether or not to generate a car. Typically a uniform distribution
     RandomGenerator::ptr dist_;
+
+    /// @brief Distribution for initial velocities. Typically a normal distribution
     RandomGenerator::ptr v0Dist_;
+
+    /// @brief Distribution for desired velocities. Typically a normal distribution
     RandomGenerator::ptr vDesDist_;
 
     /// @brief Flows left in the hour
@@ -37,6 +47,7 @@ private:
     // Simulation Timestep
     double dt_;
 
+    /// @brief Current timestep of the flow generator. 
     double time_{0.0};
 
 public:
@@ -53,8 +64,8 @@ public:
      * @param rate Approximate Number of cars that we be generated per hour by this flow generator
      * @param x0 Initial position of each car generated. This is the same for each car
      * @param factory Car factory 
-     * @param dt 
-     * @param rng 
+     * @param dt Delta timestep of the simulation. Used to compute the instantaneous flow rate at the fiven time
+     * @param rng Rng source for car generation distribution. 
      */
     FlowGenerator(double rate, double x0, std::shared_ptr<CarFactory> factory,  double dt, std::shared_ptr<std::mt19937> rng);
     ~FlowGenerator() = default;
@@ -89,6 +100,12 @@ public:
      * @return std::optional<Car> Car generated. Nullopt if no car is generated
      */
     std::optional<Car> generateFlow(double rearPosition, double vlead);
+
+    /**
+     * @brief Probabalistically generates flow 
+     * 
+     * @return std::optional<Car> Generates flow for a car that is the true leader with no lead car. 
+     */
     std::optional<Car> generateFlow();
 
 };

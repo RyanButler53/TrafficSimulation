@@ -15,30 +15,28 @@
 /**
  * @brief Struct containing the minimum data about each car at a given timestep
  * @details Enough information to reconstruct and visualize the simulation with ffmpeg. 
- */
-struct CarSnapshot {
-    std::size_t id; // car id
-    double x; /// position
-    double v; // velocity
-    double t; // time
-    uint16_t l; // lane
+ */struct CarSnapshot {
+    std::size_t id;  ///< Car id
+    double x;        ///< Position
+    double v;        ///< Velocity
+    double t;        ///< Time
+    uint16_t l;      ///< Lane
 };
-
 
 /**
  * @brief Struct containing data about a specific car
  * @details Data is specific to the car follow model and is consistent across all timesteps
  */
 struct CarData {
-    double a; // acceleration
-    double b; // braking
-    double c; // max braking in Gipps, min gap in IDM
-    double p; // lane changing politeness
-    double vdes; // desired velocity
-    size_t id; // car id
+    double a;     ///< Acceleration
+    double b;     ///< Braking
+    double c;     ///< Max braking in Gipps, min gap in IDM
+    double p;     ///< Lane changing politeness
+    double vdes;  ///< Desired velocity
+    size_t id;    ///< Car id
 };
 
 /// @brief Simple struct to hold simulator stats
 struct SimulationStats {
-    double runtime_;
+    double runtime_; ///< Simulation runtime in seconds
 };
