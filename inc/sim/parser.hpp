@@ -1,8 +1,8 @@
 /**
  * @file parser.hpp
- * @author Ryan Buutler (rmbutler@outlook.com)
+ * @author Ryan Butler (rmbutler@outlook.com)
  * @brief Defines interface for the discrete input parser for discretely defined simulations
- * @version 0.1
+ * @version 0.2
  * @date 2025-07-13
  * 
  * @copyright Copyright (c) 2025
@@ -28,6 +28,8 @@
  */
 class Parser {
 
+    std::string highwayType_;                ///< Parallel highway backend
+
     protected:
     YAML::Node cfg_;                        ///< Node for the main yaml file.
     std::filesystem::path configPath_;      ///< Path to the input config file.
@@ -44,34 +46,41 @@ class Parser {
     // Template Utility functions of parsing algorithm
 
     /**
-     * @brief General stuff for all simulations. Sets
+     * @brief General stuff for all simulations. This function parses the "jobinfo" section of the input file
      * @details Parses fields: Log directory, Time, dt, seed
      * @post Logger member var has been initialized after this
      * @return Nothing on success, error string on error 
      */
-    std::expected<void, std::string> parseGeneral();
+    std::expected<void, std::string> parseGeneral(YAML::Node node);
 
     /**
-     * @brief Parses the Driver Factory. Can be either Gipps or Intelligent
+     * @brief Parses the Car Factory. Can be either Gipps or Intelligent
+     * @details This function is meant to parse the "driver" field in the input file
      * @throw Throws an error if factory is not "Gipps" or "IDM" (case sensitive) or 
      * if the driver parameters are incorrect. 
      * @post Car Factory member var has been initialized after this
      * @return Nothing on success, error string on error 
      */
-    std::expected<void, std::string> parseCarFactory(void);
+    std::expected<void, std::string> parseCarFactory(YAML::Node node);
+
 
     /**
-     * @brief Parses the node for Flow Generation parameters
+     * @brief Creates the highway and sets up flow generators for the highway
+     * @details This function parses the "highway" field of the input file
      * 
-     * @param flowNode Node with flow generation
-     * @return FlowGenerator with zero flow. Override to parse flow. 
+     * @param highwayParams Yaml Node containing the highway parameters including lane change parameters
+     * and 
      */
-    virtual std::expected<FlowGenerator, std::string> parseFlow(YAML::Node flowNode){return FlowGenerator();}
+    std::expected<void, std::string> parseHighway(YAML::Node highwayParams);
 
     /**
-     * @brief Creates the highway and sets up flow generators for highway construction. 
+     * @brief Parses the initial state of the simulation. Builds the cars and puts them on the highway
+     * at the initial timestamp
+     * 
+     * @param initialState 
+     * @return std::expected<void, std::string> 
      */
-    virtual std::expected<void, std::string> parseHighway() = 0;
+    virtual std::expected<void, std::string> parseInitialState(YAML::Node initialState) = 0;
 
     /**
      * @brief Parses an individual field from the YAML node with a specified type. 
@@ -127,11 +136,13 @@ class Parser {
     virtual ~Parser() {}
 
     /**
-     * @brief Common algorithm to parse the inputs. 
+     * @brief Parse the entire simulator inputs.
+     * @details Calls the protected member functions with various nodes of the input file
+     * to build the entire simulator inputs. 
      * 
-     * @return Expected SimulatorInputs result or an error string
+     * @return Expected SimulatorInputs result or an error string of which step of the parsing failed
      */
-    std::expected<SimulatorInputs, std::string> parse();
+    virtual std::expected<SimulatorInputs, std::string> parse() = 0;
 };
 
 class ContinuousParser : public Parser {
@@ -139,6 +150,19 @@ class ContinuousParser : public Parser {
     public:
     using Parser::Parser;
 
-    std::expected<void, std::string> parseHighway() override;
+    std::expected<SimulatorInputs, std::string> parse() override;
+    std::expected<void, std::string> parseInitialState(YAML::Node initialState) override {return {};}
+    // std::expected<void, std::string> parseHighway(YAML::Node highwayParams) override;
 
 };
+
+// class CheckpointedParser : public Parser {
+
+//     std::expected<YAML::Node, std::string> getPreviousConfig();
+
+//     public:
+//     using Parser::Parser;
+
+//     std::expected<void, std::string> parseInitialState(YAML::Node initialState) override;
+
+// };

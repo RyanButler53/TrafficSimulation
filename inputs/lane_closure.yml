@@ -1,84 +1,92 @@
 ---
 # General Information
-jobname: large-lane-closure
-type: "continuous" # differentiates between adding cars upfront or online
-time: 500
-timestep: 0.2
-seed: 70
-logtype: "null"
-highway-type: "cpu" # "cpu", "kokkos" or "metal".
+jobinfo:
+  jobname: large-lane-closure
+  type: "continuous" # differentiates between adding cars upfront or online
+  time: 500
+  timestep: 0.2
+  seed: 70
+  logtype: "null"
+  highway-type: "cpu" # "cpu", "kokkos" or "metal".
 
 # Driver Model
-driverType: "Gipps" # driver type
-driverParams:
-  a: 1.981
-  b: -2.8955
-  bmax: -3.505
-  p: 0.2
+cars:
+  driverType: "Gipps" # driver type
+  driverParams:
+    a: 1.981
+    b: -2.8955
+    bmax: -3.505
+    p: 0.2
 
-  # standard deviations to add heterogeneous traffic
-  a_stdev: 0.1
-  b_stdev: 0.1
-  bmax_stdev: 0.1
-  p_stdev: 0.04
+    # standard deviations to add heterogeneous traffic
+    a_stdev: 0.1
+    b_stdev: 0.1
+    bmax_stdev: 0.1
+    p_stdev: 0.04
 
-# Highway Parameters:
-changePressure: 0.6
-switchThreshold: 1600
-bias: 0.2
 
-#Lane must have Flow, start, end and index (position)
-lanes:
-  -
-    flow:
-      rate: 200 # flow rate (veh/hr)
-      v0: 20
-      vdes: 20
-      v0_stdev: 2
-      vdes_stdev: 2
+# All information needed for the highway (lanes + lane change params)
+highway:
 
-    start: 0
-    end: 2000
-    position: 0 # right lane
-  -
-    flow:
-      rate: 200
-      v0: 0
-      vdes: 30
-      v0_stdev: 0
-      vdes_stdev: 2 
+    # Lane changing parameters
+  parameters:
+    changePressure: 0.6
+    switchThreshold: 1600
+    bias: 0.2
 
-    start: 5000
-    end: 10000
-    position: 0 # right lane
+  lanes:
+    -
+      flow:
+        rate: 200 # flow rate (veh/hr)
+        v0: 20
+        vdes: 20
+        v0_stdev: 2
+        vdes_stdev: 2
 
-  - 
-    flow:
-      rate: 400
-      v0: 20
-      vdes: 25
-      v0_stdev: 2
-      vdes_stdev: 2 
+      start: 0
+      end: 2000
+      position: 0 # right lane
+    -
+      flow:
+        rate: 200
+        v0: 0
+        vdes: 30
+        v0_stdev: 0
+        vdes_stdev: 2 
 
-    start: 0
-    end: 10000
-    position: 1 # middle lane 
+      start: 5000
+      end: 10000
+      position: 0 # right lane
 
-  -
-    flow:
-      rate: 600
-      v0: 25
-      vdes: 25
-      v0_stdev: 2
-      vdes_stdev: 2 
-    start: 0
-    end: 10000
-    position: 2 # left lane
+    - 
+      flow:
+        rate: 400
+        v0: 20
+        vdes: 25
+        v0_stdev: 2
+        vdes_stdev: 2 
 
-  -
-    flow:
-      rate: 0
-    start: 6000
-    end: 10000
-    position: 3 # newly added leftmost lane
+      start: 0
+      end: 10000
+      position: 1 # middle lane 
 
+    -
+      flow:
+        rate: 600
+        v0: 25
+        vdes: 25
+        v0_stdev: 2
+        vdes_stdev: 2 
+      start: 0
+      end: 10000
+      position: 2 # left lane
+
+    -
+      flow:
+        rate: 0
+      start: 6000
+      end: 10000
+      position: 3 # newly added leftmost lane
+
+"initial state":
+  # initial state of the system. Can coexist with higihway with lanes and flows. 

@@ -10,7 +10,7 @@ std::expected<std::unique_ptr<Parser>, std::string>ParserFactory::makeParser(){
     }  
 
     std::string simtype = "";
-    if (cfg_["type"]){
+    if (cfg_["jobinfo"]["type"]){
         simtype = cfg_["type"].as<std::string>();
     } else {
         return std::unexpected("type not found");
