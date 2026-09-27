@@ -27,8 +27,8 @@ class EnvironmentComparison : public ::testing::Test {
     void getEnvironment(std::string cfg){
         ParserFactory parserFac(cfg);
         // TODO : Monads!
-        std::expected<SimulatorInputs, std::string> parseResult = parserFac.makeParser().and_then(std::mem_fn(&Parser::parse)).value();
-        ASSERT_TRUE(parseResult.has_value()) << "Unable to parse config: " << cfg << " " << parseResult.error();
+        std::expected<SimulatorInputs, std::string> parseResult = parserFac.makeParser().and_then(std::mem_fn(&Parser::parse));
+        ASSERT_TRUE(parseResult.has_value()) << "Unable to parse config file: " << cfg << " " << parseResult.error();
         SimulatorInputs inputs = parseResult.value();
         auto result = inputs.logger_->logEnvironment(inputs.highway_->environment());
         ASSERT_TRUE(result.has_value()) << "Unable to generate environment for config " << cfg << result.error();
@@ -66,8 +66,8 @@ class EnvironmentComparison : public ::testing::Test {
         std::filesystem::path dbfile = testcase.filename();
 
         YAML::Node fileConfig = YAML::LoadFile(testcase.filename().string());
-        fileConfig["logtype"] = "file";
-        fileConfig["logdir"] = "environment-comparison/";
+        fileConfig["jobinfo"]["logtype"] = "file";
+        fileConfig["jobinfo"]["logdir"] = "environment-comparison/";
         TestUtil::configToFile(fileConfig,"envTest_filelog.yaml" );
 
         getEnvironment("envTest_filelog.yaml");
@@ -117,25 +117,25 @@ class EnvironmentTest : public EnvironmentComparison {
         std::filesystem::path dbfile = testcase.filename();
 
         YAML::Node fileConfig = YAML::LoadFile(testcase.filename().string());
-        fileConfig["logtype"] = "file";
-        fileConfig["logdir"] = "algorithm/";
+        fileConfig["jobinfo"]["logtype"] = "file";
+        fileConfig["jobinfo"]["logdir"] = "algorithm/";
         TestUtil::configToFile(fileConfig, "algorithm.yaml");
 
 
         // Passing lane environment
         YAML::Node cfg;
-        cfg["jobname"] = "passing-lane";
-        cfg["type"] = "continuous";
+        cfg["jobinfo"]["jobname"] = "passing-lane";
+        cfg["jobinfo"]["type"] = "continuous";
         YAML::Node rightlane;
-        cfg["lanes"][0]["flow"]["rate"] = 1500;
-        cfg["lanes"][0]["start"] = 0;
-        cfg["lanes"][0]["end"] = 2000;
-        cfg["lanes"][0]["position"] = 0; // right lane
+        cfg["highway"]["lanes"][0]["flow"]["rate"] = 1500;
+        cfg["highway"]["lanes"][0]["start"] = 0;
+        cfg["highway"]["lanes"][0]["end"] = 2000;
+        cfg["highway"]["lanes"][0]["position"] = 0; // right lane
 
-        cfg["lanes"][1]["flow"]["rate"] = 0;
-        cfg["lanes"][1]["start"] = 300;
-        cfg["lanes"][1]["end"] = 1700;
-        cfg["lanes"][1]["position"] = 1; // right lane
+        cfg["highway"]["lanes"][1]["flow"]["rate"] = 0;
+        cfg["highway"]["lanes"][1]["start"] = 300;
+        cfg["highway"]["lanes"][1]["end"] = 1700;
+        cfg["highway"]["lanes"][1]["position"] = 1; // right lane
 
         TestUtil::configToFile(cfg, "passing-lane.yaml");
         getEnvironment("algorithm.yaml");

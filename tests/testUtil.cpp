@@ -7,25 +7,25 @@ namespace TestUtil{
 
 YAML::Node getConfigNode() {
     YAML::Node cfg;
-    cfg["type"] = "continuous";
-    cfg["time"] = 150;
-    cfg["timestep"] = 1;
+    cfg["jobinfo"]["type"] = "continuous";
+    cfg["jobinfo"]["time"] = 150;
+    cfg["jobinfo"]["timestep"] = 1;
 
     // Driver params (From traffic flow book example)
-    cfg["driverType"] = "Gipps";
-    cfg["driverParams"]["a"] = 1.981;
-    cfg["driverParams"]["b"] = -2.8955;
-    cfg["driverParams"]["bmax"] = -5.505;
-    cfg["driverParams"]["p"] = 0.2;
+    cfg["cars"]["driverType"] = "Gipps";
+    cfg["cars"]["driverParams"]["a"] = 1.981;
+    cfg["cars"]["driverParams"]["b"] = -2.8955;
+    cfg["cars"]["driverParams"]["bmax"] = -5.505;
+    cfg["cars"]["driverParams"]["p"] = 0.2;
 
-    // Homogeneous traffic
-    cfg["driverParams"]["a_stdev"] = 0;
-    cfg["driverParams"]["a_stdev"] = 0;
-    cfg["driverParams"]["bmax_stdev"] = 0;
-    cfg["driverParams"]["p_stdev"] = 0;
+    // ["cars"]Homogeneous traffic
+    cfg["cars"]["driverParams"]["a_stdev"] = 0;
+    cfg["cars"]["driverParams"]["a_stdev"] = 0;
+    cfg["cars"]["driverParams"]["bmax_stdev"] = 0;
+    cfg["cars"]["driverParams"]["p_stdev"] = 0;
 
 
-    cfg["lanes"];
+    cfg["highway"]["lanes"];
     YAML::Node lane1, lane2;
 
     lane1["flow"]["rate"] = 800;
@@ -42,8 +42,8 @@ YAML::Node getConfigNode() {
     lane2["end"] = 2000;
     lane2["position"]  = 1;
 
-    cfg["lanes"].push_back(lane1);
-    cfg["lanes"].push_back(lane2);
+    cfg["highway"]["lanes"].push_back(lane1);
+    cfg["highway"]["lanes"].push_back(lane2);
 
     return cfg;
 }
@@ -51,27 +51,27 @@ YAML::Node getConfigNode() {
 // Gets the config node except for the log dir/log type fields. 
 YAML::Node getConfigNode_3Lane() {
     YAML::Node cfg;
-    cfg["jobname"] = "test-file";
-    cfg["type"] = "continuous";
-    cfg["time"] = 900; // 15 minutes
-    cfg["timestep"] = 1;
-    cfg["seed"] = 70;
+    cfg["jobinfo"]["jobname"] = "test-file";
+    cfg["jobinfo"]["type"] = "continuous";
+    cfg["jobinfo"]["time"] = 900; // 15 minutes
+    cfg["jobinfo"]["timestep"] = 1;
+    cfg["jobinfo"]["seed"] = 70;
 
     // Driver params (From traffic flow book example)
-    cfg["driverType"] = "Gipps";
-    cfg["driverParams"]["a"] = 1.981;
-    cfg["driverParams"]["b"] = -2.8955;
-    cfg["driverParams"]["bmax"] = -5.505;
-    cfg["driverParams"]["p"] = 0.2;
+    cfg["cars"]["driverType"] = "Gipps";
+    cfg["cars"]["driverParams"]["a"] = 1.981;
+    cfg["cars"]["driverParams"]["b"] = -2.8955;
+    cfg["cars"]["driverParams"]["bmax"] = -5.505;
+    cfg["cars"]["driverParams"]["p"] = 0.2;
 
     // Homogeneous traffic
-    cfg["driverParams"]["a_stdev"] = 0.0;
-    cfg["driverParams"]["b_stdev"] = 0.0;
-    cfg["driverParams"]["bmax_stdev"] = 0.0;
-    cfg["driverParams"]["p_stdev"] = 0.0;
+    cfg["cars"]["driverParams"]["a_stdev"] = 0.0;
+    cfg["cars"]["driverParams"]["b_stdev"] = 0.0;
+    cfg["cars"]["driverParams"]["bmax_stdev"] = 0.0;
+    cfg["cars"]["driverParams"]["p_stdev"] = 0.0;
 
     // 3 lanes of traffic
-    cfg["lanes"];
+    cfg["highway"]["lanes"];
     YAML::Node lane1, lane2, lane3;
 
     lane1["flow"]["rate"] = 200;
@@ -95,9 +95,9 @@ YAML::Node getConfigNode_3Lane() {
     lane3["end"] = 2000;
     lane3["position"]  = 2;
 
-    cfg["lanes"].push_back(lane1);
-    cfg["lanes"].push_back(lane2);
-    cfg["lanes"].push_back(lane3);
+    cfg["highway"]["lanes"].push_back(lane1);
+    cfg["highway"]["lanes"].push_back(lane2);
+    cfg["highway"]["lanes"].push_back(lane3);
 
     return cfg;
 }

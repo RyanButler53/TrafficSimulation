@@ -37,24 +37,24 @@ protected:
     void SetUp() override {
         // Set up file case
         YAML::Node fileLog = TestUtil::getConfigNode_3Lane();
-        fileLog["jobname"] = "test-file";
-        fileLog["logtype"] = "file";
-        fileLog["logdir"] = "./file-test/logs";
+        fileLog["jobinfo"]["jobname"] = "test-file";
+        fileLog["jobinfo"]["logtype"] = "file";
+        fileLog["jobinfo"]["logdir"] = "./file-test/logs";
 
         YAML::Node dbLog = TestUtil::getConfigNode_3Lane();
-        dbLog["jobname"] = "DB Test";
-        dbLog["logtype"] = "test";
+        dbLog["jobinfo"]["jobname"] = "DB Test";
+        dbLog["jobinfo"]["logtype"] = "test";
 
         YAML::Node tsLog = TestUtil::getConfigNode_3Lane();
-        tsLog["jobname"] = "test-time-series";
-        tsLog["logtype"] = "time-series";
-        tsLog["logdir"] = "./file-test/time-series";
+        tsLog["jobinfo"]["jobname"] = "test-time-series";
+        tsLog["jobinfo"]["logtype"] = "time-series";
+        tsLog["jobinfo"]["logdir"] = "./file-test/time-series";
 
         YAML::Node thinLog = TestUtil::getConfigNode_3Lane();
-        thinLog["jobname"] = "test-thinning";
-        thinLog["logtype"] = "time-series";
-        thinLog["logdir"] = "./file-test/thinning";
-        thinLog["thinning"] = 10; // Only write out every 10 time steps
+        thinLog["jobinfo"]["jobname"] = "test-thinning";
+        thinLog["jobinfo"]["logtype"] = "time-series";
+        thinLog["jobinfo"]["logdir"] = "./file-test/thinning";
+        thinLog["jobinfo"]["thinning"] = 10; // Only write out every 10 time steps
 
         TestUtil::configToFile(fileLog, "fileConfig.yaml");
         TestUtil::configToFile(dbLog, "dbConfig.yaml");
