@@ -4,7 +4,7 @@ type: "continuous"
 time: 180 # 3 minutes
 timestep: 0.5
 seed: 70
-logtype: "time-series"
+logtype: "null"
 highway-type: "cpu" # "cpu", "kokkos" or "metal".
 
 # Driver Model

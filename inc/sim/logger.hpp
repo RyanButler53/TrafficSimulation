@@ -205,3 +205,21 @@ class DBLogger : public CarLogger {
     std::expected<void, std::string> logEnvironment(const Environment& env) override;
 
 };
+
+/**
+ * @brief Class that represents no logging at all. All logging functions are a pass through. Only return
+ * is a true/false if the simulation succeeded
+ * 
+ */
+struct NullLogger : public CarLogger {
+    
+    std::expected<void, std::string> writeSnapshots(std::vector<CarSnapshot> snapshots) override {return {};}
+
+    std::expected<void, std::string> writeCars(std::vector<CarData> data) override {return {};}
+
+    std::expected<void, std::string> writeStats(SimulationStats s) override {return {};}
+
+    std::expected<void, std::string> logFailure(std::string message) override;
+
+    std::expected<void, std::string> logEnvironment(const Environment& env) override {return {};}
+};

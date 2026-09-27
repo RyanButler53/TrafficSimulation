@@ -1,7 +1,7 @@
 type: continuous
 time: 55
 timestep: 0.2
-logtype: time-series
+logtype: "null"
 driverType: Gipps
 jobname: ZeroFlow
 driverParams:

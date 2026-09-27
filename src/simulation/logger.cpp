@@ -340,6 +340,10 @@ std::expected<void, std::string> DBLogger::logEnvironment(const Environment& env
     return {};
 }
 
+std::expected<void, std::string> NullLogger::logFailure(std::string message){
+    return message.empty() ? std::expected<void, std::string>{} : std::unexpected(message);
+}
+
 // Template Instantiations
 template std::expected<void, std::string> DBLogger::updateField(std::string, size_t, std::string);
 template std::expected<void, std::string> DBLogger::updateField(std::string, std::string, std::string);

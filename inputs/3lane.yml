@@ -2,9 +2,9 @@
 # General Information
 jobname: 3-lane
 type: "continuous" # differentiates between adding cars upfront or online
-time: 8000
+time: 1500 # crashes at t = 1737
 timestep: 1
-thinning: 10
+thinning: 1
 seed: 70
 logtype: "time-series"
 highway-type: "cpu" # "cpu", "kokkos" or "metal".
