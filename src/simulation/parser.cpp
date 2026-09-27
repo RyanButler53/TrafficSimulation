@@ -16,6 +16,10 @@
 
 std::expected<void, std::string> Parser::parseGeneral(YAML::Node node) {
 
+    if (!node){
+        return std::unexpected("Missing \"jobinfo\" field in config file");
+    }
+
     // Gauranteed to be filled in
     totaltime_ = ParseField<double>(node, "time").value_or(100.0);
     dt_ = ParseField<double>(node, "timestep").value_or(1.0);
@@ -47,6 +51,9 @@ std::expected<void, std::string> Parser::parseGeneral(YAML::Node node) {
 }
 
 std::expected<void, std::string> Parser::parseCarFactory(YAML::Node cfg){
+    if (!cfg){
+        return std::unexpected("Missing \"car\" field in config file");
+    }
     std::string drivertype = ParseField<std::string>(cfg, "driverType").value_or("Gipps");
 
     if (drivertype == "Gipps"){
@@ -137,7 +144,7 @@ std::expected<void, std::string> Parser::parseHighway(YAML::Node hwyNode){
 std::expected<SimulatorInputs, std::string> ContinuousParser::parse() {
     return parseGeneral(cfg_["jobinfo"]).and_then([this](){return parseCarFactory(cfg_["cars"]);})
                          .and_then([this](){return parseHighway(cfg_["highway"]);})
-                         .and_then([this](){return parseInitialState(cfg_["inital-state"]);})
+                         .and_then([this](){return parseInitialState(cfg_["inital state"]);})
                          .transform([this](){return SimulatorInputs{logger_, highway_, totaltime_, dt_, thinning_, jobname_};});
 
 }
