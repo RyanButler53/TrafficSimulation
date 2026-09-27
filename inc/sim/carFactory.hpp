@@ -15,6 +15,11 @@
 #include "car.hpp"
 #include "random.hpp"
 
+/**
+ * @brief Abstract Car Factory class. This class outlines the interface of all Car Factories that will create cars with 
+ * different following models.
+ * 
+ */
 class CarFactory {
 
 protected: 
@@ -44,6 +49,14 @@ public:
      * @return Car 
      */
     virtual Car makeCar(double x0, double v0, double vdes, double t0 = 0) = 0;
+
+    /**
+     * @brief Set the carID field. This is used for checkpointed starts where the carID needs to get set
+     * to the id of the next new car. Required to get matching results between full runs and checkpointed runs
+     * 
+     * @param id Id of the next car generated
+     */
+    void setCarID(size_t id);
 };
 
 class GippsCarFactory : public CarFactory {
