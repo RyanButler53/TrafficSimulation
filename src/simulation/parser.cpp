@@ -37,11 +37,12 @@ std::expected<void, std::string> Parser::parseGeneral() {
         return DBLogger::make(jobname_, configPath_, drivertype, logtype == "test").transform([this](std::shared_ptr<DBLogger> log){logger_ = log;});
     } else if (logtype == "time-series"){
         logger_ = std::make_shared<TimeSeriesLogger>(logdir);
-        return {};
-    } else {
+    } else if (logtype == "file") {
         logger_ = std::make_shared<IndividualCarLogger>(logdir);
-        return {};
+    } else {
+        logger_ = std::make_shared<NullLogger>();
     }
+    return {};
 }
 
 std::expected<void, std::string> Parser::parseCarFactory(){

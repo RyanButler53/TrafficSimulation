@@ -98,8 +98,9 @@ class TimeSeries(MovieMaker):
             snapshot = row[1]
             plt.annotate(f"{int(snapshot["id"])}", xy=(snapshot["x"], snapshot["l"]), xytext = (5,5), textcoords="offset points")
 
-        for empty in self.emptySegments:
-            plt.plot([empty["start"], empty["end"]], [empty["position"], empty["position"]], color="red", lw=6)
+        if (self.emptySegments):
+            for empty in self.emptySegments:
+                plt.plot([empty["start"], empty["end"]], [empty["position"], empty["position"]], color="red", lw=6)
 
         plt.tight_layout()
         plt.savefig(f"{self.temp_path}/frame{self.index}.jpg")

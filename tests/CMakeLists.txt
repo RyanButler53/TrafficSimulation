@@ -92,3 +92,14 @@ endif()
 
 add_executable(timing timing.cpp)
 target_link_libraries(timing PRIVATE simulation jobManager dbmanager pqxx_wrapper testutil)
+
+file(GLOB INPUT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/../inputs/*.yml)
+
+foreach(input_file ${INPUT_FILES})
+  cmake_path(GET input_file STEM test_name)
+  add_test(
+    NAME data_${test_name}
+    COMMAND traffic ${input_file}
+  )
+  set_tests_properties(data_${test_name} PROPERTIES LABELS data)
+endforeach()
