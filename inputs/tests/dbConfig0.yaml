@@ -1,30 +1,39 @@
-type: continuous
-time: 150
-timestep: 1
-driverType: Gipps
-driverParams:
-  a: 1.981
-  b: -2.8955
-  bmax: -5.505
-  p: 0.2
-  a_stdev: 0
-  bmax_stdev: 0
-  p_stdev: 0
-lanes:
-  - flow:
-      rate: 800
-      v0: 20
-      vdes: 35
-    start: 0
-    end: 2000
-    position: 0
-  - flow:
-      rate: 400
-      v0: 0
-      vdes: 38
-    start: 0
-    end: 2000
-    position: 1
-logtype: test
-jobname: test-dbreader0
-seed: 70
+---
+# General Information
+jobinfo:
+  jobname: test-dbreader0
+  type: continuous
+  time: 150
+  timestep: 1
+  seed: 70
+  logtype: test
+
+# Driver Model
+cars:
+  driverType: Gipps
+  driverParams:
+    a: 1.981
+    b: -2.8955
+    bmax: -5.505
+    p: 0.2
+    a_stdev: 0
+    bmax_stdev: 0
+    p_stdev: 0
+
+# All information needed for the highway (lanes + lane change params)
+highway:
+  lanes:
+    - flow:
+        rate: 800
+        v0: 20
+        vdes: 35
+      start: 0
+      end: 2000
+      position: 0
+    - flow:
+        rate: 400
+        v0: 0
+        vdes: 38
+      start: 0
+      end: 2000
+      position: 1

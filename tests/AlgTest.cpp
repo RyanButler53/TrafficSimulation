@@ -68,15 +68,15 @@ size_t Test3Lane::nlanes() const {
 
 void Test3Lane::generateInput(){
     YAML::Node cfg = TestUtil::getConfigNode_3Lane();
-    cfg["logtype"] = "test";
-    cfg["jobname"] = testName();
-    cfg["timestep"] = 0.1; // dt = 0.1 tests streaming
+    cfg["jobinfo"]["logtype"] = "test";
+    cfg["jobinfo"]["jobname"] = testName();
+    cfg["jobinfo"]["timestep"] = 0.1; // dt = 0.1 tests streaming
 
     // Heterogeneous traffic
-    cfg["driverParams"]["a_stdev"] = 0.1;
-    cfg["driverParams"]["b_stdev"] = 0.2;
-    cfg["driverParams"]["bmax_stdev"] = 0.2;
-    cfg["driverParams"]["p_stdev"] = 0.02;
+    cfg["cars"]["driverParams"]["a_stdev"] = 0.1;
+    cfg["cars"]["driverParams"]["b_stdev"] = 0.2;
+    cfg["cars"]["driverParams"]["bmax_stdev"] = 0.2;
+    cfg["cars"]["driverParams"]["p_stdev"] = 0.02;
 
     TestUtil::configToFile(cfg, filename());
 }
@@ -105,10 +105,10 @@ size_t TestZeroFlow::nlanes() const {
 
 void TestZeroFlow::generateInput(){
     YAML::Node cfg = TestUtil::getConfigNode();
-    cfg["lanes"][0]["flow"]["rate"] = 0;
-    cfg["time"] = 1000;
-    cfg["logtype"] = "test";
-    cfg["jobname"] = testName();
+    cfg["highway"]["lanes"][0]["flow"]["rate"] = 0;
+    cfg["jobinfo"]["time"] = 1000;
+    cfg["jobinfo"]["logtype"] = "test";
+    cfg["jobinfo"]["jobname"] = testName();
 
     TestUtil::configToFile(cfg, filename());
 }
@@ -144,71 +144,71 @@ void TestLaneClosure::generateInput(){
     YAML::Node cfg;
 
     // General Information
-    cfg["jobname"] = testName();
-    cfg["type"] = "continuous";
-    cfg["time"] = 500;
-    cfg["timestep"] = 0.2;
-    cfg["seed"] = 70;
-    cfg["logtype"] = "test";
-    cfg["highway-type"] = "cpu";
+    cfg["jobinfo"]["jobname"] = testName();
+    cfg["jobinfo"]["type"] = "continuous";
+    cfg["jobinfo"]["time"] = 500;
+    cfg["jobinfo"]["timestep"] = 0.2;
+    cfg["jobinfo"]["seed"] = 70;
+    cfg["jobinfo"]["logtype"] = "test";
+    cfg["jobinfo"]["highway-type"] = "cpu";
  
     // Driver Model
-    cfg["driverType"] = "Gipps";
-    cfg["driverParams"]["a"] = 1.981;
-    cfg["driverParams"]["b"] = -2.8955;
-    cfg["driverParams"]["bmax"] = -3.505;
-    cfg["driverParams"]["p"] = 0.2;
-    cfg["driverParams"]["a_stdev"] = 0.1;
-    cfg["driverParams"]["b_stdev"] = 0.1;
-    cfg["driverParams"]["bmax_stdev"] = 0.1;
-    cfg["driverParams"]["p_stdev"] = 0.04;
+    cfg["cars"]["driverType"] = "Gipps";
+    cfg["cars"]["driverParams"]["a"] = 1.981;
+    cfg["cars"]["driverParams"]["b"] = -2.8955;
+    cfg["cars"]["driverParams"]["bmax"] = -3.505;
+    cfg["cars"]["driverParams"]["p"] = 0.2;
+    cfg["cars"]["driverParams"]["a_stdev"] = 0.1;
+    cfg["cars"]["driverParams"]["b_stdev"] = 0.1;
+    cfg["cars"]["driverParams"]["bmax_stdev"] = 0.1;
+    cfg["cars"]["driverParams"]["p_stdev"] = 0.04;
  
     // Highway Parameters
-    cfg["changePressure"] = 0.6;
-    cfg["switchThreshold"] = 1600;
-    cfg["bias"] = 0.2;
+    cfg["highway"]["parameters"]["changePressure"] = 0.6;
+    cfg["highway"]["parameters"]["switchThreshold"] = 1600;
+    cfg["highway"]["parameters"]["bias"] = 0.2;
  
     // Lanes: must have flow, start, end and position
-    cfg["lanes"][0]["flow"]["rate"] = 200;
-    cfg["lanes"][0]["flow"]["v0"] = 20;
-    cfg["lanes"][0]["flow"]["vdes"] = 20;
-    cfg["lanes"][0]["flow"]["v0_stdev"] = 2;
-    cfg["lanes"][0]["flow"]["vdes_stdev"] = 2;
-    cfg["lanes"][0]["start"] = 0;
-    cfg["lanes"][0]["end"] = 2000;
-    cfg["lanes"][0]["position"] = 0; // right lane
+    cfg["highway"]["lanes"][0]["flow"]["rate"] = 200;
+    cfg["highway"]["lanes"][0]["flow"]["v0"] = 20;
+    cfg["highway"]["lanes"][0]["flow"]["vdes"] = 20;
+    cfg["highway"]["lanes"][0]["flow"]["v0_stdev"] = 2;
+    cfg["highway"]["lanes"][0]["flow"]["vdes_stdev"] = 2;
+    cfg["highway"]["lanes"][0]["start"] = 0;
+    cfg["highway"]["lanes"][0]["end"] = 2000;
+    cfg["highway"]["lanes"][0]["position"] = 0; // right lane
  
-    cfg["lanes"][1]["flow"]["rate"] = 200;
-    cfg["lanes"][1]["flow"]["v0"] = 0;
-    cfg["lanes"][1]["flow"]["vdes"] = 30;
-    cfg["lanes"][1]["flow"]["v0_stdev"] = 0;
-    cfg["lanes"][1]["flow"]["vdes_stdev"] = 2;
-    cfg["lanes"][1]["start"] = 5000;
-    cfg["lanes"][1]["end"] = 10000;
-    cfg["lanes"][1]["position"] = 0; // right lane
+    cfg["highway"]["lanes"][1]["flow"]["rate"] = 200;
+    cfg["highway"]["lanes"][1]["flow"]["v0"] = 0;
+    cfg["highway"]["lanes"][1]["flow"]["vdes"] = 30;
+    cfg["highway"]["lanes"][1]["flow"]["v0_stdev"] = 0;
+    cfg["highway"]["lanes"][1]["flow"]["vdes_stdev"] = 2;
+    cfg["highway"]["lanes"][1]["start"] = 5000;
+    cfg["highway"]["lanes"][1]["end"] = 10000;
+    cfg["highway"]["lanes"][1]["position"] = 0; // right lane
  
-    cfg["lanes"][2]["flow"]["rate"] = 400;
-    cfg["lanes"][2]["flow"]["v0"] = 20;
-    cfg["lanes"][2]["flow"]["vdes"] = 25;
-    cfg["lanes"][2]["flow"]["v0_stdev"] = 2;
-    cfg["lanes"][2]["flow"]["vdes_stdev"] = 2;
-    cfg["lanes"][2]["start"] = 0;
-    cfg["lanes"][2]["end"] = 10000;
-    cfg["lanes"][2]["position"] = 1; // middle lane
+    cfg["highway"]["lanes"][2]["flow"]["rate"] = 400;
+    cfg["highway"]["lanes"][2]["flow"]["v0"] = 20;
+    cfg["highway"]["lanes"][2]["flow"]["vdes"] = 25;
+    cfg["highway"]["lanes"][2]["flow"]["v0_stdev"] = 2;
+    cfg["highway"]["lanes"][2]["flow"]["vdes_stdev"] = 2;
+    cfg["highway"]["lanes"][2]["start"] = 0;
+    cfg["highway"]["lanes"][2]["end"] = 10000;
+    cfg["highway"]["lanes"][2]["position"] = 1; // middle lane
  
-    cfg["lanes"][3]["flow"]["rate"] = 600;
-    cfg["lanes"][3]["flow"]["v0"] = 25;
-    cfg["lanes"][3]["flow"]["vdes"] = 25;
-    cfg["lanes"][3]["flow"]["v0_stdev"] = 2;
-    cfg["lanes"][3]["flow"]["vdes_stdev"] = 2;
-    cfg["lanes"][3]["start"] = 0;
-    cfg["lanes"][3]["end"] = 10000;
-    cfg["lanes"][3]["position"] = 2; // left lane
+    cfg["highway"]["lanes"][3]["flow"]["rate"] = 600;
+    cfg["highway"]["lanes"][3]["flow"]["v0"] = 25;
+    cfg["highway"]["lanes"][3]["flow"]["vdes"] = 25;
+    cfg["highway"]["lanes"][3]["flow"]["v0_stdev"] = 2;
+    cfg["highway"]["lanes"][3]["flow"]["vdes_stdev"] = 2;
+    cfg["highway"]["lanes"][3]["start"] = 0;
+    cfg["highway"]["lanes"][3]["end"] = 10000;
+    cfg["highway"]["lanes"][3]["position"] = 2; // left lane
  
-    cfg["lanes"][4]["flow"]["rate"] = 0;
-    cfg["lanes"][4]["start"] = 6000;
-    cfg["lanes"][4]["end"] = 10000;
-    cfg["lanes"][4]["position"] = 3; // newly added leftmost lane
+    cfg["highway"]["lanes"][4]["flow"]["rate"] = 0;
+    cfg["highway"]["lanes"][4]["start"] = 6000;
+    cfg["highway"]["lanes"][4]["end"] = 10000;
+    cfg["highway"]["lanes"][4]["position"] = 3; // newly added leftmost lane
     TestUtil::configToFile(cfg, filename());
 }
 

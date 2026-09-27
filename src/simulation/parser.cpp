@@ -51,9 +51,9 @@ std::expected<void, std::string> Parser::parseGeneral(YAML::Node node) {
 }
 
 std::expected<void, std::string> Parser::parseCarFactory(YAML::Node cfg){
-    if (!cfg){
-        return std::unexpected("Missing \"car\" field in config file");
-    }
+    // if (!cfg){
+    //     return std::unexpected("Missing \"cars\" field in config file");
+    // }
     std::string drivertype = ParseField<std::string>(cfg, "driverType").value_or("Gipps");
 
     if (drivertype == "Gipps"){

@@ -27,9 +27,9 @@ class DBManagerTest : public ::testing::Test {
 
         for (size_t i = 0; i < 3; ++i){
             YAML::Node dbLog = TestUtil::getConfigNode();
-            dbLog["logtype"] = "test";
-            dbLog["jobname"] = std::format("test-dbreader{}", i);
-            dbLog["seed"] = 70 + i;
+            dbLog["jobinfo"]["logtype"] = "test";
+            dbLog["jobinfo"]["jobname"] = std::format("test-dbreader{}", i);
+            dbLog["jobinfo"]["seed"] = 70 + i;
 
             TestUtil::configToFile(dbLog, std::format("dbConfig{}.yaml", i));
         }
@@ -38,7 +38,7 @@ class DBManagerTest : public ::testing::Test {
 
         // Run the tests with the job scheduler. 
         JobManager j;
-        for (size_t i = 0; i< 3; ++i){
+        for (size_t i = 0; i < 3; ++i){
             auto result = j.submit(std::format("dbConfig{}.yaml", i));
             ASSERT_TRUE(result.has_value()) << "Error during job submission: " << result.error();
         }
@@ -63,8 +63,8 @@ class ErrorLogTest : public DBManagerTest {
 
     void SetUp() override {
         YAML::Node dbLog = TestUtil::getConfigNode();
-        dbLog["jobname"] = "test-dbreader3";
-        dbLog["seed"] = 70;
+        dbLog["jobinfo"]["jobname"] = "test-dbreader3";
+        dbLog["jobinfo"]["seed"] = 70;
         dbLog["flow"]["rate"] = 900;
         dbLog["flow"]["v0"] = 40;
 
@@ -97,7 +97,9 @@ TEST_F(DBManagerTest, jobData){
     std::expected<std::vector<JobData>, std::string> jobsAll = reader.queryJobs();
     ASSERT_TRUE(jobsAll.has_value()) << std::format("Error Querying All Jobs: {}", jobsAll.error());
     EXPECT_EQ(jobsSingle.size(), jobsAll->size());
-
+    std::sort(jobsAll.value().begin(), jobsAll.value().end(), [](const JobData& j1, const JobData& j2){
+        return j1.jobName_ < j2.jobName_;
+    });
     for (auto [cfg, single, all] : std::views::zip(configs, jobsSingle, *jobsAll)){
         EXPECT_EQ(single.cfgPath_, all.cfgPath_);
         EXPECT_EQ(single.jobName_, all.jobName_);

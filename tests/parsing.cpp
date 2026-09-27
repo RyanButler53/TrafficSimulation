@@ -10,25 +10,25 @@ class ParsingTest : public ::testing::Test {
 
     void  SetUp() override {
         YAML::Node cfg;
-        cfg["jobname"] = "continuous-flow";
-        cfg["type"] = "continuous";
-        cfg["time"] = 150;
-        cfg["timestep"] = 1;
-        cfg["seed"] = 70;
-        cfg["highway-type"] = "cpu";
-        cfg["thinning"] = 2;
+        cfg["jobinfo"]["jobname"] = "continuous-flow";
+        cfg["jobinfo"]["type"] = "continuous";
+        cfg["jobinfo"]["time"] = 150;
+        cfg["jobinfo"]["timestep"] = 1;
+        cfg["jobinfo"]["seed"] = 70;
+        cfg["jobinfo"]["highway-type"] = "cpu";
+        cfg["jobinfo"]["thinning"] = 2;
 
         // Driver params (From traffic flow book example)
-        cfg["driverType"] = "Gipps";
-        cfg["driverParams"]["a"] = 1.981;
-        cfg["driverParams"]["b"] = -2.8955;
-        cfg["driverParams"]["bmax"] = -5.505;
-        cfg["driverParams"]["p"] = 0.2;
+        cfg["cars"]["driverType"] = "Gipps";
+        cfg["cars"]["driverParams"]["a"] = 1.981;
+        cfg["cars"]["driverParams"]["b"] = -2.8955;
+        cfg["cars"]["driverParams"]["bmax"] = -5.505;
+        cfg["cars"]["driverParams"]["p"] = 0.2;
         // No randomness
-        cfg["driverParams"]["a_stdev"] = 0;
-        cfg["driverParams"]["b_stdev"] = 0;
-        cfg["driverParams"]["bmax_stdev"] = 0;
-        cfg["driverParams"]["p_stdev"] = 0;
+        cfg["cars"]["driverParams"]["a_stdev"] = 0;
+        cfg["cars"]["driverParams"]["b_stdev"] = 0;
+        cfg["cars"]["driverParams"]["bmax_stdev"] = 0;
+        cfg["cars"]["driverParams"]["p_stdev"] = 0;
 
         YAML::Node leftLane, rightlane;
         
@@ -46,11 +46,11 @@ class ParsingTest : public ::testing::Test {
         leftLane["end"] = 2000;
         leftLane["position"] = 1;
 
-        cfg["lanes"].push_back(rightlane);
-        cfg["lanes"].push_back(leftLane);
+        cfg["highway"]["lanes"].push_back(rightlane);
+        cfg["highway"]["lanes"].push_back(leftLane);
 
         TestUtil::configToFile(cfg, "parseTest.yaml");
-        cfg["thinning"] = -2;
+        cfg["jobinfo"]["thinning"] = -2;
         TestUtil::configToFile(cfg, "invalidThinning.yaml" );
     };
 

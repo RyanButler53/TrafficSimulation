@@ -182,15 +182,15 @@ class ApiTest : public ::testing::Test {
     static void createInputFile() {
         YAML::Node cfg = TestUtil::getConfigNode();
 
-        cfg["jobname"] = "apiTest";
-        cfg["seed"] = 105;
-        cfg["logtype"]= "test";
+        cfg["jobinfo"]["jobname"] = "apiTest";
+        cfg["jobinfo"]["seed"] = 105;
+        cfg["jobinfo"]["logtype"]= "test";
         TestUtil::configToFile(cfg, "apiConfig.yml");
 
         YAML::Node cfg2 = TestUtil::getConfigNode_3Lane();
-        cfg2["jobname"] = "apiTestTimeSeries";
-        cfg2["seed"] = 140;
-        cfg2["logtype"]= "test";
+        cfg2["jobinfo"]["jobname"] = "apiTestTimeSeries";
+        cfg2["jobinfo"]["seed"] = 140;
+        cfg2["jobinfo"]["logtype"]= "test";
         TestUtil::configToFile(cfg2, "apiTestTimeSeries.yml");
     }
 

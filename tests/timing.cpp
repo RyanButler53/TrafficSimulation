@@ -22,20 +22,20 @@ class Benchmark{
             YAML::Node cfg = TestUtil::getConfigNode_3Lane();
             std::string file_name = std::format("timing{}_file", i);
             std::string db_name = std::format("timing{}_db", i);
-            cfg["logtype"] = "file";
-            cfg["jobname"] = file_name;
-            cfg["timestep"] = 0.1; // dt = 0.1 tests streaming
+            cfg["jobinfo"]["logtype"] = "file";
+            cfg["jobinfo"]["jobname"] = file_name;
+            cfg["jobinfo"]["timestep"] = 0.1; // dt = 0.1 tests streaming
         
             // Heterogeneous traffic
-            cfg["driverParams"]["a_stdev"] = 0.1;
-            cfg["driverParams"]["b_stdev"] = 0.2;
-            cfg["driverParams"]["bmax_stdev"] = 0.2;
-            cfg["driverParams"]["p_stdev"] = 0.02;
+            cfg["cars"]["driverParams"]["a_stdev"] = 0.1;
+            cfg["cars"]["driverParams"]["b_stdev"] = 0.2;
+            cfg["cars"]["driverParams"]["bmax_stdev"] = 0.2;
+            cfg["cars"]["driverParams"]["p_stdev"] = 0.02;
         
             TestUtil::configToFile(cfg, std::format("{}.yaml", file_name));
     
-            cfg["logtype"] = "test";
-            cfg["jobname"] = std::format("timing{}_db", i);
+            cfg["jobinfo"]["logtype"] = "test";
+            cfg["jobinfo"]["jobname"] = std::format("timing{}_db", i);
             TestUtil::configToFile(cfg, std::format("{}.yaml", db_name));
 
             // Save Paths

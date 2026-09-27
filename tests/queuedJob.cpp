@@ -18,9 +18,9 @@ class QueuedJobTest : public ::testing::Test {
     protected:
     void SetUp() override {
         YAML::Node dbLog = TestUtil::getConfigNode();
-        dbLog["logtype"] = "test";
-        dbLog["jobname"] = "test-queued";
-        dbLog["seed"] = 133;
+        dbLog["jobinfo"]["logtype"] = "test";
+        dbLog["jobinfo"]["jobname"] = "test-queued";
+        dbLog["jobinfo"]["seed"] = 133;
 
         TestUtil::configToFile(dbLog, "test-queued.yml");
         dbManager_.deleteJob("test-queued");
@@ -28,7 +28,8 @@ class QueuedJobTest : public ::testing::Test {
     }
 
     void TearDown() override {
-        EXPECT_TRUE(dbManager_.deleteJob("test-queued").has_value());
+        auto deleteResult = dbManager_.deleteJob("test-queued");
+        EXPECT_TRUE(deleteResult.has_value()) << "Error deleting job: " << deleteResult.error();
         TestUtil::conditionalFileCleanup("test-queued.yml");
     }
 };
