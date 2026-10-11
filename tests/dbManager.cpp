@@ -4,9 +4,9 @@
 #include <filesystem>
 #include <string>
 
-#include "api/DBManager.hpp"
+#include "database/DBReader.hpp"
 #include "api/jobManager.hpp"
-#include "api/structs.hpp"
+#include "database/structs.hpp"
 #include "yaml-cpp/yaml.h"
 #include "testUtil.hpp"
 
@@ -85,7 +85,7 @@ class ErrorLogTest : public DBManagerTest {
 
 
 TEST_F(DBManagerTest, jobData){
-    DBManager reader(true);
+    DBReader reader(true);
     std::vector<JobData> jobsSingle;
     std::vector<std::string> configs;
     for (size_t i = 0; i < 3; ++i){
@@ -122,7 +122,7 @@ TEST_F(DBManagerTest, jobData){
 }
 
 TEST_F(DBManagerTest, carMetadata){
-    DBManager reader(true);
+    DBReader reader(true);
     std::vector<CarMetadata> singleMetadata;
     std::expected<std::vector<CarMetadata>, std::string> allCarMetadata = reader.queryCars("test-dbreader1");
     EXPECT_TRUE(allCarMetadata.has_value()) << std::format("Error querying all cars metadata: {}", allCarMetadata.error());
@@ -165,7 +165,7 @@ TEST_F(DBManagerTest, carMetadata){
 }
 
 TEST_F(DBManagerTest, rawData){
-    DBManager reader(true);
+    DBReader reader(true);
     const size_t ncars = 22;
     std::vector<RawData> singleRawData;
     std::expected<std::vector<RawData>, std::string> allRawData = reader.queryData("test-dbreader1");
@@ -191,7 +191,7 @@ TEST_F(DBManagerTest, rawData){
 TEST_F(DBManagerTest, environment){
 
     std::vector<Environment::LaneSegment> segments({{0, 2000, 800, 0}, {0, 2000, 400, 1}});
-    DBManager reader(true);
+    DBReader reader(true);
 
     std::expected<Environment, std::string> env = reader.queryEnvironment("test-dbreader2");
     ASSERT_TRUE(env.has_value()) << "Error querying for environment: " << env.error();
@@ -213,7 +213,7 @@ TEST_F(DBManagerTest, environment){
 
 // The tests may NOT be run in parallel due to this test modifying the database
 TEST_F(DBManagerTest, cleanupDB){
-    DBManager reader(true);
+    DBReader reader(true);
 
     // Clean up jobs: 
     for (size_t i = 0; i < 3; ++i){
@@ -231,7 +231,7 @@ TEST_F(ErrorLogTest, DISABLED_errorLogging){
     std::expected<void, std::string> result = Traffic::Simulate("dbConfig3.yaml");
     ASSERT_TRUE(result.has_value()) << std::format("Error Querying Job test-dbreader3: {}", result.error());
 
-    DBManager reader(true);
+    DBReader reader(true);
 
     std::expected<JobData, std::string> data = reader.queryJobs("test-dbreader3");
     ASSERT_TRUE(data.has_value()) << std::format("Error Querying Job test-dbreader3: {}", data.error());

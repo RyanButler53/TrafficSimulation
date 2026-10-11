@@ -276,3 +276,7 @@ Environment CpuHighway::environment() {
     }
     return e;
 }
+
+void CpuHighway::addCar(Car&& c, size_t lane) {
+    lanes_[lane].insert(std::move(c));
+}

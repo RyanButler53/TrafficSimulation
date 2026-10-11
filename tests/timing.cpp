@@ -9,7 +9,7 @@
 #include <charconv>
 
 #include "api/jobManager.hpp"
-#include "api/DBManager.hpp"
+#include "database/DBReader.hpp"
 
 class Benchmark{
     std::vector<std::filesystem::path> paths_;
@@ -46,7 +46,7 @@ class Benchmark{
 
     void operator()(){
         JobManager jobScheduler;
-        DBManager database(true);
+        DBReader database(true);
         for (auto p : paths_){
             jobScheduler.submit(p);
         }

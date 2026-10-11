@@ -18,6 +18,7 @@ set (SETUP_SRC
     carFactory.cpp
     parserFactory.cpp
     parser.cpp
+    initialState.cpp
     )
 
 set (SIMULATION_SRC

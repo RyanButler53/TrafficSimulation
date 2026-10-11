@@ -14,7 +14,7 @@
 #include "sim/parser.hpp"
 #include "sim/parserFactory.hpp"
 #include "sim/simulator.hpp"
-#include "api/DBManager.hpp"
+#include "database/DBReader.hpp"
 
 // Test Cases
 #include "testUtil.hpp"
@@ -46,7 +46,7 @@ class AlgorithmTest : public testing::Test {
 
         auto simResult = Traffic::Simulate(c.filename());
         ASSERT_TRUE(simResult.has_value()) << "Simulator Failed: " << simResult.error();
-        DBManager reader(true);
+        DBReader reader(true);
         std::expected<std::vector<RawData>, std::string> raw = reader.queryData(c.testName());
         ASSERT_TRUE(raw.has_value()) << raw.error();
         rawData_ = *raw;

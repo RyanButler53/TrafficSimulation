@@ -1,8 +1,8 @@
 #pragma once
 
 #include "api/DTOs/DTOs.hpp"
-#include "api/structs.hpp"
-#include "api/DBManager.hpp"
+#include "database/structs.hpp"
+#include "database/DBReader.hpp"
 #include "api/jobManager.hpp"
 #include "shared/environment.hpp"
 #include <iostream>
@@ -29,7 +29,7 @@ using namespace oatpp;
 
 class Controller : public oatpp::web::server::api::ApiController {
     
-    DBManager dataManager_;
+    DBReader dataManager_;
     JobManager jobManager_;
     
     static inline std::unordered_map<std::string, JOB_STATUS> map_ = {
@@ -204,7 +204,7 @@ class Controller : public oatpp::web::server::api::ApiController {
         }
 
     void setDBManager(bool testDB){
-        dataManager_ = DBManager(testDB);
+        dataManager_ = DBReader(testDB);
     }
     
     // Get simple information about a job

@@ -2,6 +2,7 @@
 #include "sim/simInputs.hpp"
 #include "sim/highway.hpp"
 #include "sim/laneInfo.hpp"
+#include "sim/initialState.hpp"
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -9,9 +10,11 @@
 #include <memory>
 #include <ranges>
 #include <random>
+#include <filesystem>
 #include <functional>
 #include <expected>
 #include <algorithm>
+#include "database/DBReader.hpp"
 
 
 std::expected<void, std::string> Parser::parseGeneral(YAML::Node node) {
@@ -65,7 +68,7 @@ std::expected<void, std::string> Parser::parseCarFactory(YAML::Node cfg){
         double b_stdev = ParseField<double>(cfg, "driverParams", "b_stdev").value_or(0);
         double bmax_stdev = ParseField<double>(cfg, "driverParams", "bmax_stdev").value_or(0);
         double p_stdev = ParseField<double>(cfg, "driverParams", "p_stdev").value_or(0);
-        factory_ = std::make_shared<GippsCarFactory>(a, b, bmax, p, a_stdev, b_stdev, bmax_stdev, p_stdev, seed_);
+        factory_ = std::make_shared<CarFactoryImpl<decltype(&makeGippsUpdateFunc)>>(a, b, bmax, p, a_stdev, b_stdev, bmax_stdev, p_stdev, seed_, makeGippsUpdateFunc);
     } else if (drivertype == "IDM") {
         double a = ParseField<double>(cfg, "driverParams", "a").value_or(2.0);
         double b = ParseField<double>(cfg, "driverParams", "b").value_or(3.0);
@@ -75,7 +78,7 @@ std::expected<void, std::string> Parser::parseCarFactory(YAML::Node cfg){
         double b_stdev = ParseField<double>(cfg, "driverParams", "b_stdev").value_or(0);
         double s0_stdev = ParseField<double>(cfg, "driverParams", "s0_stdev").value_or(0);
         double p_stdev = ParseField<double>(cfg, "driverParams", "p_stdev").value_or(0);
-        factory_ = std::make_shared<IDMCarFactory>(a, b, s0, p, a_stdev, b_stdev, s0_stdev, p_stdev, seed_);
+        factory_ = std::make_shared<CarFactoryImpl<decltype(&makeIdmUpdateFunc)>>(a, b, s0, p, a_stdev, b_stdev, s0_stdev, p_stdev, seed_, makeIdmUpdateFunc);
     } else {
         return std::unexpected("Valid driverType values are [\"Gipps\" and \"IDM\"]");
     }
@@ -149,3 +152,81 @@ std::expected<SimulatorInputs, std::string> ContinuousParser::parse() {
 
 }
 
+std::expected<YAML::Node, std::string> CheckpointedParser::getPreviousConfig(YAML::Node jobinfo){
+    auto prevLogType = ParseField<std::string>(jobinfo, "previous",  "logtype");
+    if (!prevLogType){
+        return std::unexpected(std::format("Unable to parse previous job type: {}", prevLogType.error()));
+    }
+    previousConfigType_ = *prevLogType;
+    if (previousConfigType_ == "file" or previousConfigType_ == "time-series"){
+        return ParseField<std::string>(jobinfo, "previous", "logdir").and_then(findYamlFile);
+    } else if (previousConfigType_ == "test" or previousConfigType_ == "db"){
+        return ParseField<std::string>(jobinfo, "previous", "jobname").and_then([this](auto name){
+            return findYamlDatabase(name, previousConfigType_ == "test");
+        });
+    } else {
+        return std::unexpected(std::format("Unable to find or invalid previous log type: {}", previousConfigType_));
+    }
+}
+
+std::expected<YAML::Node, std::string> CheckpointedParser::findYamlFile(std::string filepath){
+    auto yaml_files = std::filesystem::directory_iterator(filepath) | std::views::filter([](const auto& e) {
+        return (e.path().extension() == ".yaml" || e.path().extension() == ".yml") && (e.path().filename() != "environment.yml");
+    });
+    
+    try {
+        return YAML::LoadFile(yaml_files.begin()->path().string());
+    }
+    catch(const std::exception& e){
+        return std::unexpected(e.what());
+    }
+}
+
+std::expected<YAML::Node, std::string> CheckpointedParser::findYamlDatabase(std::string jobname, bool useTestDB){
+
+    return DBReader(useTestDB).queryJobs(jobname).and_then(
+        [](const JobData& jobdata) -> std::expected<YAML::Node, std::string>{
+            try {
+                return YAML::Load(jobdata.cfgPath_.c_str());
+            } catch(const std::exception& e) {
+                return std::unexpected("Error parsing yaml: " + std::string(e.what()));
+            }
+        }
+    );    
+}
+
+std::expected<void, std::string> CheckpointedParser::parseInitialState(YAML::Node previous){
+
+    return ParseField<double>(previous, "t0").and_then(
+        [this, previous](double t) -> std::expected<void, std::string> {
+            std::unique_ptr<InitialStateGenerator> gen;
+            if (previousConfigType_ == "file"){
+                gen =  std::make_unique<IndividualFileState>(previous["logdir"].as<std::string>());
+            } else if (previousConfigType_ == "time-series"){
+                gen = std::make_unique<TimeSeriesFileState>(previous["logdir"].as<std::string>());
+            } else if (previousConfigType_ == "db" || previousConfigType_ == "test") {
+                gen = nullptr;
+                // gen = std::make_unique<DatabaseFileState>(previous["jobname"].as<std::string>(), previousConfigType_ == "test");
+            } else {
+                return std::unexpected("Invalid previous log type: " + previousConfigType_);
+            }
+            return gen->populateHighway(highway_, t, factory_);
+        }
+    );
+}
+
+// Checkpointed Parser
+std::expected<SimulatorInputs, std::string> CheckpointedParser::parse() {
+
+    auto prevNode = ParseField<YAML::Node>(cfg_, "jobinfo").and_then([this](auto node){return getPreviousConfig(node);});
+    if (!prevNode){
+        return std::unexpected(std::format("Unable to find config file from previous job: {}", prevNode.error()));
+    } else {
+        YAML::Node prevConfig = prevNode.value();
+        return prevNode.and_then([this](YAML::Node prev){return parseCarFactory(prev["cars"]);})
+                         .and_then([this, prevConfig](){return parseHighway(prevConfig["highway"]);})
+                         .and_then([this, prevConfig](){return parseInitialState(cfg_["jobinfo"]["previous"]);})
+                         .transform([this](){return SimulatorInputs{logger_, highway_, totaltime_, dt_, thinning_, jobname_};});
+    }
+    
+}

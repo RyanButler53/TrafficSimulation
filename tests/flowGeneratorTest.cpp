@@ -17,6 +17,10 @@ struct MockCarFactory: public CarFactory {
     Car makeCar(double x0, double v0, double vdes, double t) override {
         return Car(0, x0, v0, t, 0.2, {});
     }
+
+    Car makeCar(size_t id, double x0, double v0, double, double t0, double, double, double, double p) override {
+        return Car(id, x0, v0, t0, p, {});
+    }
 };
 
 

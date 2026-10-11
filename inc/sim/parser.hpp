@@ -156,13 +156,26 @@ class ContinuousParser : public Parser {
 
 };
 
-// class CheckpointedParser : public Parser {
+class CheckpointedParser : public Parser {
 
-//     std::expected<YAML::Node, std::string> getPreviousConfig();
+    /**
+     * @brief Get the main node of the previous config file. This could be a file DB, 
+     * 
+     * @return std::expected<YAML::Node, std::string> 
+     */
+    std::expected<YAML::Node, std::string> getPreviousConfig(YAML::Node jobinfo);
 
-//     public:
-//     using Parser::Parser;
+    static std::expected<YAML::Node, std::string> findYamlFile(std::string filepath);
 
-//     std::expected<void, std::string> parseInitialState(YAML::Node initialState) override;
+    static std::expected<YAML::Node, std::string> findYamlDatabase(std::string jobname, bool useTestDB);
 
-// };
+    /// @brief The logging type of the previous job
+    std::string previousConfigType_;
+
+    public:
+    using Parser::Parser;
+
+    std::expected<void, std::string> parseInitialState(YAML::Node initialState) override;
+    std::expected<SimulatorInputs, std::string> parse() override;
+
+};

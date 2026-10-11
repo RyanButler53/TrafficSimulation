@@ -18,7 +18,7 @@
 #include <condition_variable>
 #include <atomic>
 #include <expected>
-#include "structs.hpp"
+#include "database/structs.hpp"
 #include "sim/simulator.hpp"
 #include "dataStructures/threadsafeQueue.hpp"
 
