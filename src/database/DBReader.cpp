@@ -1,5 +1,5 @@
 /**
- * @file DBManager.cpp
+ * @file DBReader.cpp
  * @author Ryan Butler
  * @brief Implements the DB Reader class
  * @version 0.1
@@ -9,14 +9,14 @@
  * 
  */
 
-#include "api/DBManager.hpp"
+#include "database/DBReader.hpp"
 #include <format>
 #include <iostream>
 #include <pqxx/pqxx>
 #include <unordered_map>
 #include <cstdlib> 
 
-DBManager::DBManager(bool testDB){
+DBReader::DBReader(bool testDB){
     if (testDB){
         connectionStr_ = "host=localhost port=5432 dbname=trafficDBTest";
     } else {
@@ -30,8 +30,6 @@ std::expected<pqxx::connection, std::string> getConnection(std::string connStr){
     try {   
         return pqxx::connection(connStr);
     } catch(const std::exception& e) {
-        std::cout << "Error connecting to the database" << std::endl;
-        std::cerr << e.what() << '\n';
         return std::unexpected(std::format("Error Connecting to the database: {}", e.what()));
     }
 }
@@ -40,7 +38,7 @@ std::expected<pqxx::connection, std::string> getConnection(std::string connStr){
 
 // JOB DATA
 
-std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
+std::expected<JobData, std::string> DBReader::queryJobs(std::string jobname){
     std::string querystr = std::format("SELECT jobname, configfile, status, error, followModel, numCars, runtime FROM TrafficJobs WHERE jobname = '{}'", jobname);
 
     auto connect = getConnection(connectionStr_);
@@ -76,7 +74,7 @@ std::expected<JobData, std::string> DBManager::queryJobs(std::string jobname){
     return JobData{name, cfgfile, error, status, followModel, numCars, runtime};
 }
 
-std::expected<std::vector<JobData>, std::string> DBManager::queryJobs(){
+std::expected<std::vector<JobData>, std::string> DBReader::queryJobs(){
     std::string querystr = std::format("SELECT jobname, configfile, status, error, followModel, numCars, runtime FROM TrafficJobs");
     auto connect = getConnection(connectionStr_);
     if (!connect){return std::unexpected(connect.error());}
@@ -95,7 +93,7 @@ std::expected<std::vector<JobData>, std::string> DBManager::queryJobs(){
 
 // CAR METADATA
 
-std::expected<CarMetadata, std::string>  DBManager::queryCars(std::string jobname, int carid){
+std::expected<CarMetadata, std::string>  DBReader::queryCars(std::string jobname, int carid){
     auto connect = getConnection(connectionStr_);
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
@@ -118,7 +116,7 @@ std::expected<CarMetadata, std::string>  DBManager::queryCars(std::string jobnam
     }
 }
 
-std::expected<std::vector<CarMetadata>, std::string> DBManager::queryCars(std::string jobname){
+std::expected<std::vector<CarMetadata>, std::string> DBReader::queryCars(std::string jobname){
     auto connect = getConnection(connectionStr_);
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
@@ -143,7 +141,7 @@ std::expected<std::vector<CarMetadata>, std::string> DBManager::queryCars(std::s
 
 // RAW DATA 
 
-std::expected<RawData, std::string>  DBManager::queryData(std::string jobname, int carid){
+std::expected<RawData, std::string>  DBReader::queryData(std::string jobname, int carid){
     std::string querystr = std::format("SELECT x, v, t, lane FROM snapshotData INNER JOIN TrafficJobs ON TrafficJobs.JobID = snapshotData.jobid WHERE TrafficJobs.jobname = '{}' and snapshotData.carid = {} ORDER BY snapshotData.t ASC", jobname, carid);
     auto connect = getConnection(connectionStr_);
     if (!connect){return std::unexpected(connect.error());}
@@ -168,7 +166,7 @@ std::expected<RawData, std::string>  DBManager::queryData(std::string jobname, i
     return raw;
 }
 
-std::expected<std::vector<RawData>, std::string> DBManager::queryData(std::string jobname){
+std::expected<std::vector<RawData>, std::string> DBReader::queryData(std::string jobname){
 
     std::string querystr = std::format("SELECT carid, x, v, t, lane FROM snapshotData INNER JOIN TrafficJobs ON TrafficJobs.JobID = snapshotData.jobid WHERE TrafficJobs.jobname = '{}' ORDER BY snapshotData.carid ASC, snapshotData.t ASC", jobname);
 
@@ -198,7 +196,7 @@ std::expected<std::vector<RawData>, std::string> DBManager::queryData(std::strin
     return alldata;
 }
 
-std::expected<TimeSeries, std::string> DBManager::queryData(std::string jobname, 
+std::expected<TimeSeries, std::string> DBReader::queryData(std::string jobname, 
     std::optional<double>x0, std::optional<double>x1,
     std::optional<double>t0, std::optional<double>t1){
 
@@ -230,7 +228,7 @@ std::expected<TimeSeries, std::string> DBManager::queryData(std::string jobname,
 }
 
 
-std::expected<Environment, std::string> DBManager::queryEnvironment(std::string jobname){
+std::expected<Environment, std::string> DBReader::queryEnvironment(std::string jobname){
     auto connect = getConnection(connectionStr_);
     if (!connect){return std::unexpected(connect.error());}
     pqxx::work tx{*connect};
@@ -267,7 +265,7 @@ std::expected<Environment, std::string> DBManager::queryEnvironment(std::string 
     }
 }
 
-std::expected<std::vector<int>, std::string> DBManager::getJobId(std::string jobname) {
+std::expected<std::vector<int>, std::string> DBReader::getJobId(std::string jobname) {
     
     auto connect = getConnection(connectionStr_);
     if (!connect){return std::unexpected(connect.error());}
@@ -288,7 +286,7 @@ std::expected<std::vector<int>, std::string> DBManager::getJobId(std::string job
     }
 }
 
-DBResponse DBManager::deleteJob(std::string jobname){
+DBResponse DBReader::deleteJob(std::string jobname){
 
     auto deleteJobByID = [this, &jobname](const std::vector<int>&  jobids) -> DBResponse {
         try {

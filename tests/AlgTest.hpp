@@ -14,7 +14,7 @@
 #include <filesystem>
 #include <vector>
 #include <type_traits>
-#include "api/structs.hpp"
+#include "database/structs.hpp"
 #include "yaml-cpp/yaml.h"
 
 

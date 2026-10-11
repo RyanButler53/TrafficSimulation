@@ -3,7 +3,7 @@
 #include "yaml-cpp/yaml.h"
 #include "sim/simulator.hpp"
 #include "sim/parserFactory.hpp"
-#include "api/DBManager.hpp"
+#include "database/DBReader.hpp"
 
 #include "testUtil.hpp"
 #include "AlgTest.hpp"
@@ -83,7 +83,7 @@ class EnvironmentComparison : public ::testing::Test {
 
 // Compare File vs DB
 TEST_F(EnvironmentComparison, FileDBComparison){
-    DBManager reader(true);
+    DBReader reader(true);
 
     Environment db;
     extract<Environment>([&reader](){return reader.queryEnvironment(TestLaneClosure().testName());}, db, "Query DB environment");

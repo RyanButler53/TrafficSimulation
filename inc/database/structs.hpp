@@ -63,7 +63,7 @@ struct Snapshot {
 };
 
 /**
- * @brief Struct to hold Databae's data as a time series
+ * @brief Struct to hold Database's data as a time series
  * 
  */
 struct TimeSeries {

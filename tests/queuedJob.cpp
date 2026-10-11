@@ -5,16 +5,16 @@
 #include <string>
 #include <format>
 
-#include "api/DBManager.hpp"
+#include "database/DBReader.hpp"
 #include "api/jobManager.hpp"
-#include "api/structs.hpp"
+#include "database/structs.hpp"
 #include "testUtil.hpp"
 #include "yaml-cpp/yaml.h"
 
 
 class QueuedJobTest : public ::testing::Test {
 
-    DBManager dbManager_{true};
+    DBReader dbManager_{true};
     protected:
     void SetUp() override {
         YAML::Node dbLog = TestUtil::getConfigNode();
@@ -43,7 +43,7 @@ TEST_F(QueuedJobTest, QueryQueuedJob){
     EXPECT_EQ(job->second, "test-queued");
     EXPECT_EQ(j.status(jobid), JobStatus::QUEUED);
 
-    DBManager db(true);
+    DBReader db(true);
 
     std::expected<JobData, std::string> data = db.queryJobs("test-queued");
     ASSERT_TRUE(data.has_value()) << "Error querying the database: " << data.error();

@@ -1,5 +1,5 @@
 /**
- * @file DBManager.hpp
+ * @file DBRanager.hpp
  * @brief defines the DB Reader class
  * Depends on Api's DTO definitions
  */
@@ -23,7 +23,7 @@ using DBResponse = std::expected<void, std::string>;
  * 
  */
 
-class DBManager {
+class DBReader {
 
     /**
      * @brief Connection string to connect to the database.
@@ -34,11 +34,11 @@ class DBManager {
 public:
 
     /**
-     * @brief Construct a new DBManager object.
+     * @brief Construct a new DBReader object.
      * @note By default, constructs a reader for the PROD database. 
      * @param testDB True to use the testDB, false to use prod DB
      */
-    DBManager(bool testDB = false);
+    DBReader(bool testDB = false);
     
     /**
      * @brief Queries for top level job information for a single job by name.

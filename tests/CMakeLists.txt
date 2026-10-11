@@ -53,25 +53,25 @@ TrafficTest(queueTest queueTest.cpp unit)
 TrafficTest(laneinfoTest laneInfoTest.cpp unit shared)
 TrafficTest(flowGeneratorTest flowGeneratorTest.cpp unit shared setup)
 
-SingleFixtureTest(dbManagerTest dbManager.cpp integration testutil
+SingleFixtureTest(dbReaderTest dbManager.cpp integration testutil
                                                           jobManager 
-                                                          dbmanager)
-target_compile_definitions(dbManagerTest PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+                                                          database)
+target_compile_definitions(dbReaderTest PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 
 SingleFixtureTest(algorithmTest algorithmTest.cpp integration simulation 
                                                               testCases
                                                               testutil
-                                                              dbmanager)
+                                                              database)
 
 TrafficTest(environmentTest environment.cpp unit simulation 
                                                  yaml-cpp::yaml-cpp
-                                                 dbmanager
+                                                 database
                                                  testCases
                                                  testutil)
 
 TrafficTest(queuedJobTest queuedJob.cpp unit jobManager
-                                             dbmanager
+                                             database
                                              testutil
                                              simulation)
 
@@ -91,7 +91,7 @@ if (CURL_FOUND)
 endif()
 
 add_executable(timing timing.cpp)
-target_link_libraries(timing PRIVATE simulation jobManager dbmanager pqxx_wrapper testutil)
+target_link_libraries(timing PRIVATE simulation jobManager database pqxx_wrapper testutil)
 
 file(GLOB INPUT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/../inputs/*.yml)
 

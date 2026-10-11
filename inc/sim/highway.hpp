@@ -45,6 +45,13 @@ struct Highway {
      */
     virtual Environment environment() = 0;
 
+    /**
+     * @brief Adds a car to the highway. Takes ownership of this car. 
+     * 
+     * @param c Car to add. 
+     */
+    virtual void addCar(Car&& c, size_t lane) = 0;
+
 };
 
  // Each derived class of the highway owns the cars 
@@ -132,6 +139,8 @@ class CpuHighway : public Highway {
     void log(double t, std::vector<CarSnapshot>& data) override;
 
     Environment environment() override;
+
+    void addCar(Car&& c, size_t lane) override;
 };
 
 // #ifdef TRAFFIC_WITH_KOKKOS

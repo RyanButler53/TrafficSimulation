@@ -18,10 +18,10 @@ std::expected<std::unique_ptr<Parser>, std::string>ParserFactory::makeParser(){
     
     if (simtype == "continuous"){
         return std::make_unique<ContinuousParser>(cfg_, cfgpath_);
-    } else if (simtype == "discrete"){
-        return std::unexpected("Discrete simulations are no longer supported");
+    } else if (simtype == "checkpointed"){
+        return std::make_unique<CheckpointedParser>(cfg_, cfgpath_);
     } else {
-        return std::unexpected("\"type\" must be either continuous or discrete");
+        return std::unexpected("\"type\" must be either continuous or checkpointed");
     }
 
 }
