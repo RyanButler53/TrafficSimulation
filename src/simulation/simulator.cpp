@@ -75,7 +75,7 @@ std::expected<void, std::string> Simulator::mainLoop(){
     auto end = std::chrono::steady_clock::now();
     long ms = std::chrono::duration_cast<std::chrono::microseconds>((end - start)).count();
 
-    SimulationStats stats{double(ms / 1000000.0)};
+    SimulationStats stats{{}, {}, double(ms / 1000000.0)};
     auto statsStatus = logger_->writeStats(stats).transform_error(Simulator::errorFunc("writing stats"));
 
     auto envStatus = logger_->logEnvironment(highway_->environment()).transform_error(Simulator::errorFunc("writing environment"));

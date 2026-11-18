@@ -38,5 +38,7 @@ struct CarData {
 
 /// @brief Simple struct to hold simulator stats
 struct SimulationStats {
+    std::vector<int> commSendTimes_; ///< Time spent in comm library sending a packet (ms)
+    std::vector<int> commRecvTimes_; ///< Time spent in comm library during recieving a packet (ms, including waits)
     double runtime_; ///< Simulation runtime in seconds
 };

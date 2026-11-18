@@ -14,6 +14,8 @@
 #include <vector>
 #include <set>
 #include <numeric>
+#include <string>
+#include <cstdint>
 #include "shared/environment.hpp"
 
 /// @brief Lane boundary class to store the high and low boundaries of a segment
@@ -26,7 +28,8 @@ struct LaneBoundary {
 };    
 
 /// @brief Small enum representing lane change direction
-enum class Direction : int8_t{
+enum class Direction : int8_t
+{
     LEFT = -1,
     RIGHT = 1
 };
