@@ -10,6 +10,7 @@
  */
 #pragma once
 #include <random>
+#include <variant>
 #include <memory>
 
 /**
@@ -57,19 +58,35 @@ class UniformDistribution : public RandomGenerator {
 };
 
 /**
- * @brief Constructs a normal districbution with a mean and standard deviaton
+ * @brief Constructs a normal distribution with a mean and standard deviaton. 
+ * Handles the implementation defined case of a standard deviation of zero
  */
 class NormalDistribution : public RandomGenerator {
 
-    std::normal_distribution<double> dist_;
-    
+    std::variant<std::normal_distribution<double>, double> dist_;
+
     public:
 
-    NormalDistribution(double mean, double stdev):
-        dist_(mean, stdev){}
+    NormalDistribution(double mean, double stdev) {
+        if (stdev == 0.0){
+            dist_ = mean;
+        } else {
+            dist_ = std::normal_distribution<double>(mean, stdev);
+        }
+    }
 
     double getValue(std::mt19937& rng) override {
-        return dist_(rng);
+        if (std::holds_alternative<double>(dist_)){
+            return std::get<double>(dist_);
+        } else {
+            auto& dist = std::get<std::normal_distribution<double>>(dist_);
+            return dist(rng);
+
+        }
+    }
+
+    double operator()(std::mt19937& rng){
+        return getValue(rng);
     }
 
 };

@@ -63,7 +63,9 @@ class ParsingTest : public ::testing::Test {
 TEST_F(ParsingTest, ParseMultiLane){
     std::string configfile = "parseTest.yaml";
     ParserFactory parserFac(configfile);
-    SimulatorInputs res = parserFac.makeParser().and_then(std::mem_fn(&Parser::parse)).value();
+    auto parser = parserFac.makeParser().and_then(std::mem_fn(&Parser::parse));
+    ASSERT_TRUE(parser.has_value());
+    auto res = parser.value();
     ASSERT_DOUBLE_EQ(res.dt_, 1.0);
     ASSERT_EQ(res.totalTime_, 150);
     EXPECT_EQ(res.thinning_, 2);
