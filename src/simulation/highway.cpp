@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <map>
 #include <ranges>
+#include <print>
 #include <numeric>
 
 #include "sim/highway.hpp"
