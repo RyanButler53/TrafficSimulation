@@ -38,7 +38,9 @@ class CommunicationsManager
      * @param pkt Data packet
      */
     virtual void send(DataPacket::ptr pkt){
+      // Start timer here
       queue_.wait_and_push(pkt);
+      // End timer on 
     }
 
     /**
@@ -103,7 +105,7 @@ class CommunicationsManager
      * @return DataPacket::ptr Pointer to the data packet. 
      */
     DataPacket::ptr getPacket(){
-        DataPacket::ptr pkt = *(queue_.wait_and_pop());
+        DataPacket::ptr pkt = recv();
         pkt->decompress(compressor_.get());
         return pkt;
     }
