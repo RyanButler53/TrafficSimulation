@@ -14,6 +14,8 @@
 #include <vector>
 #include <set>
 #include <numeric>
+#include <cstdint>
+#include <string>
 #include "shared/environment.hpp"
 
 /// @brief Lane boundary class to store the high and low boundaries of a segment

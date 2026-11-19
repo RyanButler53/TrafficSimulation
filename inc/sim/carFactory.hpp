@@ -13,11 +13,12 @@
 #include <memory>
 #include <random>
 #include "car.hpp"
+#include "random.hpp"
 
 class CarFactory {
 
 protected: 
-    std::normal_distribution<double> politeness_dist_; ///< Distribution of politeness values for the cars
+    NormalDistribution politeness_dist_; ///< Distribution of politeness values for the cars
     mutable size_t carid_; ///< Car id of the next car to be generated
 
 public:
@@ -47,9 +48,9 @@ public:
 
 class GippsCarFactory : public CarFactory {
     std::mt19937 rng_;
-    std::normal_distribution<double> a_dist;
-    std::normal_distribution<double> b_dist;
-    std::normal_distribution<double> bmax_dist;
+    NormalDistribution a_dist;
+    NormalDistribution b_dist;
+    NormalDistribution bmax_dist;
 
     public: 
     GippsCarFactory(double a, double b, double bmax, double p,
