@@ -23,8 +23,13 @@ std::optional<Car> FlowGenerator::generateFlow(){
 }
 
 double FlowGenerator::rollRng(RandomGenerator::ptr dist){
-    ++rngRolls;
+    ++rngRolls_;
     return dist->getValue(*rng_);
+}
+
+void FlowGenerator::discardRng(size_t n){
+    rng_->discard(n);
+    rngRolls_ += n;
 }
 
 std::optional<Car> FlowGenerator::generateFlow(double rearPosition, double vlead){

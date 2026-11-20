@@ -50,7 +50,7 @@ private:
     /// @brief Current timestep of the flow generator. 
     double time_{0.0};
 
-    size_t rngRolls{0};
+    size_t rngRolls_{0};
 
     inline double rollRng(RandomGenerator::ptr dist);
 
@@ -82,6 +82,21 @@ public:
      * @param mainDist Uniform 0-1 distribution. Parameterized for mocking
      */
     void setRng(RandomGenerator::ptr v0Dist, RandomGenerator::ptr vDesDist, RandomGenerator::ptr mainDist);
+
+    /**
+     * @brief Discards n generations of flow rng to achieve matching state between
+     * t = 0 runs and checkpointed runs
+     * 
+     * @param n Number of generations to skip
+     */
+    void discardRng(size_t n);
+
+    /**
+     * @brief Returns the number of rng rolls that the flow generator has rolled
+     * 
+     * @return size_t n
+     */
+    size_t numRngRolls() const {return rngRolls_;}
 
     /**
      * @brief Returns the position that cars are generated at
