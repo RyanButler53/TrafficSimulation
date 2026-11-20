@@ -197,10 +197,31 @@ std::expected<void, std::string> TimeSeriesFileState::populateHighway(std::share
     });
 }
 
-DatabaseFileState::DatabaseFileState(std::string jobname, bool useTestDB):
+DatabaseState::DatabaseState(std::string jobname, bool useTestDB):
     jobname_{jobname}, useTestDB_{useTestDB}{}
 
-std::expected<void, std::string> DatabaseFileState::populateHighway(std::shared_ptr<Highway> highway, double t, std::shared_ptr<CarFactory> factory) {
+std::expected<void, std::string> DatabaseState::populateHighway(std::shared_ptr<Highway> highway, double t, std::shared_ptr<CarFactory> factory) {
 
     DBReader reader(useTestDB_);
+    std::expected<TimeSeries, std::string> snapshots = reader.queryData(jobname_, std::nullopt, std::nullopt, t, t);
+    if (!snapshots or snapshots->snapshots_.size() == 0 or snapshots->timestamps_.size()!= 1){
+        return std::unexpected("Error getting snapshots");
+    }
+    std::expected<std::vector<CarMetadata>, std::string> metadata = reader.queryCars(jobname_);
+    if (!metadata){
+        return std::unexpected(std::format("Error getting metadata: {}", metadata.error()));
+    }
+
+
+    std::unordered_map<size_t, FileState::Metadata> carMeta;
+    std::unordered_map<size_t, FileState::SnapshotData> snapshotData;
+    for (const Snapshot& snap : snapshots->snapshots_[0]){
+        // grab the metadata from each 
+        size_t id = static_cast<size_t>(snap.id_);
+        const CarMetadata& cm = metadata->at(id);
+        carMeta.insert({id, {cm.model_.a_, cm.model_.b_, cm.model_.c_, cm.politeness_, cm.vDes_}});
+        snapshotData.insert({id, {snap.x_, snap.x_, snap.l_}});
+    }
+    FileState::populateHighway(carMeta, snapshotData, factory, highway, t);
+    return {};
 }

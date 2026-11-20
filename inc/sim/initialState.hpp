@@ -124,12 +124,12 @@ class TimeSeriesFileState : public InitialStateGenerator {
  * @brief Initial state generator for any flavor of database logging (logtype = db or test)
  * 
  */
-class DatabaseFileState : public InitialStateGenerator {
+class DatabaseState : public InitialStateGenerator {
     std::string jobname_;
     bool useTestDB_;
 
     public:
-    DatabaseFileState(std::string jobname, bool useTestDB);
+    DatabaseState(std::string jobname, bool useTestDB);
 
     std::expected<void, std::string> populateHighway(std::shared_ptr<Highway> highway, double t, std::shared_ptr<CarFactory> factory) override;
 };

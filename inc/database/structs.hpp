@@ -52,7 +52,7 @@ struct RawData {
 };
 
 /**
- * @brief Struct holding an individual snapshot data for the API. 
+ * @brief Struct holding an individual snapshot data (X, V, T, l) for the API. 
  * 
  */
 struct Snapshot {
@@ -68,7 +68,7 @@ struct Snapshot {
  */
 struct TimeSeries {
     std::vector<float> timestamps_; ///< All timestamps found (sorted)
-    std::vector<std::vector<Snapshot>> snapshots_; ///< All car snapshots found by timestamp
+    std::vector<std::vector<Snapshot>> snapshots_; ///< All car snapshots found by timestamp. This vector is 
 };
 
 /**
