@@ -205,8 +205,7 @@ std::expected<void, std::string> CheckpointedParser::parseInitialState(YAML::Nod
             } else if (previousConfigType_ == "time-series"){
                 gen = std::make_unique<TimeSeriesFileState>(previous["logdir"].as<std::string>());
             } else if (previousConfigType_ == "db" || previousConfigType_ == "test") {
-                gen = nullptr;
-                // gen = std::make_unique<DatabaseFileState>(previous["jobname"].as<std::string>(), previousConfigType_ == "test");
+                gen = std::make_unique<DatabaseState>(previous["jobname"].as<std::string>(), previousConfigType_ == "test");
             } else {
                 return std::unexpected("Invalid previous log type: " + previousConfigType_);
             }
