@@ -50,6 +50,10 @@ private:
     /// @brief Current timestep of the flow generator. 
     double time_{0.0};
 
+    size_t rngRolls{0};
+
+    inline double rollRng(RandomGenerator::ptr dist);
+
 public:
 
     /**
