@@ -85,16 +85,17 @@ public:
      * @brief Discards n generations of flow rng to achieve matching state between
      * t = 0 runs and checkpointed runs
      * 
-     * @param n Number of generations to skip
+     * @param n Skips n generations of rng
+     * @param gens Number of flow generations to skip. Used to match floating point precision between generating cars and restoring. 
      */
-    void discardRng(size_t n);
+    void restoreState(size_t n, size_t gens);
 
     /**
      * @brief Returns the number of rng rolls that the flow generator has rolled
      * 
      * @return size_t n
      */
-    size_t numRngRolls() const {return rng_->draws;}
+    size_t getState() const {return rng_->draws;}
 
     /**
      * @brief Returns the position that cars are generated at

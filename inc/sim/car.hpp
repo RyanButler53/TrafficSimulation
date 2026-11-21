@@ -16,6 +16,7 @@
 #include <expected>
 #include "strategy.hpp"
 #include "logStructs.hpp"
+#include "shared/reflectionUtil.hpp"
 
 class Car {
     /// @brief Unique id for each card
@@ -158,6 +159,10 @@ class Car {
         return pos_ < other.pos_;
     }
 
+    friend constexpr bool equality::operatorEquals<Car>(const Car&, const Car&);
+    bool operator==(const Car& other) const{
+        return equality::operatorEquals(*this, other);
+    }
 };
 
 

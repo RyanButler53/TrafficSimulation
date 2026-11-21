@@ -16,7 +16,7 @@ For making movies based on the outputs:
 - ffmpeg (cli only)
 - pyyaml
 
-Compiler must be compatible with C++23 with `std::views::zip` and `std::expected`
+Compiler must be compatible with C++26 with reflection
 
 # Database Schema:
 There are two databases: TrafficDB and TrafficDBTest

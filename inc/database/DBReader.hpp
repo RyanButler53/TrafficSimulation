@@ -119,7 +119,7 @@ public:
      * @brief Deletes all jobs from the database matching the specified job name
      * 
      * @param jobname Jobname to delete. 
-     * @return std::expected<void, std::string> Nthing on success, error string on failure
+     * @return std::expected<void, std::string> Nothing on success, error string on failure
      */
     std::expected<void, std::string> deleteJob(std::string jobname);
 

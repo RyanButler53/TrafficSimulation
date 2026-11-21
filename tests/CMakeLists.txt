@@ -52,6 +52,8 @@ target_compile_definitions(regression PUBLIC DATA_DIR="${CMAKE_CURRENT_SOURCE_DI
 TrafficTest(queueTest queueTest.cpp unit)
 TrafficTest(laneinfoTest laneInfoTest.cpp unit shared)
 TrafficTest(flowGeneratorTest flowGeneratorTest.cpp unit shared setup)
+TrafficTest(carFactoryTest carFactoryTest.cpp unit shared setup)
+
 
 SingleFixtureTest(dbReaderTest dbManager.cpp integration testutil
                                                           jobManager 

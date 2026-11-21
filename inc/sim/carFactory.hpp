@@ -2,7 +2,7 @@
  * @file carFactory.hpp
  * @author Ryan Buutler (rmbutler@outlook.com)
  * @brief Defines the interface for a car factory
- * @version 0.2
+ * @version 0.3
  * @date 2025-07-13
  * 
  * @copyright Copyright (c) 2025
@@ -73,7 +73,24 @@ public:
      * 
      * @param id Id of the next car generated
      */
-    void setCarID (size_t id) {carid_ = id;}};
+    void setCarID (size_t id) {carid_ = id;}
+
+    /**
+     * @brief Get the state of the number
+     * 
+     * @return size_t Number of rolls. Used to reset the state of the car factory
+     */
+    virtual std::pair<size_t, size_t> state() {return {0, carid_};};
+
+    /**
+     * @brief Restores the car factory to the previous state. Defaults to not restoring any state at all.  
+     * 
+     * @param rngRolls: Number of rng rolls to skip the rng engine forward 
+     * @param newId Next ID to start a car on. Used for generations that use don't specify an ID. 
+     */
+    virtual void restore(size_t rngRolls, size_t newId) {};
+
+};
 
 
 template <typename F>
@@ -94,6 +111,8 @@ class CarFactoryImpl : public CarFactory {
     Car makeCar(double x0, double v0, double vdes, double t0) override;
     Car makeCar(size_t id, double x0, double v0, double vdes, double t0, double a, double b, double c, double p) override;
 
+    std::pair<size_t, size_t> state() override;
+    void restore(size_t rngRolls, size_t newId) override;
 };
 
 template <typename F>
@@ -109,6 +128,7 @@ Car CarFactoryImpl<F>::makeCar(double x0, double v0, double vdes, double t0) {
     double c = c_dist(rng_);
     double p = std::clamp<double>(politeness_dist_(rng_),0, 1);
 
+    // TODO: Remove 2 uses of C in FollowModel struct
     FollowModel m{makeFollowModel_(a, b, c, vdes), c, a, b, c, vdes};
     // Make a follow model, return a function that curries 
     return Car(carid_++, x0, v0, t0, p, m);
@@ -119,4 +139,15 @@ Car CarFactoryImpl<F>::makeCar(size_t id, double x0, double v0, double vdes, dou
     FollowModel m(makeFollowModel_(a, b, c, vdes));
     carid_ = std::max(carid_, id) + 1; // Ensure that the next car id is ALWAYS a new identifier
     return Car(id, x0, v0, t0, p, m);
+}
+
+template <typename F>
+std::pair<size_t, size_t> CarFactoryImpl<F>::state(){
+    return std::make_pair(rng_.draws, carid_);
+}
+
+template <typename F>
+void CarFactoryImpl<F>::restore(size_t rngRolls, size_t newId){
+    rng_.eng.discard(rngRolls);
+    carid_ = newId;
 }

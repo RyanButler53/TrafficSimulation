@@ -2,7 +2,6 @@
 #include <sim/flowGenerator.hpp>
 #include <ranges>
 #include "sim/random.hpp"
-#include <print>
 
 struct AlwaysGenerate : public RandomGenerator {
     double getValue(RngEngine&) override {return 0.0;}
@@ -84,7 +83,7 @@ TEST_F(FlowGeneratorTest, adjustedV0){
     EXPECT_EQ(gen->generateFlow(95, 15)->getVelocity(), 15);
     EXPECT_EQ(gen->generateFlow(100, 15)->getVelocity(), 20); // Equal case doesn't slow down
     EXPECT_EQ(gen->generateFlow(115, 15)->getVelocity(), 20);
-    EXPECT_EQ(gen->numRngRolls(), 0); // Generator always skips the rng engine
+    EXPECT_EQ(gen->getState(), 0); // Generator always skips the rng engine
 }
 
 
@@ -104,8 +103,8 @@ TEST_F(FlowGeneratorTest, restoreState){
         std::make_shared<NormalDistribution>(22, 0),
         std::make_shared<UniformDistribution>(0, 1)
     );
-    gen2->discardRng(gen->numRngRolls());
-    EXPECT_EQ(gen->numRngRolls(), gen2->numRngRolls());
+    gen2->restoreState(gen->getState(), 10);
+    EXPECT_EQ(gen->getState(), gen2->getState());
 
     for (auto i : std::views::iota(0, 1000)){
         std::optional<Car> c1 = gen->generateFlow(200, 30);
@@ -113,15 +112,13 @@ TEST_F(FlowGeneratorTest, restoreState){
 
         if (c1){
             ASSERT_TRUE(c2.has_value()) << "Rng engines diverged on iteration " << i;
-            EXPECT_EQ(c1->getPosition(), c2->getPosition());
-            EXPECT_EQ(c1->getVelocity(), c2->getVelocity());
+            EXPECT_EQ(*c1, *c2);
         } else if (c2){
             ASSERT_TRUE(c1.has_value()) << "Rng engines diverged  on iteration " << i;
-            EXPECT_EQ(c1->getPosition(), c2->getPosition());
-            EXPECT_EQ(c1->getVelocity(), c2->getVelocity());
+            EXPECT_EQ(*c1, *c2);
         }
     }
-    EXPECT_EQ(gen->numRngRolls(), gen2->numRngRolls());
+    EXPECT_EQ(gen->getState(), gen2->getState());
 }
 
 // Ensure the rng is properly modifying  

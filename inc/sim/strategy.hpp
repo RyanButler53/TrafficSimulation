@@ -11,6 +11,7 @@
 
 #include <string>
 #include <functional>
+#include "shared/reflectionUtil.hpp"
 
  #pragma once
 
@@ -23,6 +24,11 @@ struct FollowModel {
     double maxbraking;
     double a, b, c;
     double vDes;
+
+    friend constexpr bool equality::operatorEquals<FollowModel>(const FollowModel&, const FollowModel&);
+    bool operator==(const FollowModel& other) const{
+        return equality::operatorEquals(*this, other);
+    }
 };
 
 // Figure out cool way to unite this with a concept. So adding a new follow model is as easy as adding another "class"

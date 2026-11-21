@@ -23,8 +23,8 @@ class QueuedJobTest : public ::testing::Test {
         dbLog["jobinfo"]["seed"] = 133;
 
         TestUtil::configToFile(dbLog, "test-queued.yml");
-        dbManager_.deleteJob("test-queued");
-        TestUtil::clearDB();
+        auto _ = dbManager_.deleteJob("test-queued").has_value();
+        TestUtil::clearDB(); 
     }
 
     void TearDown() override {

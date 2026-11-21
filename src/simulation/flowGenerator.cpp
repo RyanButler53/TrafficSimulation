@@ -13,6 +13,7 @@ double FlowGenerator::position() const {return x0_;}
 
 double FlowGenerator::rate() const {return rate_;}
 
+// TODO: This should live in the constructor
 void FlowGenerator::setRng(RandomGenerator::ptr v0Dist, RandomGenerator::ptr vDesDist, RandomGenerator::ptr mainDist){
     v0Dist_ = v0Dist;
     vDesDist_ = vDesDist;
@@ -27,9 +28,13 @@ double FlowGenerator::rollRng(const RandomGenerator::ptr& dist){
     return dist->getValue(*rng_);
 }
 
-void FlowGenerator::discardRng(size_t n){
+// TODO: this should be an overloaded ctor
+void FlowGenerator::restoreState(size_t n, size_t gens){
     rng_->eng.discard(n);
     rng_->draws += n; // TODO make this a private setter/getter
+    for (auto _ : std::views::iota(0UL, gens)){
+        time_ += dt_;
+    }
 }
 
 std::optional<Car> FlowGenerator::generateFlow(double rearPosition, double vlead){

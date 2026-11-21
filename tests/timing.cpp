@@ -48,7 +48,10 @@ class Benchmark{
         JobManager jobScheduler;
         DBReader database(true);
         for (auto p : paths_){
-            jobScheduler.submit(p);
+            if (auto r = jobScheduler.submit(p)){
+                std::println("Job submission error: {}", r.error());
+                return;
+            }
         }
 
         // Need to wait until the jobs are finished. Need to query them for the timing. 
