@@ -78,7 +78,7 @@ public:
 
 template <typename F>
 class CarFactoryImpl : public CarFactory {
-    std::mt19937 rng_;
+    RngEngine rng_;
     NormalDistribution a_dist;
     NormalDistribution b_dist;
     NormalDistribution c_dist;

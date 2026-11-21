@@ -20,7 +20,7 @@ private:
     std::shared_ptr<CarFactory> factory_;
 
     /// @brief Randomness generator
-    std::shared_ptr<std::mt19937> rng_;
+    std::shared_ptr<RngEngine> rng_;
 
     /// @brief Distribution for whether or not to generate a car. Typically a uniform distribution
     RandomGenerator::ptr dist_;
@@ -50,9 +50,7 @@ private:
     /// @brief Current timestep of the flow generator. 
     double time_{0.0};
 
-    size_t rngRolls_{0};
-
-    inline double rollRng(RandomGenerator::ptr dist);
+    inline double rollRng(const RandomGenerator::ptr& dist);
 
 public:
 
@@ -71,7 +69,7 @@ public:
      * @param dt Delta timestep of the simulation. Used to compute the instantaneous flow rate at the fiven time
      * @param rng Rng source for car generation distribution. 
      */
-    FlowGenerator(double rate, double x0, std::shared_ptr<CarFactory> factory,  double dt, std::shared_ptr<std::mt19937> rng);
+    FlowGenerator(double rate, double x0, std::shared_ptr<CarFactory> factory,  double dt, std::shared_ptr<RngEngine> rng);
     ~FlowGenerator() = default;
 
     /**
@@ -96,7 +94,7 @@ public:
      * 
      * @return size_t n
      */
-    size_t numRngRolls() const {return rngRolls_;}
+    size_t numRngRolls() const {return rng_->draws;}
 
     /**
      * @brief Returns the position that cars are generated at

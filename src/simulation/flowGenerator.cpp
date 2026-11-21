@@ -1,9 +1,10 @@
 #include "sim/flowGenerator.hpp"
 #include <ranges>
+#include <print>
 
 FlowGenerator::FlowGenerator():rate_{0}{}
 
-FlowGenerator::FlowGenerator(double rate, double x0, std::shared_ptr<CarFactory> factory, double dt, std::shared_ptr<std::mt19937> rng):
+FlowGenerator::FlowGenerator(double rate, double x0, std::shared_ptr<CarFactory> factory, double dt, std::shared_ptr<RngEngine> rng):
     rate_{rate}, rng_{rng},dist_{nullptr}, v0Dist_{nullptr}, vDesDist_{nullptr},
     x0_{x0}, factory_{factory}, dt_{dt}, flowsLeft_{rate}, timestepsLeft_{3600.0/dt}
 {}
@@ -22,14 +23,13 @@ std::optional<Car> FlowGenerator::generateFlow(){
     return generateFlow(std::numeric_limits<double>::max(), 500);
 }
 
-double FlowGenerator::rollRng(RandomGenerator::ptr dist){
-    ++rngRolls_;
+double FlowGenerator::rollRng(const RandomGenerator::ptr& dist){
     return dist->getValue(*rng_);
 }
 
 void FlowGenerator::discardRng(size_t n){
-    rng_->discard(n);
-    rngRolls_ += n;
+    rng_->eng.discard(n);
+    rng_->draws += n; // TODO make this a private setter/getter
 }
 
 std::optional<Car> FlowGenerator::generateFlow(double rearPosition, double vlead){

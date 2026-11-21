@@ -14,6 +14,28 @@
 #include <memory>
 
 /**
+ * @brief Wrapper around std::mt19937 to count actual engine rolls for reproducibility
+ * 
+ */
+struct RngEngine {
+    using result_type = std::mt19937::result_type;
+    static constexpr result_type min() { return std::mt19937::min(); }
+    static constexpr result_type max() { return std::mt19937::max(); }
+
+    result_type operator()() {
+        ++draws;
+        return eng();
+    }
+
+    std::mt19937 eng;
+    std::uint64_t draws = 0;
+
+    bool operator==(const RngEngine& other) const {
+        return eng == other.eng;
+    }
+};
+
+/**
  * @brief Abstract class for randomness generators. 
  * 
  * @pure Derived classes must implement getValue() to get the next value
@@ -29,7 +51,7 @@ struct RandomGenerator {
      * @param rng random number generator
      * @return double value
      */
-    virtual double getValue(std::mt19937& rng) = 0;
+    virtual double getValue(RngEngine& rng) = 0;
 
 };
 
@@ -52,7 +74,7 @@ class UniformDistribution : public RandomGenerator {
     UniformDistribution(double min, double max):
         dist_{min, max}{}
 
-    double getValue(std::mt19937& rng) override {
+    double getValue(RngEngine& rng) override {
         return dist_(rng);
     }
 };
@@ -75,7 +97,7 @@ class NormalDistribution : public RandomGenerator {
         }
     }
 
-    double getValue(std::mt19937& rng) override {
+    double getValue(RngEngine& rng) override {
         if (std::holds_alternative<double>(dist_)){
             return std::get<double>(dist_);
         } else {
@@ -85,7 +107,7 @@ class NormalDistribution : public RandomGenerator {
         }
     }
 
-    double operator()(std::mt19937& rng){
+    double operator()(RngEngine& rng){
         return getValue(rng);
     }
 

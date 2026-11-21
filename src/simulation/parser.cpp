@@ -105,7 +105,7 @@ std::expected<void, std::string> Parser::parseHighway(YAML::Node hwyNode){
     double switchThreshold = ParseField<double>(hwyNode, "parameters", "switchThreshold").value_or(1600);
 
     std::unique_ptr<LaneInfo> lanes = std::make_unique<LaneInfo>(bias, changePressure, switchThreshold);
-    auto rng = std::make_shared<std::mt19937>(seed_);
+    auto rng = std::make_shared<RngEngine>(std::mt19937(seed_));
     for (const YAML::Node& node : laneNode) {
         
         double start = ParseField<double>(node, "start").value_or(0);
