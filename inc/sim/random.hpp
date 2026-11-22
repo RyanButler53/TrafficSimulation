@@ -24,26 +24,16 @@ struct RngEngine {
     static constexpr result_type min() { return std::mt19937::min(); }
     static constexpr result_type max() { return std::mt19937::max(); }
 
-    result_type operator()() {
-        ++draws;
-        return eng();
-    }
+    result_type operator()();
 
     std::mt19937 eng;
     std::uint64_t draws = 0;
 
-    bool operator==(const RngEngine& other) const {
-        return eng == other.eng;
-    }
+    bool operator==(const RngEngine& other) const { return eng == other.eng;}
 
-    void discard(size_t n){
-        eng.discard(n);
-        draws += n;
-    }
+    void discard(size_t n);
 
-    uint64_t getState() {
-        return draws;
-    }
+    uint64_t getState() { return draws;}
 };
 
 /**
@@ -89,24 +79,18 @@ class UniformDistribution : public RandomGenerator {
      * @param min Minimum value
      * @param max Maximum value
      */
-    UniformDistribution(double min, double max):
-        dist_{min, max}{}
+    UniformDistribution(double min, double max);
 
-    UniformDistribution(std::string state){
-        std::stringstream ss;
-        ss << state;
-        ss >> dist_;
-    }
+    /**
+     * @brief Construct a new Uniform Distribution from a serialized string
+     * 
+     * @param state 
+     */
+    UniformDistribution(std::string state);
 
-    double getValue(RngEngine& rng) override {
-        return dist_(rng);
-    }
+    double getValue(RngEngine& rng) override;
 
-    std::string getState() override {
-        std::stringstream ss;
-        ss << dist_;
-        return ss.str();
-    }
+    std::string getState() override;
 };
 
 /**
@@ -119,52 +103,13 @@ class NormalDistribution : public RandomGenerator {
     using Dist_t = std::normal_distribution<double>;
     public:
 
-    NormalDistribution(double mean, double stdev) {
-        if (stdev == 0.0){
-            dist_ = mean;
-        } else {
-            dist_ = std::normal_distribution<double>(mean, stdev);
-        }
-    }
+    NormalDistribution(double mean, double stdev);
 
-    NormalDistribution(std::string state){
-        if (state.find(' ') != std::string::npos){
-            // Confirmed that this contains the distribution not a mean
-            dist_.emplace<Dist_t>();
-            std::stringstream ss;
-            ss << state;
-            ss >> std::get<Dist_t>(dist_);
-        } else {
-            double mean = 0;
-            std::string_view sv(state.begin(), state.end());
-            std::from_chars(sv.begin(), sv.begin() + sv.size(), mean);
-            dist_.emplace<double>(mean);
-        }
-        
-    }
+    NormalDistribution(std::string state);
 
-    double getValue(RngEngine& rng) override {
-        if (std::holds_alternative<double>(dist_)){
-            return std::get<double>(dist_);
-        } else {
-            auto& dist = std::get<Dist_t>(dist_);
-            return dist(rng);
-        }
-    }
+    double getValue(RngEngine& rng) override;
 
-    std::string getState() override {
-        if (std::holds_alternative<double>(dist_)){
-            return std::to_string(std::get<double>(dist_));
-        } else {
-            std::stringstream ss;
-            ss << std::get<Dist_t>(dist_);
-            return ss.str();
-        }
-       
-    }
+    std::string getState() override;
 
-    double operator()(RngEngine& rng){
-        return getValue(rng);
-    }
-
+    double operator()(RngEngine& rng){ return getValue(rng); }
 };

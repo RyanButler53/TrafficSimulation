@@ -12,7 +12,8 @@ set (SHARED_SRC
     flowGenerator.cpp
     highway.cpp
     strategy.cpp
-    laneInfo.cpp)
+    laneInfo.cpp
+    random.cpp)
 
 set (SETUP_SRC
     parserFactory.cpp
