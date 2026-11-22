@@ -25,9 +25,8 @@ struct FollowModel {
     double a, b, c;
     double vDes;
 
-    friend constexpr bool equality::operatorEquals<FollowModel>(const FollowModel&, const FollowModel&);
-    bool operator==(const FollowModel& other) const{
-        return equality::operatorEquals(*this, other);
+    friend bool operator==(const FollowModel& f1, const FollowModel& f2) {
+        return equality::operatorEquals(f1, f2);
     }
 };
 

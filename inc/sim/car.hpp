@@ -159,10 +159,7 @@ class Car {
         return pos_ < other.pos_;
     }
 
-    friend constexpr bool equality::operatorEquals<Car>(const Car&, const Car&);
-    bool operator==(const Car& other) const{
-        return equality::operatorEquals(*this, other);
+    friend bool operator==(const Car& c1, const Car& c2) {
+        return equality::operatorEquals(c1, c2);
     }
 };
-
-
