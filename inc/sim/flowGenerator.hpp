@@ -3,10 +3,28 @@
 #include <memory>
 #include <optional>
 #include <random>
+#include <string>
 
 #include "carFactory.hpp"
 #include "car.hpp"
 #include "random.hpp"
+#include "shared/reflectionUtil.hpp"
+
+/**
+ * @brief Struct encapsulating the state of the FlowGenerator. 
+ * 
+ */
+struct FlowGeneratorState {
+    uint64_t rngState_;
+    std::string distState_;
+    std::string v0State_;
+    std::string vDesState_;
+    int numGens_; // Used to tick the time forward
+
+    friend bool operator==(const FlowGeneratorState& f1, const FlowGeneratorState& f2) {
+        return equality::operatorEquals(f1, f2);
+    }
+};
 
 /**
  * @brief Class to encapsulate flow generation for each lane
@@ -88,14 +106,14 @@ public:
      * @param n Skips n generations of rng
      * @param gens Number of flow generations to skip. Used to match floating point precision between generating cars and restoring. 
      */
-    void restoreState(size_t n, size_t gens);
+    void restoreState(const FlowGeneratorState& state);
 
     /**
      * @brief Returns the number of rng rolls that the flow generator has rolled
      * 
      * @return size_t n
      */
-    size_t getState() const {return rng_->draws;}
+    FlowGeneratorState getState() const;
 
     /**
      * @brief Returns the position that cars are generated at

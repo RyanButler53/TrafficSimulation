@@ -29,6 +29,7 @@ class CarFactoryTest : public ::testing::Test {
         }
     }
 
+    /// @brief Generates n cars and modifies the randomness state each time
     void generateCars(int n){
         for (auto _ : std::views::iota(0, n)){
             factory_->makeCar(0, 0, 0);
@@ -39,9 +40,9 @@ class CarFactoryTest : public ::testing::Test {
         factory_ = makeCarFactory();
         generateCars(100);
 
-        auto [rngRolls, id] = factory_->getState();
-        EXPECT_GT(rngRolls, 0); // Must have run rng engine at least once
-        ASSERT_EQ(id, 100); // 100 will be the NEXT car id
+        auto curState = factory_->getState();
+        EXPECT_GT(curState.rng_, 0); // Must have run rng engine at least once
+        ASSERT_EQ(curState.nextCarId_, 100); // 100 will be the NEXT car id
     }
 };
 
@@ -57,31 +58,30 @@ TEST_F(CarFactoryTest, SkipRestoreState){
 
 TEST_F(CarFactoryTest, RestoreState){
 
-    auto [rngRolls, _] = factory_->getState();
+    auto curState = factory_->getState();
     std::unique_ptr<CarFactory> restoredFactory = makeCarFactory();
-    restoredFactory->restore(rngRolls, 100);
+    restoredFactory->restoreState(curState);
 
     compareGenerators(factory_, restoredFactory, 100);
     auto s1 = factory_->getState();
     auto s2 = restoredFactory->getState();
-    EXPECT_EQ(s1.first, s2.first);
-    EXPECT_EQ(s1.second, s2.second);
+    EXPECT_EQ(s1, s2);
 }
 
 TEST_F(CarFactoryTest, RestoreStateSavedCars){
-    auto [rngRolls, id] = factory_->getState();
+    auto curState = factory_->getState();
     std::unique_ptr<CarFactory> restoredFactory = makeCarFactory();
 
-    // Make 100 cars without calling the randomness generator
-    for (auto i : std::views::iota(0, 100)){
+    // Make 55 cars without calling the randomness generator. 
+    for (auto i : std::views::iota(0, 55)){
         restoredFactory->makeCar(i, 0, 0, 0, 5.0, 0, 0, 0, 0.2);
     }
 
-    restoredFactory->restore(rngRolls, 100);
+    restoredFactory->restoreState(curState);
 
     compareGenerators(factory_, restoredFactory, 100);
-    auto s1 = factory_->getState();
-    auto s2 = restoredFactory->getState();
-    EXPECT_EQ(s1.first, s2.first);
-    EXPECT_EQ(s1.second, s2.second);
+
+    EXPECT_EQ(restoredFactory->getState(), factory_->getState());
+
+
 }

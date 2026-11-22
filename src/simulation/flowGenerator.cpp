@@ -28,12 +28,25 @@ double FlowGenerator::rollRng(const RandomGenerator::ptr& dist){
     return dist->getValue(*rng_);
 }
 
-// TODO: this should be an overloaded ctor
-void FlowGenerator::restoreState(size_t n, size_t gens){
-    rng_->discard(n);
-    for (auto _ : std::views::iota(0UL, gens)){
+void FlowGenerator::restoreState(const FlowGeneratorState& state){
+    rng_->discard(state.rngState_ - rng_->getState());
+    for (auto _ : std::views::iota(0, state.numGens_)){
         time_ += dt_;
     }
+
+    dist_ = std::make_shared<UniformDistribution>(state.distState_);
+    v0Dist_ = std::make_shared<NormalDistribution>(state.v0State_);
+    vDesDist_ = std::make_shared<NormalDistribution>(state.vDesState_);
+}
+
+FlowGeneratorState FlowGenerator::getState() const{
+    FlowGeneratorState s;
+    s.distState_ = dist_->getState();
+    s.v0State_ = v0Dist_->getState();
+    s.vDesState_ = vDesDist_->getState();
+    s.numGens_ = static_cast<int>(std::roundl(time_/dt_));
+    s.rngState_ = rng_->getState();
+    return s;
 }
 
 std::optional<Car> FlowGenerator::generateFlow(double rearPosition, double vlead){

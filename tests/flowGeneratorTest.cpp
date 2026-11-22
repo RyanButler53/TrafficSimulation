@@ -5,12 +5,14 @@
 
 struct AlwaysGenerate : public RandomGenerator {
     double getValue(RngEngine&) override {return 0.0;}
+
+    std::string getState() override {return "";}
 };
 
 
 struct MockCarFactory: public CarFactory {
 
-    MockCarFactory(): CarFactory(0.2, 0){}
+    MockCarFactory() = default;
     ~MockCarFactory(){};
 
     Car makeCar(double x0, double v0, double, double t) override {
@@ -83,9 +85,48 @@ TEST_F(FlowGeneratorTest, adjustedV0){
     EXPECT_EQ(gen->generateFlow(95, 15)->getVelocity(), 15);
     EXPECT_EQ(gen->generateFlow(100, 15)->getVelocity(), 20); // Equal case doesn't slow down
     EXPECT_EQ(gen->generateFlow(115, 15)->getVelocity(), 20);
-    EXPECT_EQ(gen->getState(), 0); // Generator always skips the rng engine
+    EXPECT_EQ(gen->getState().rngState_, 0); // Generator always skips the rng engine
 }
 
+
+TEST(FlowGeneratorState, restoreStateNonzeroStdev){
+    RngEngine rng1{std::mt19937{70}};
+    FlowGenerator gen1(600, 0, std::make_shared<MockCarFactory>(), 0.2, std::make_shared<RngEngine>(rng1));
+
+    gen1.setRng(
+        std::make_shared<NormalDistribution>(20, 1), 
+        std::make_shared<NormalDistribution>(22, 1),
+        std::make_shared<UniformDistribution>(0, 1)
+    );
+
+    size_t nflowAttempts = 20;
+    for (auto _ : std::views::iota(0UL, nflowAttempts)){
+        gen1.generateFlow(300, 40);
+    }
+
+    FlowGeneratorState gen1State = gen1.getState();
+    EXPECT_GT(gen1State.rngState_, 0);
+    // Set up gen2
+    RngEngine rng2{std::mt19937{70}};
+    FlowGenerator gen2(600, 0, std::make_shared<MockCarFactory>(), 0.2, std::make_shared<RngEngine>(rng2));
+    gen2.restoreState(gen1State);
+
+    for (auto i : std::views::iota(0, 1000)){
+        std::optional<Car> c1 = gen1.generateFlow(200, 30);
+        std::optional<Car> c2 = gen2.generateFlow(200, 30);
+
+        if (c1){
+            ASSERT_TRUE(c2.has_value()) << "Rng engines diverged on iteration " << i;
+            EXPECT_EQ(c1->getVelocity(), c2->getVelocity()) << "iteration" << i;
+            EXPECT_EQ(*c1, *c2);
+        } else if (c2){
+            ASSERT_TRUE(c1.has_value()) << "Rng engines diverged on iteration " << i;
+            EXPECT_EQ(c1->getVelocity(), c2->getVelocity()) << "iteration" << i;
+            EXPECT_EQ(*c1, *c2);
+
+        }
+    }
+}
 
 TEST_F(FlowGeneratorTest, restoreState){
     setRng(std::make_shared<UniformDistribution>(0, 1));
@@ -98,12 +139,7 @@ TEST_F(FlowGeneratorTest, restoreState){
     auto factory = std::make_shared<MockCarFactory>();
     std::unique_ptr<FlowGenerator> gen2 = std::make_unique<FlowGenerator>(600, 0, factory, 0.2, std::make_shared<RngEngine>(rng2));
 
-    gen2->setRng(
-        std::make_shared<NormalDistribution>(20, 0), 
-        std::make_shared<NormalDistribution>(22, 0),
-        std::make_shared<UniformDistribution>(0, 1)
-    );
-    gen2->restoreState(gen->getState(), 10);
+    gen2->restoreState(gen->getState());
     EXPECT_EQ(gen->getState(), gen2->getState());
 
     for (auto i : std::views::iota(0, 1000)){
@@ -114,22 +150,9 @@ TEST_F(FlowGeneratorTest, restoreState){
             ASSERT_TRUE(c2.has_value()) << "Rng engines diverged on iteration " << i;
             EXPECT_EQ(*c1, *c2);
         } else if (c2){
-            ASSERT_TRUE(c1.has_value()) << "Rng engines diverged  on iteration " << i;
+            ASSERT_TRUE(c1.has_value()) << "Rng engines diverged on iteration " << i;
             EXPECT_EQ(*c1, *c2);
         }
     }
     EXPECT_EQ(gen->getState(), gen2->getState());
-}
-
-// Ensure the rng is properly modifying  
-TEST(RngTest, DifferentValues){
-    UniformDistribution dist(0, 1);
-
-    RngEngine rng(std::mt19937{105});
-    double sum = 0;
-    for (size_t i : std::views::iota(0, 100)){
-        double v = dist.getValue(rng);
-        sum += dist.getValue(rng);
-    }
-    EXPECT_NEAR(sum, 50, 5);
 }

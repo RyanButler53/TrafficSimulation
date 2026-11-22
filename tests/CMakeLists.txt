@@ -53,6 +53,7 @@ TrafficTest(queueTest queueTest.cpp unit)
 TrafficTest(laneinfoTest laneInfoTest.cpp unit shared)
 TrafficTest(flowGeneratorTest flowGeneratorTest.cpp unit shared setup)
 TrafficTest(carFactoryTest carFactoryTest.cpp unit shared setup)
+TrafficTest(randomnessTest randomnessTest.cpp unit setup)
 
 
 SingleFixtureTest(dbReaderTest dbManager.cpp integration testutil

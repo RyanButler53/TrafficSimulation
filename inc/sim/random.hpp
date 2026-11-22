@@ -12,6 +12,8 @@
 #include <random>
 #include <variant>
 #include <memory>
+#include <sstream>
+#include <charconv>
 
 /**
  * @brief Wrapper around std::mt19937 to count actual engine rolls for reproducibility
@@ -38,6 +40,10 @@ struct RngEngine {
         eng.discard(n);
         draws += n;
     }
+
+    uint64_t getState() {
+        return draws;
+    }
 };
 
 /**
@@ -57,6 +63,13 @@ struct RandomGenerator {
      * @return double value
      */
     virtual double getValue(RngEngine& rng) = 0;
+
+    /**
+     * @brief Dumps the state of the generator to a string
+     * 
+     * @return std::string 
+     */
+    virtual std::string getState() = 0;
 
 };
 
@@ -79,8 +92,20 @@ class UniformDistribution : public RandomGenerator {
     UniformDistribution(double min, double max):
         dist_{min, max}{}
 
+    UniformDistribution(std::string state){
+        std::stringstream ss;
+        ss << state;
+        ss >> dist_;
+    }
+
     double getValue(RngEngine& rng) override {
         return dist_(rng);
+    }
+
+    std::string getState() override {
+        std::stringstream ss;
+        ss << dist_;
+        return ss.str();
     }
 };
 
@@ -91,7 +116,7 @@ class UniformDistribution : public RandomGenerator {
 class NormalDistribution : public RandomGenerator {
 
     std::variant<std::normal_distribution<double>, double> dist_;
-
+    using Dist_t = std::normal_distribution<double>;
     public:
 
     NormalDistribution(double mean, double stdev) {
@@ -102,14 +127,40 @@ class NormalDistribution : public RandomGenerator {
         }
     }
 
+    NormalDistribution(std::string state){
+        if (state.find(' ') != std::string::npos){
+            // Confirmed that this contains the distribution not a mean
+            dist_.emplace<Dist_t>();
+            std::stringstream ss;
+            ss << state;
+            ss >> std::get<Dist_t>(dist_);
+        } else {
+            double mean = 0;
+            std::string_view sv(state.begin(), state.end());
+            std::from_chars(sv.begin(), sv.begin() + sv.size(), mean);
+            dist_.emplace<double>(mean);
+        }
+        
+    }
+
     double getValue(RngEngine& rng) override {
         if (std::holds_alternative<double>(dist_)){
             return std::get<double>(dist_);
         } else {
-            auto& dist = std::get<std::normal_distribution<double>>(dist_);
+            auto& dist = std::get<Dist_t>(dist_);
             return dist(rng);
-
         }
+    }
+
+    std::string getState() override {
+        if (std::holds_alternative<double>(dist_)){
+            return std::to_string(std::get<double>(dist_));
+        } else {
+            std::stringstream ss;
+            ss << std::get<Dist_t>(dist_);
+            return ss.str();
+        }
+       
     }
 
     double operator()(RngEngine& rng){

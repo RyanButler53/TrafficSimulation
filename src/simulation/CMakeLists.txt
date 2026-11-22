@@ -15,7 +15,6 @@ set (SHARED_SRC
     laneInfo.cpp)
 
 set (SETUP_SRC
-    carFactory.cpp
     parserFactory.cpp
     parser.cpp
     initialState.cpp
