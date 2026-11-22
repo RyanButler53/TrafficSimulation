@@ -33,6 +33,11 @@ struct RngEngine {
     bool operator==(const RngEngine& other) const {
         return eng == other.eng;
     }
+
+    void discard(size_t n){
+        eng.discard(n);
+        draws += n;
+    }
 };
 
 /**

@@ -76,11 +76,11 @@ public:
     void setCarID (size_t id) {carid_ = id;}
 
     /**
-     * @brief Get the state of the number
+     * @brief Gets the state of the car factory; Returns the number of rng rolls and car id of the next car
      * 
      * @return size_t Number of rolls. Used to reset the state of the car factory
      */
-    virtual std::pair<size_t, size_t> state() {return {0, carid_};};
+    virtual std::pair<size_t, size_t> getState() {return {0, carid_};};
 
     /**
      * @brief Restores the car factory to the previous state. Defaults to not restoring any state at all.  
@@ -111,7 +111,7 @@ class CarFactoryImpl : public CarFactory {
     Car makeCar(double x0, double v0, double vdes, double t0) override;
     Car makeCar(size_t id, double x0, double v0, double vdes, double t0, double a, double b, double c, double p) override;
 
-    std::pair<size_t, size_t> state() override;
+    std::pair<size_t, size_t> getState() override;
     void restore(size_t rngRolls, size_t newId) override;
 };
 
@@ -142,12 +142,12 @@ Car CarFactoryImpl<F>::makeCar(size_t id, double x0, double v0, double vdes, dou
 }
 
 template <typename F>
-std::pair<size_t, size_t> CarFactoryImpl<F>::state(){
+std::pair<size_t, size_t> CarFactoryImpl<F>::getState(){
     return std::make_pair(rng_.draws, carid_);
 }
 
 template <typename F>
 void CarFactoryImpl<F>::restore(size_t rngRolls, size_t newId){
-    rng_.eng.discard(rngRolls);
+    rng_.discard(rngRolls);
     carid_ = newId;
 }

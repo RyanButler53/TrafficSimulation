@@ -30,8 +30,7 @@ double FlowGenerator::rollRng(const RandomGenerator::ptr& dist){
 
 // TODO: this should be an overloaded ctor
 void FlowGenerator::restoreState(size_t n, size_t gens){
-    rng_->eng.discard(n);
-    rng_->draws += n; // TODO make this a private setter/getter
+    rng_->discard(n);
     for (auto _ : std::views::iota(0UL, gens)){
         time_ += dt_;
     }
