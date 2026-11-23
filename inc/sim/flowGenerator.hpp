@@ -8,23 +8,7 @@
 #include "carFactory.hpp"
 #include "car.hpp"
 #include "random.hpp"
-#include "shared/reflectionUtil.hpp"
-
-/**
- * @brief Struct encapsulating the state of the FlowGenerator. 
- * 
- */
-struct FlowGeneratorState {
-    uint64_t rngState_;
-    std::string distState_;
-    std::string v0State_;
-    std::string vDesState_;
-    int numGens_; // Used to tick the time forward
-
-    friend bool operator==(const FlowGeneratorState& f1, const FlowGeneratorState& f2) {
-        return equality::operatorEquals(f1, f2);
-    }
-};
+#include "checkpoint.hpp"
 
 /**
  * @brief Class to encapsulate flow generation for each lane

@@ -14,23 +14,7 @@
 #include <random>
 #include "car.hpp"
 #include "random.hpp"
-#include "shared/reflectionUtil.hpp"
-/**
- * @brief Struct representing the entire state of the CarFactory. 
- * 
- */
-struct CarFactoryState{
-    std::string a_dist_;
-    std::string b_dist_;
-    std::string c_dist_;
-    std::string p_dist_;
-    size_t nextCarId_;
-    uint64_t rng_;
-
-    friend bool operator==(const CarFactoryState& f1, const CarFactoryState& f2) {
-        return equality::operatorEquals(f1, f2);
-    }
-};
+#include "checkpoint.hpp"
 
 /**
  * @brief Abstract Car Factory class. This class outlines the interface of all Car Factories that will create cars with 

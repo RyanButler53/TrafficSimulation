@@ -20,7 +20,7 @@
 #include <expected>
 #include "logStructs.hpp"
 #include "shared/environment.hpp"
-
+#include "checkpoint.hpp"
 // Comms for streaming based logging
 #include "comms.hpp"
 
@@ -33,6 +33,7 @@
  * @pure writeCars(cars): Write Car metadata
  * @pure logFailure(error): Writes a failure
  * @pure writeStats(stats): Writes simulation stats
+ * @pure writeCheckpoint(checkpoint): Writes a checkpoint stats
  * 
  */
 class CarLogger 
@@ -48,7 +49,7 @@ class CarLogger
     /**
      * @brief Writes Car Metadata to the file/database. 
      * 
-     * @return std::expected<void, std::string> 
+     * @return std::expected<void, std::string> Nothing on success, error string on error. 
      */
     virtual std::expected<void, std::string> writeCars(std::vector<CarData> cardata) = 0;
 
@@ -89,12 +90,22 @@ class CarLogger
     virtual std::expected<void, std::string> logFailure(std::string message) = 0;
 
     /**
-     * @brief Writes and commits the enviornment to the sink. For files this is a yaml file
+     * @brief Writes and commits the environment to the sink. For files this is a yaml file
      * 
      * @param env Environment data to save
      * @return std::expected<void, std::string> Nothing on success or an error message on failure
      */
     virtual std::expected<void, std::string> logEnvironment(const Environment& env) = 0;
+
+    /**
+     * @brief Writes a single checkpoint out to the sink. 
+     * @detail For files, this is a yaml file and for databases this is a row in the checkpoint table
+     * 
+     * 
+     * @param checkpoint Checkpoint data to save
+     * @return std::expected<void, std::string> Nothing on success, error message on failure
+     */
+    virtual std::expected<void, std::string> logCheckpoint(const Checkpoint& checkpoint) = 0;
 
      /**
       * @brief Streaming run function.  Reads data from the comms manager 
@@ -125,6 +136,8 @@ class FileLogger : public CarLogger {
     std::expected<void, std::string> logFailure(std::string message) override;
 
     std::expected<void, std::string> logEnvironment(const Environment& env) override;
+
+    std::expected<void, std::string> logCheckpoint(const Checkpoint& checkpoint) override;
 };
 
 /**
@@ -204,6 +217,8 @@ class DBLogger : public CarLogger {
 
     std::expected<void, std::string> logEnvironment(const Environment& env) override;
 
+    std::expected<void, std::string> logCheckpoint(const Checkpoint& checkpoint) override { return {};}
+
 };
 
 /**
@@ -222,4 +237,6 @@ struct NullLogger : public CarLogger {
     std::expected<void, std::string> logFailure(std::string message) override;
 
     std::expected<void, std::string> logEnvironment(const Environment& env) override {return {};}
+
+    std::expected<void, std::string> logCheckpoint(const Checkpoint& checkpoint) override {return {};};
 };

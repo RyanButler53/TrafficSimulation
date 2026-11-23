@@ -109,6 +109,21 @@ std::expected<void, std::string> FileLogger::writeCars(std::vector<CarData> data
     return {};
 }
 
+namespace {
+    std::expected<void, std::string> writeToYamlFile(YAML::Node node, std::filesystem::path fname){
+        YAML::Emitter envyaml;
+        std::ofstream fileout(fname);
+        if (!fileout.is_open()){
+            return std::unexpected("Unable to open environment file!");
+        }
+        envyaml << node;
+        fileout << envyaml.c_str();
+        fileout.close();
+        return {};
+    }
+
+} // anonymous namespace 
+
 std::expected<void, std::string> FileLogger::logEnvironment(const Environment& env){
     YAML::Node node;
     node["nlanes"] = env.nlanes;
@@ -139,15 +154,37 @@ std::expected<void, std::string> FileLogger::logEnvironment(const Environment& e
     node["empty-segments"] = emptySegments;
 
     std::filesystem::path fname = basepath_ / "environment.yml";
-    YAML::Emitter envyaml;
-    std::ofstream fileout(fname);
-    if (!fileout.is_open()){
-        return std::unexpected("Unable to open environment file!");
+    return writeToYamlFile(node, fname);
+}
+
+std::expected<void, std::string> FileLogger::logCheckpoint(const Checkpoint& checkpoint){
+    YAML::Node node;
+    node["timestamp"] = checkpoint.timestamp_;
+
+    YAML::Node carFactory, flowGenerators;
+
+    // Car Factory
+    static constexpr auto ctx = std::meta::access_context::current();
+    template for (constexpr std::meta::info mem : std::define_static_array(std::meta::nonstatic_data_members_of(^^CarFactoryState, ctx))){
+        carFactory[std::meta::identifier_of(mem)] = checkpoint.factoryState_.[:mem:];
     }
-    envyaml << node;
-    fileout << envyaml.c_str();
-    fileout.close();
-    return {};
+    node["car-factory"] = carFactory;
+
+    // Flow Generators
+    for (auto& [lane, flowGen] : checkpoint.flowStates_){
+        YAML::Node flowNode;
+        flowNode["lane"] = lane;
+        template for (constexpr std::meta::info mem : std::define_static_array(std::meta::nonstatic_data_members_of(^^FlowGeneratorState, ctx))){
+            flowNode[std::meta::identifier_of(mem)] = flowGen.[:mem:];
+        }
+        flowGenerators.push_back(flowNode);
+    }
+    node["flow-generators"] = flowGenerators;
+    
+    std::string fname = std::format("checkpoint_t={:.3f}.yml", checkpoint.timestamp_);
+    std::filesystem::path fpath = basepath_ / "checkpoints" / fname;
+    return writeToYamlFile(node, fpath);
+
 }
 
 // INDIVIDUAL CAR BASED FILE LOGGER
