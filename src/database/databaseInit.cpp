@@ -18,6 +18,9 @@ std::expected<void, std::string> Database::initDB(bool useTestDB){
         tx.exec("CREATE TABLE IF NOT EXISTS snapshotData (carID int, jobID int, x float, v float, t float, lane int, PRIMARY KEY (carID, jobID, t), FOREIGN KEY (carID, jobID) REFERENCES cardata (carID, jobID))");
         tx.exec("CREATE TABLE IF NOT EXISTS laneSegments (jobID int, segmentStart float, segmentEnd float, rate float, position int, FOREIGN KEY (jobID) REFERENCES trafficJobs(jobID))");
         tx.exec("CREATE TABLE IF NOT EXISTS environment (jobID int, x0 float, xf float, numLanes int, FOREIGN KEY (jobID) REFERENCES trafficJobs(jobID))");
+        tx.exec("CREATE TABLE IF NOT EXISTS flowGenerators (jobID int, time float, lane int, genDist text, v0Dist text, vDesDist text, genAttempts int, rng int, FOREIGN KEY (jobID) REFERENCES trafficJobs(jobID), PRIMARY KEY (jobID, time, lane))");
+        tx.exec("CREATE TABLE IF NOT EXISTS carFactories (jobID int, time float, rng int, aDist text, bDist text, cDist text, pDist text, FOREIGN KEY (jobID) REFERENCES trafficJobs(jobID), PRIMARY KEY(jobID, time))");
+
         tx.commit();
         return {};
     }
@@ -42,6 +45,8 @@ std::expected<void, std::string> Database::clearDB(bool useTestDB){
         tx.exec("DROP TABLE IF EXISTS snapshotData");
         tx.exec("DROP TABLE IF EXISTS environment");
         tx.exec("DROP TABLE IF EXISTS laneSegments");
+        tx.exec("DROP TABLE IF EXISTS flowGenerators");
+        tx.exec("DROP TABLE IF EXISTS carFactories");
         tx.commit();
         return {};
     } catch(const std::exception& e) {

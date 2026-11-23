@@ -12,15 +12,25 @@
 - Curl: For making api requests for Api Testing
 
 For making movies based on the outputs: 
-- Python
+
+- python
 - ffmpeg (cli only)
 - pyyaml
 
-Compiler must be compatible with C++26 with reflection
+Compiler must be compatible with C++26 reflection
 
 # Database Schema:
 There are two databases: TrafficDB and TrafficDBTest
-Both have 3 tables: trafficJobs, carData, snapshotData
+Both databases have 7 tables and their schemas are defined below 
+
+- trafficJobs: High level simulation data about each job submitted
+- carData: Metadata and modeling parameters for each car in each job
+- snapshotData: Snapshots in time of all cars for all jobs. The majority of data lives in this table
+- laneSegments: Information about each lane segment in each simulation
+- Environment: Data about the road in general
+- FlowGenerators: Stored state of all the rng and distributions used to reconstruct the state of the simulation from any checkpoint in any job
+- CarFactory: Stored state of car generators for all checkpoints in all jobs
+
 
 ### Job Data:
 
@@ -62,11 +72,27 @@ JobID is a foreigh key to the Job ID in the Traffic Jobs table.
 
 ### Environment Data:
 
-| jobId (int) | x0 (float) | xf (float) | numLanes (int) |
+| jobId (int) | x_0 (float) | xf (float) | numLanes (int) |
 | --- | --- | --- | --- |
 | Job ID of the environment | Beginning of the road (m) | End of the road (m). The maximum of all segmentEnds with the same Job ID | Total number of lanes. Represents the maximum value of the "position" parameter in input files |
 
-JobID is a foreigh key to the Job ID in the Traffic Jobs table. There should be only one environment with a given JobID in this table, thus it is a primary key (although it is explicitly marked as one)
+JobID is a foreign key to the Job ID in the Traffic Jobs table. There should be only one environment with a given JobID in this table, thus it is a primary key (although it is explicitly marked as one)
+
+### Flow Generation Data
+
+| jobId (int) | Time (float) | Lane (int) | Generation dist state (text) | Initial velocity dist state (text) | Desired velocity dist state (text) | Number of generation attempts (int) | RNG state (int) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Job id that the flow generator checkpoint belongs to | Timestep the checkpoint represents | Lane the flow generator generates cars in | State of the uniform distribution used to generate new cars | State of the normal distribution for determining a car's initial velocity | State of the normal distribution determining the desired velocity | Number of times the flow generator has tried to generate a car | State of the underlying RNG engine for flow generation |
+
+JobID is a foreign key to the JobID in the Traffic Jobs table. The combination of JobID, Time and Lane represents the primary key. 
+
+### Car Factory Data
+
+| jobId (int) | Time (float) | RNG State (int) | Acceleration distribution state (text) | Braking distribution state (text) | C term distribution state (text) | Politeness distribution state (text)  |
+| --- | --- | --- | --- | --- | --- | --- |
+| Job id that the car factory checkpoint belongs to | Timestep the checkpoint represents | State of the rng engine used for car behavior parameters | State of normal distribution used for acceleration | State of normal distribution used for braking   | State of the normal distribution determining the C coefficient | State of normal distribution of lane changing politeness *p* |
+
+JobId is a foreign key to the JobID field in teh Traffic Jobs table. JobId + Time is a primary key pair. 
 
 # List of Api Endpoints
 
